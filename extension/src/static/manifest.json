@@ -1,6 +1,6 @@
 {
-  "name": "React Extension",
-  "description": "Chrome Extension in React!",
+  "name": "Hexagon",
+  "description": "Password managing chrome extension in React",
   "version": "1.0.0",
   "manifest_version": 3,
   "icons": {
