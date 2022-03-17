@@ -5,7 +5,8 @@ import './popup.css'
 const App: React.FC<{}> = () => {
   return (
     <div>
-      <img src="icon.png" />
+      {/* <img src="icon.png" /> */}
+      <h1>Hello welcome to hexagon</h1>
     </div>
   )
 }
