@@ -18,6 +18,7 @@ const HexagonUserType = new GraphQLObjectType({
             type: new GraphQLList(WebsiteCredentialsType),
             resolve(parent, args){
                 //return _.filter(WebsiteCredentials, {UIDs:parent.UID}) // need to find out how to retrieve from a  list of UIDs
+                return SecureRecord.find({type: "account", UID: parent.UID});
             }
         },
         MFAs: {
