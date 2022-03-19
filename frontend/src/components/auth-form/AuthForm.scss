@@ -1,0 +1,72 @@
+@import '../../shared/colors.module.scss';
+
+.modal {
+    z-index: 75;
+    transform: translate(-50%, 0);
+    position: fixed;
+    top: 400px;
+    left: 50%;
+    width: 500px;
+
+    // background-color: #fff;
+    border: 1px solid $darkPrimary;
+    border-radius: 15px;
+    box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.75);
+
+    & > * {
+        padding: 15px;
+    }
+
+    .header {
+        height: 50px;
+        border-radius: 15px 15px 0 0;
+        background-color: $darkPrimary;
+        display: flex;
+        align-items: center;
+
+        .title {
+            color: white;
+            margin: 0 auto;
+            font-size: 40px;
+            letter-spacing: 6px;
+            font-weight: 300;
+            font-family: 'Lato', 'Roboto', 'Helvetica', 'Ariel', sans-serif;
+        }
+
+        .logo {
+            background-repeat: no-repeat;
+            background-size: cover;
+            border-radius: 50%;
+            background-image: url('../../../public/logo.png');
+            height: 100px;
+            width: 100px;
+            position: absolute;
+            top: -50px;
+            justify-self: left;
+        }
+    }
+
+    .body {
+        .username-greeting {
+            margin-bottom: 10px;
+            font-size: 20px;
+            font-style: italic;
+
+            #current-email {
+                font-weight: bold;
+            }
+        }
+
+        #prompt {
+            margin-bottom: 5px;
+            font-size: 20px;
+            font-style: italic;
+        }
+    }
+
+    .footer {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: space-between;
+    }
+}
