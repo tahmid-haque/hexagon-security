@@ -1,0 +1,15 @@
+.modal {
+    transform: translate(-50%, 0);
+    position: fixed;
+    top: 400px;
+    left: 50%;
+
+    .sorry {
+        font-size: 60px;
+        font-weight: bold;
+    }
+
+    .message {
+        font-size: 30px;
+    }
+}
