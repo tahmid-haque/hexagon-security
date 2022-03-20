@@ -8,6 +8,11 @@
   },
   "author": "",
   "devDependencies": {
+    "@emotion/react": "^11.8.2",
+    "@emotion/styled": "^11.8.1",
+    "@fontsource/roboto": "^4.5.3",
+    "@mui/icons-material": "^5.5.1",
+    "@mui/material": "^5.5.1",
     "@types/chrome": "^0.0.134",
     "@types/react": "^17.0.3",
     "@types/react-dom": "^17.0.3",
@@ -24,10 +29,5 @@
     "webpack": "^5.34.0",
     "webpack-cli": "^4.6.0",
     "webpack-merge": "^5.7.3"
-  },
-  "dependencies": {
-    "@emotion/react": "^11.8.2",
-    "@emotion/styled": "^11.8.1",
-    "@mui/material": "^5.5.1"
   }
 }

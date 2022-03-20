@@ -10,6 +10,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AuthForm from './components/auth-form/AuthForm';
 import NotFound from './components/not-found/NotFound';
 import Dashboard from './components/dashboard/Dashboard';
+import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 
 const muiTheme = createTheme({
     palette: {
@@ -31,24 +32,34 @@ const muiTheme = createTheme({
     },
 });
 
+const client = new ApolloClient({
+    uri: 'http://localhost:4000/graphql',
+    cache: new InMemoryCache(),
+});
+
 ReactDOM.render(
     <React.StrictMode>
         <Provider store={store}>
             <ThemeProvider theme={muiTheme}>
-                <BrowserRouter>
-                    <Routes>
-                        <Route path='/' element={<App />}>
-                            <Route path='app/' element={<Dashboard />}>
+                <ApolloProvider client={client}>
+                    <BrowserRouter>
+                        <Routes>
+                            <Route path='/' element={<App />}>
+                                <Route path='app/' element={<Dashboard />}>
+                                    <Route
+                                        path='credentials'
+                                        element={<div>Hello World!</div>}
+                                    />
+                                </Route>
                                 <Route
-                                    path='credentials'
-                                    element={<div>Hello World!</div>}
+                                    path='authenticate'
+                                    element={<AuthForm />}
                                 />
+                                <Route path='*' element={<NotFound />} />
                             </Route>
-                            <Route path='authenticate' element={<AuthForm />} />
-                            <Route path='*' element={<NotFound />} />
-                        </Route>
-                    </Routes>
-                </BrowserRouter>
+                        </Routes>
+                    </BrowserRouter>
+                </ApolloProvider>
             </ThemeProvider>
         </Provider>
     </React.StrictMode>,
