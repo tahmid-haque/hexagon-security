@@ -1,10 +1,20 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
-import { Card, Box, Button} from '@mui/material';
-import { createTheme } from '@mui/material/styles'
-import CloseIcon from '@mui/icons-material/Close';
+import { Card, Box, Button, Typography, Tab } from '@mui/material';
+import {  TabContext, TabList, TabPanel } from '@mui/lab';
 import './popup.css'
 import './signin.css'
+import PopupPasswords from './passwords/passwords'
+import Header from '../sharedComponents/header/header'
+// import { ThemeProvider, createTheme } from '@mui/material/styles';
+
+// const theme = createTheme({
+//   palette: {
+//     primary: {
+//       main: '#a3a3a3'
+//     }
+//   },
+// });
 
 const SigninPage = () => {
   const onClickSignin = () => {
@@ -25,47 +35,68 @@ type User = {
   name: string
 }
 
-const Greet = ({ name }: User) => {
-  return <h1>Hello {name}</h1>
+const GreetUser = ({ name }: User) => {
+  return (
+    <div className='container'>
+      <Box mb={"2px"}>
+        <Card>
+          <div className='greeting'>Hello {name}</div>
+        </Card>
+      </Box>
+    </div>
+  )
+}
+
+const PopupHome = ({ name }: User) => {
+  const [value, setValue] = React.useState('1');
+
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
+  };
+
+  return (
+
+    <div className='home-container'>
+      <GreetUser name={name} />
+
+      <Box sx={{ width: '100%', typography: 'body1' }}>
+        <TabContext value={value}>
+          <Box sx={{backgroundColor: '#f2f2f2', marginBottom: "0px"}}>
+            <TabList onChange={handleChange} aria-label="chrome extension popup tabs">
+              <Tab label="Home" value="1"/>
+              <Tab label="Generator" value="2" />
+              <Tab label="Manager" value="3" />
+            </TabList>
+          </Box>
+          <TabPanel value="1" sx={{ width: '100%', typography: 'body1', padding: '0'}}>
+            <PopupPasswords />
+          </TabPanel>
+          <TabPanel value="2" sx={{height: "440px"}}>Item Two</TabPanel>
+          <TabPanel value="3" sx={{height: "440px"}}>Item Three</TabPanel>
+        </TabContext>
+      </Box>
+    </div>
+
+  )
 }
 
 const PopupBody = ({ name }: User) => {
   if(!name){
     return <SigninPage />
   }
-  return <Greet name={name} />
+  return <PopupHome name={name} />
 }
 
-const Header = () => {
-  const onClickClose = () => {
-    console.log("close popup");
-    window.close();
-  }
-
-  return (
-    <div>
-      <div className='top-border'></div>
-      <Card>
-        <div className='header-container'>
-          <div className='header'>
-            <img src="icon.png" className="icon"/> 
-            <div className='title'>HEXAGON</div>
-          </div>
-          <Box m={1}>
-            <CloseIcon onClick={onClickClose} color="action"></CloseIcon>
-          </Box>
-        </div>
-      </Card>
-    </div>
-  )
+const PopupGenerator = () => {
+  
 }
 
 const App = () => {
   return (
     <div>
-      <Header />
+      <Header url={"icon.png"} />
       {/* <PopupBody name={null} /> */}
-      <PopupBody name={"yellow"} />
+      <PopupBody name={"Raisa"} />
     </div>
   )
 }

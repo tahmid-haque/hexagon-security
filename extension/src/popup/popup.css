@@ -2,7 +2,7 @@ body {
   font-family: 'Lato', 'Roboto', 'Helvetica', 'Ariel', sans-serif;
   background-color: #dadada;
   width: 350px;
-  height: 500px;
+  max-height: 500px;
   padding: 0;
   margin: 0;
   border: 0;
@@ -29,31 +29,9 @@ body {
 	}
 }
 
-.top-border{
-  height: 8px;
-  width: 100%;
-  display: block;
-  background: linear-gradient(90deg, #3e9fff 0%, #3a5cb5 100%);
+.home-container{
+  background-color: #dadada;
+  margin-top: 4px;
+  max-height: 440px !important;
+  overflow: scroll;
 }
-
-.title{
-  font-size: 24px;
-  letter-spacing: 4px;
-  font-weight: 300;
-}
-
-.header-container{
-  display: flex;
-  justify-content: space-between;
-}
-
-.header{
-  display: flex;
-  align-items: center;
-}
-
-.header img{
-  width: 40px;
-  padding: 10px;
-}
-
