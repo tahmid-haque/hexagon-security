@@ -1,5 +1,6 @@
 const HexagonUser = require('../models/HexagonUser');
 const jwt = require('jsonwebtoken');
+import {v4 as uuid} from 'uuid';
 
 //handle errors
 const handleErrors = (err) =>{
@@ -48,8 +49,8 @@ module.exports.signup_post = async (req, res) =>{
         //     masterKey: "test"
         // });
         // hexagonUser.save();
-        const hexagonUser = await new HexagonUser.create({username: username, password: password, UID: username, masterKey: "test"});
-        const token = createToken(hexagonUser._id);
+        const hexagonUser = await new HexagonUser.create({username: username, password: password, UID: uuid(), masterKey: "test"});
+        const token = createToken(hexagonUser.UID);
         res.cookie('jwt',token, {httpOnly: true, maxAge: maxAge*1000});
         res.status(201).json(hexagonUser.UID);
     }
