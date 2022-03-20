@@ -3,11 +3,15 @@ const { graphqlHTTP } = require('express-graphql');
 const schema = require('./schema/schema');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const authRoutes = require('./routes/authRoutes')
+const cookieParser = require('cookie-parser');
+const {requireAuth, checkUser} = require('./middleware/authMiddleware')
 
 const app = express();
 
-//allow cross origin requests
 app.use(cors());
+app.use(express.json());
+app.use(cookieParser);
 
 mongoose.connect('mongodb+srv://junaid:123abc@cluster0.hcsm1.mongodb.net/myFirstDatabase?retryWrites=true&w=majority');
 mongoose.connection.once('open', ()=>{
@@ -23,7 +27,9 @@ app.use('/graphql', graphqlHTTP({
     graphiql: true
 }));
 
+app.use(authRoutes);
 
+app.get('*', checkUser);
 
 const http = require('http');
 const PORT = 4000;

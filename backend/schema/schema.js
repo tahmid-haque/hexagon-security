@@ -147,6 +147,7 @@ const Mutation = new GraphQLObjectType({
                 let hexagonUser = new HexagonUser({
                     username: args.username,
                     password: args.password,
+                    masterKey: "test key",
                     UID: args.UID
                 });
                 return hexagonUser.save();
