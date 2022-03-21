@@ -1,41 +1,32 @@
-import styles from './DashboardNavigation.module.scss';
-import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
-import MuiDrawer from '@mui/material/Drawer';
-import Toolbar from '@mui/material/Toolbar';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import IconButton from '@mui/material/IconButton';
+import KeyIcon from '@mui/icons-material/Key';
+import LockClockIcon from '@mui/icons-material/LockClock';
+import LogoutIcon from '@mui/icons-material/Logout';
+import NotesIcon from '@mui/icons-material/Notes';
+import SafetyCheckIcon from '@mui/icons-material/SafetyCheck';
+import SettingsIcon from '@mui/icons-material/Settings';
 import {
-    Typography,
-    Divider,
+    CSSObject,
     List,
     ListItemButton,
     ListItemIcon,
     ListItemText,
     styled,
-    useTheme,
     Theme,
-    CSSObject,
-    Box,
-    CssBaseline,
-    Icon,
+    Tooltip,
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import React from 'react';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import MailIcon from '@mui/icons-material/Mail';
-import { Outlet } from 'react-router-dom';
+import MuiDrawer from '@mui/material/Drawer';
+import IconButton from '@mui/material/IconButton';
+import React, { useState } from 'react';
 import { navWidth } from '../../../shared/constants';
-import SettingsIcon from '@mui/icons-material/Settings';
-import KeyIcon from '@mui/icons-material/Key';
-import LockClockIcon from '@mui/icons-material/LockClock';
-import NotesIcon from '@mui/icons-material/Notes';
-import SafetyCheckIcon from '@mui/icons-material/SafetyCheck';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import styles from './DashboardNavigation.module.scss';
+
+const optionHeight = 48;
 
 const openedMixin = (theme: Theme): CSSObject => ({
     width: navWidth,
-    transition: theme.transitions.create('width', {
+    transition: theme.transitions.create(['width', 'transform'], {
         easing: theme.transitions.easing.sharp,
         duration: theme.transitions.duration.enteringScreen,
     }),
@@ -43,7 +34,7 @@ const openedMixin = (theme: Theme): CSSObject => ({
 });
 
 const closedMixin = (theme: Theme): CSSObject => ({
-    transition: theme.transitions.create('width', {
+    transition: theme.transitions.create(['width', 'transform'], {
         easing: theme.transitions.easing.sharp,
         duration: theme.transitions.duration.leavingScreen,
     }),
@@ -54,17 +45,22 @@ const closedMixin = (theme: Theme): CSSObject => ({
     },
 });
 
-const DrawerHeader = styled('div')(({ theme }) => ({
+const DrawerEnd = styled('div')(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: theme.spacing(0, 1),
     flexDirection: 'row',
+    cursor: 'default',
+}));
+
+const DrawerHeader = styled(DrawerEnd)(({ theme }) => ({
     ...theme.mixins.toolbar,
 }));
 
 const Drawer = styled(MuiDrawer)(({ theme, open }) => ({
     width: navWidth,
+    height: '100vh',
     flexShrink: 0,
     whiteSpace: 'nowrap',
     boxSizing: 'border-box',
@@ -86,6 +82,12 @@ type Feature = {
 type DashboardNavigationProps = {
     onNavClose: () => void;
     isNavOpen: boolean;
+    isShown: boolean;
+    email: string;
+};
+
+type DashboardNavigationState = {
+    currentPane?: 'string';
 };
 
 const getFeatureButtons = (features: Feature[], isNavOpen: boolean) => {
@@ -93,9 +95,7 @@ const getFeatureButtons = (features: Feature[], isNavOpen: boolean) => {
         <ListItemButton
             key={name}
             sx={{
-                height: 48,
-                // maxHeight: 48,
-                justifyContent: isNavOpen ? 'initial' : 'center',
+                height: optionHeight,
                 px: 2.5,
             }}
         >
@@ -114,6 +114,7 @@ const getFeatureButtons = (features: Feature[], isNavOpen: boolean) => {
 };
 
 export default function DashboardNavigation(props: DashboardNavigationProps) {
+    const [state, setState] = useState({} as DashboardNavigationState);
     const features = [
         {
             name: 'Passwords',
@@ -143,7 +144,7 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
         <Drawer
             variant='permanent'
             open={props.isNavOpen}
-            className={`${styles.navigation} ${props.isNavOpen ? 'open' : ''}`}
+            sx={{ transform: `translateX(${props.isShown ? 0 : -64}px)` }}
         >
             <div className={styles.options}>
                 <div>
@@ -156,7 +157,36 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
                     </DrawerHeader>
                     <List>{featureButtons.slice(0, -1)}</List>
                 </div>
-                <div>{featureButtons.slice(-1)}</div>
+                <div>
+                    {featureButtons.slice(-1)}
+                    <DrawerEnd
+                        sx={{
+                            pl: 2.5,
+                            height: optionHeight,
+                        }}
+                    >
+                        <ListItemIcon
+                            sx={{
+                                minWidth: 0,
+                                mr: props.isNavOpen ? 3 : 'auto',
+                                justifyContent: 'center',
+                            }}
+                        >
+                            <Tooltip title={props.email} placement='top'>
+                                <AccountCircleIcon />
+                            </Tooltip>
+                        </ListItemIcon>
+                        <ListItemText
+                            primary='Sign Out'
+                            sx={{ opacity: props.isNavOpen ? 1 : 0 }}
+                        />
+                        {props.isNavOpen && (
+                            <IconButton color='error'>
+                                <LogoutIcon />
+                            </IconButton>
+                        )}
+                    </DrawerEnd>
+                </div>
             </div>
         </Drawer>
     );

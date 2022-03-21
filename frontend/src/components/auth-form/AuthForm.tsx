@@ -1,22 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
-import InputAdornment from '@mui/material/InputAdornment';
-import IconButton from '@mui/material/IconButton';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import Slide from '@mui/material/Slide';
-import styles from './AuthForm.module.scss';
-import AccountService from '../../services/AccountService';
-import { sendToast } from '../../store/slices/ToastSlice';
-import { useAppDispatch } from '../../store/store';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Grow from '@mui/material/Grow';
-import { updateAccount } from '../../store/slices/AccountSlice';
+import Slide from '@mui/material/Slide';
+import TextField from '@mui/material/TextField';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AccountService from '../../services/AccountService';
+import { updateAccount } from '../../store/slices/AccountSlice';
+import { sendToast } from '../../store/slices/ToastSlice';
+import { useAppDispatch } from '../../store/store';
+import PasswordField from '../shared/PasswordField';
+import styles from './AuthForm.module.scss';
 
 type AuthFormState = {
     isSignUp: boolean;
@@ -116,11 +113,12 @@ export default function AuthForm() {
         });
     };
 
-    const welcomeUser = (masterKey: string) => {
+    const welcomeUser = (masterKey: string, jwt: string) => {
         appDispatch(
             updateAccount({
                 email: state.currentEmail,
                 masterKey,
+                jwt,
             })
         );
 
@@ -145,11 +143,11 @@ export default function AuthForm() {
         }
         update({ isLoading: true });
         try {
-            const masterKey = (await accountService.authenticateUser(
+            const { masterKey, jwt } = await accountService.authenticateUser(
                 state.currentEmail,
                 state.currentPassword
-            )) as string;
-            welcomeUser(masterKey);
+            );
+            welcomeUser(masterKey, jwt);
         } catch (error: any) {
             appDispatch(
                 sendToast({
@@ -177,35 +175,14 @@ export default function AuthForm() {
             onChange={onEmailChange}
         />
     ) : (
-        <TextField
-            fullWidth
-            id='password'
-            error={!state.isInputValid}
-            value={state.currentPassword}
-            label='Password'
-            type={state.showPassword ? 'text' : 'password'}
-            helperText={state.invalidInputText ?? ''}
-            variant='standard'
-            InputProps={{
-                endAdornment: (
-                    <InputAdornment position='end'>
-                        <IconButton
-                            aria-label='toggle password visibility'
-                            onClick={onTogglePasswordViewClick}
-                            edge='end'
-                        >
-                            {state.showPassword ? (
-                                <VisibilityOff />
-                            ) : (
-                                <Visibility />
-                            )}
-                        </IconButton>
-                    </InputAdornment>
-                ),
-            }}
-            onChange={onPasswordChange}
+        <PasswordField
+            isError={!state.isInputValid}
+            password={state.currentPassword}
+            onPasswordChange={onPasswordChange}
+            errorMessage={state.invalidInputText}
         />
     );
+
     return (
         <Grow in={state.isShown} timeout={500}>
             <div className={styles.modal}>

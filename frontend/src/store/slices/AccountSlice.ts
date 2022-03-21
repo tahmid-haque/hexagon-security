@@ -3,6 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 export type Account = {
     email: string;
     masterKey: string;
+    jwt: string;
 };
 
 const accountSlice = createSlice({
@@ -11,6 +12,7 @@ const accountSlice = createSlice({
     initialState: {
         email: '',
         masterKey: '',
+        jwt: '',
     } as Account,
     reducers: {
         updateAccount(_state, action: PayloadAction<Account>) {

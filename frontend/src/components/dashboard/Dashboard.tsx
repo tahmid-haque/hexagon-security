@@ -1,29 +1,7 @@
-import styles from './Dashboard.module.scss';
-import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
-import MuiDrawer from '@mui/material/Drawer';
-import Toolbar from '@mui/material/Toolbar';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import IconButton from '@mui/material/IconButton';
-import {
-    Typography,
-    Divider,
-    List,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
-    styled,
-    useTheme,
-    Theme,
-    CSSObject,
-    Box,
-    CssBaseline,
-} from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import React from 'react';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import MailIcon from '@mui/icons-material/Mail';
+import { Box, styled } from '@mui/material';
+import React, { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
+import { useAppSelector } from '../../store/store';
 import DashboardHeader from './dashboard-header/DashboardHeader';
 import DashboardNavigation from './dashboard-navigation/DashboardNavigation';
 
@@ -33,11 +11,14 @@ const Offset = styled('div')(({ theme }) => theme.mixins.toolbar);
 
 type DashboardState = {
     isNavOpen: boolean;
+    isDashShown: boolean;
 };
 
 export default function Dashboard() {
+    const account = useAppSelector((state) => state.account);
     const [state, setState] = React.useState({
         isNavOpen: false,
+        isDashShown: false,
     } as DashboardState);
 
     const update = (update: Partial<DashboardState>) => {
@@ -54,20 +35,29 @@ export default function Dashboard() {
         update({ isNavOpen: false });
     };
 
+    useEffect(() => {
+        setTimeout(() => {
+            update({ isDashShown: true });
+        }, 1);
+    }, []);
+
     return (
-        <div className={styles.container}>
+        <Box sx={{ display: 'flex' }}>
             <DashboardHeader
                 isNavOpen={state.isNavOpen}
                 onNavOpen={onNavOpen}
+                isShown={state.isDashShown}
             ></DashboardHeader>
             <DashboardNavigation
                 isNavOpen={state.isNavOpen}
+                isShown={state.isDashShown}
                 onNavClose={onNavClose}
+                email={account.email}
             ></DashboardNavigation>
-            <div className={styles.main}>
+            <Box sx={{ width: '100%', height: '100vh', overflowY: 'scroll' }}>
                 <Offset />
-                <Outlet />
-            </div>
-        </div>
+                <Outlet context={{ account }} />
+            </Box>
+        </Box>
     );
 }

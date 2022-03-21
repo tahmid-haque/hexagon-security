@@ -10,6 +10,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AuthForm from './components/auth-form/AuthForm';
 import NotFound from './components/not-found/NotFound';
 import Dashboard from './components/dashboard/Dashboard';
+import CredentialsView from './components/credentials/CredentialsView';
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 
 const muiTheme = createTheme({
@@ -48,7 +49,7 @@ ReactDOM.render(
                                 <Route path='app/' element={<Dashboard />}>
                                     <Route
                                         path='credentials'
-                                        element={<div>Hello World!</div>}
+                                        element={<CredentialsView />}
                                     />
                                 </Route>
                                 <Route

@@ -1,3 +1,8 @@
+type AuthenticationResponse = {
+    masterKey: string;
+    jwt: string;
+};
+
 class AccountController {
     async checkExists(email: string) {
         // TODO: Use real API later
@@ -8,16 +13,25 @@ class AccountController {
         });
     }
 
-    async signIn(email: string, password: string) {
+    async signIn(
+        email: string,
+        password: string
+    ): Promise<AuthenticationResponse> {
         // TODO: Use real API later
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-                resolve({ masterKey: 'c2d2d3f0-a7ce-11ec-b909-0242ac120002' });
+                resolve({
+                    masterKey: 'c2d2d3f0-a7ce-11ec-b909-0242ac120002',
+                    jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+                });
             }, 1000);
         });
     }
 
-    async signUp(email: string, password: string) {
+    async signUp(
+        email: string,
+        password: string
+    ): Promise<AuthenticationResponse> {
         // TODO: Use real API later
         return new Promise((resolve, reject) => {
             setTimeout(() => {

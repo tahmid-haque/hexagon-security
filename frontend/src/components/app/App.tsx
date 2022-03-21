@@ -1,17 +1,11 @@
-import React, { SyntheticEvent, useEffect } from 'react';
-import './App.scss';
-import AuthForm from '../auth-form/AuthForm';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import Snackbar, {
-    SnackbarCloseReason,
-    SnackbarOrigin,
-} from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-import { connect } from 'react-redux';
-import { useAppDispatch, useAppSelector } from '../../store/store';
-import { sendToast, Toast } from '../../store/slices/ToastSlice';
 import Slide from '@mui/material/Slide';
+import Snackbar, { SnackbarCloseReason } from '@mui/material/Snackbar';
+import React, { useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { sendToast } from '../../store/slices/ToastSlice';
+import { useAppDispatch, useAppSelector } from '../../store/store';
+import './App.scss';
 
 const UpTransition = (props: any) => {
     return <Slide {...props} direction='up' />;
@@ -26,6 +20,7 @@ export default function App() {
     useEffect(() => {
         if (location.pathname === '/')
             navigate(account.email ? '/app/credentials' : '/authenticate');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location]);
 
     const onToastClose = (
