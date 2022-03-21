@@ -1,11 +1,11 @@
-.top-border{
+.header-top-border{
   height: 8px;
   width: 100%;
   display: block;
   background: linear-gradient(90deg, #3e9fff 0%, #3a5cb5 100%);
 }
 
-.title{
+.header-container .header .title{
   font-size: 24px;
   letter-spacing: 4px;
   font-weight: 300;
@@ -16,12 +16,13 @@
   justify-content: space-between;
 }
 
-.header{
+.header-container .header{
   display: flex;
   align-items: center;
+  justify-items: center;
 }
 
-.header img{
+.header-container .header img{
   width: 40px;
   padding: 10px;
 }

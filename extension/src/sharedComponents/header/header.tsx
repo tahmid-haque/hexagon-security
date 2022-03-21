@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Box, Button, Typography, Tab } from '@mui/material';
+import { Card, Box, Button, Typography, Tab, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import './header.css'
 
-const Header = ({url} : {url: string}) => {
-    const onClickClose = () => {
-      console.log("close popup");
-      // window.close();
-    }
+const Header = ({url, clickAction} : {url: string, clickAction: () => void}) => {
+    // const onClickClose = () => {
+    //   console.log("close popup");
+    //   // window.close();
+    // }
   
     return (
       <div>
-        <div className='top-border'></div>
+        <div className='header-top-border'></div>
         <Card>
           <div className='header-container'>
             <div className='header'>
@@ -19,7 +19,9 @@ const Header = ({url} : {url: string}) => {
               <div className='title'>HEXAGON</div>
             </div>
             <Box m={1}>
-              <CloseIcon onClick={onClickClose} color="action"></CloseIcon>
+              <IconButton onClick={clickAction} >
+                <CloseIcon color="action"/>
+              </IconButton>
             </Box>
           </div>
         </Card>

@@ -8,6 +8,8 @@
     z-index: 9999;
     font-family: 'Lato', 'Roboto', 'Helvetica', 'Ariel', sans-serif;
     font-size: 14px;
+    /* shadow from https://getcssscan.com/css-box-shadow-examples */
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
 }
 
 .overlay-body{

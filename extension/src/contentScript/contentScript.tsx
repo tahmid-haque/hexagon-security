@@ -7,7 +7,7 @@ import './contentScript.css'
 const AutofillOverlay = () => {
     return (
         <div className='overlay'>
-            <Header url={chrome.runtime.getURL("icon.png")}/>
+            <Header url={chrome.runtime.getURL("icon.png")} clickAction ={() => console.log("close overlay")} />
             <Card className='overlay-body'>
                 <div>Username/Password fields detected. Autofill fields?</div>
                 <Button size='large' sx={{margin: "5px", fontSize: "15px"}}>Autofill</Button>
@@ -19,7 +19,7 @@ const AutofillOverlay = () => {
 const SavePassOverlay = () => {
     return (
         <div className='overlay'>
-            <Header url={chrome.runtime.getURL("icon.png")}/>
+            <Header url={chrome.runtime.getURL("icon.png")} clickAction ={() => console.log("close overlay")} />
             <Card className='overlay-body'>
                 <div>Username/Password detected. Save username and password?</div>
                 <Button size='large' sx={{margin: "5px", fontSize: "15px"}}>Save</Button>
@@ -41,3 +41,10 @@ const detectUsernameField = () => {
 const detectPasswordField = () => {
 
 }
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
+    console.log(request);
+    if (request.message === "new page"){
+        sendResponse({name: "raisa", url: request.changeInfo.url});
+    }
+})

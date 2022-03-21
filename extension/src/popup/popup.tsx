@@ -40,7 +40,7 @@ const GreetUser = ({ name }: User) => {
     <div className='container'>
       <Box mb={"2px"}>
         <Card>
-          <div className='greeting'>Hello {name}</div>
+          <div className='greeting'>Hello {name}...</div>
         </Card>
       </Box>
     </div>
@@ -65,7 +65,7 @@ const PopupHome = ({ name }: User) => {
             <TabList onChange={handleChange} aria-label="chrome extension popup tabs">
               <Tab label="Home" value="1"/>
               <Tab label="Generator" value="2" />
-              <Tab label="Manager" value="3" />
+              <Tab label="2FA Keys" value="3" />
             </TabList>
           </Box>
           <TabPanel value="1" sx={{ width: '100%', typography: 'body1', padding: '0'}}>
@@ -94,7 +94,7 @@ const PopupGenerator = () => {
 const App = () => {
   return (
     <div>
-      <Header url={"icon.png"} />
+      <Header url={"icon.png"} clickAction ={ () => window.close() } />
       {/* <PopupBody name={null} /> */}
       <PopupBody name={"Raisa"} />
     </div>
