@@ -290,7 +290,10 @@ export default function CredentialsView() {
     }, []);
 
     return (
-        <Box ref={ref} sx={{ height: 'calc(100% - 64px)' }}>
+        <Box
+            ref={ref}
+            sx={{ height: 'calc(100% - 64px)', width: 'calc(100vw - 66px)' }}
+        >
             <DataGrid
                 rows={state.credentials}
                 columns={columns}

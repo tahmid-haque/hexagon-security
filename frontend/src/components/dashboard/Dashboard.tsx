@@ -54,7 +54,7 @@ export default function Dashboard() {
                 onNavClose={onNavClose}
                 email={account.email}
             ></DashboardNavigation>
-            <Box sx={{ width: '100%', height: '100vh', overflowY: 'scroll' }}>
+            <Box sx={{ width: '100%', height: '100vh', overflowY: 'auto' }}>
                 <Offset />
                 <Outlet context={{ account }} />
             </Box>
