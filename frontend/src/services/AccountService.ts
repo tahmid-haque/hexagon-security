@@ -12,13 +12,15 @@ class AccountService {
     }
 
     checkInUse(email: string) {
-        return this.accountController.checkExists(email);
+        return this.accountController
+            .checkExists(email)
+            .then((res: any) => ({ inUse: res.exists }));
     }
 
     authenticateUser(email: string, password: string, isSignUp = false) {
         return isSignUp
-            ? this.accountController.signIn(email, password)
-            : this.accountController.signUp(email, password);
+            ? this.accountController.signUp(email, password)
+            : this.accountController.signIn(email, password);
     }
 }
 

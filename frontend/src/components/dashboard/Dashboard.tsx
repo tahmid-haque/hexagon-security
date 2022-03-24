@@ -1,7 +1,8 @@
 import { Box, styled } from '@mui/material';
 import React, { useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
-import { useAppSelector } from '../../store/store';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { sendToast } from '../../store/slices/ToastSlice';
+import { useAppDispatch, useAppSelector } from '../../store/store';
 import DashboardHeader from './dashboard-header/DashboardHeader';
 import DashboardNavigation from './dashboard-navigation/DashboardNavigation';
 
@@ -20,6 +21,8 @@ export default function Dashboard() {
         isNavOpen: false,
         isDashShown: false,
     } as DashboardState);
+    const navigate = useNavigate();
+    const dispatch = useAppDispatch();
 
     const update = (update: Partial<DashboardState>) => {
         setState((state) => {
@@ -37,9 +40,25 @@ export default function Dashboard() {
 
     useEffect(() => {
         setTimeout(() => {
-            update({ isDashShown: true });
+            if (account.email) update({ isDashShown: true });
+            else navigate('/authenticate');
         }, 1);
     }, []);
+
+    useEffect(() => {
+        if (state.isDashShown && !account.email) {
+            update({ isDashShown: false });
+            setTimeout(() => {
+                dispatch(
+                    sendToast({
+                        message: 'Successfully signed out.',
+                        severity: 'success',
+                    })
+                );
+                navigate('/authenticate');
+            }, 300);
+        }
+    }, [account]);
 
     return (
         <Box sx={{ display: 'flex' }}>
@@ -54,10 +73,12 @@ export default function Dashboard() {
                 onNavClose={onNavClose}
                 email={account.email}
             ></DashboardNavigation>
-            <Box sx={{ width: '100%', height: '100vh', overflowY: 'auto' }}>
-                <Offset />
-                <Outlet />
-            </Box>
+            {state.isDashShown && (
+                <Box sx={{ width: '100%', height: '100vh', overflowY: 'auto' }}>
+                    <Offset />
+                    <Outlet />
+                </Box>
+            )}
         </Box>
     );
 }

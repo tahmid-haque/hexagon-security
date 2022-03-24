@@ -1,46 +1,48 @@
-type AuthenticationResponse = {
+export type AuthenticationResponse = {
     masterKey: string;
     jwt: string;
 };
 
+const doPOST = (url: string, body: any) => {
+    return fetch(url, {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+    }).then((res) => {
+        if (!res.ok)
+            throw new Error(
+                JSON.stringify({ status: res.status, errors: res.json() })
+            );
+        else return res.json();
+    });
+};
+
 class AccountController {
     async checkExists(email: string) {
-        // TODO: Use real API later
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                resolve({ inUse: false });
-            }, 1000);
-        });
+        return doPOST('/api/auth/exists', { username: email });
     }
 
     async signIn(
         email: string,
         password: string
     ): Promise<AuthenticationResponse> {
-        // TODO: Use real API later
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                resolve({
-                    masterKey: 'c2d2d3f0-a7ce-11ec-b909-0242ac120002',
-                    jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
-                });
-            }, 1000);
-        });
+        return doPOST('/api/auth/signin', {
+            username: email,
+            password,
+        }) as any as AuthenticationResponse;
     }
 
     async signUp(
         email: string,
         password: string
     ): Promise<AuthenticationResponse> {
-        // TODO: Use real API later
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                resolve({
-                    masterKey: 'c2d2d3f0-a7ce-11ec-b909-0242ac120002',
-                    jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
-                });
-            }, 1000);
-        });
+        return doPOST('/api/auth/signup', {
+            username: email,
+            password,
+        }) as any as AuthenticationResponse;
     }
 }
 

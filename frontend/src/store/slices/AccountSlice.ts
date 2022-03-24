@@ -6,17 +6,22 @@ export type Account = {
     jwt: string;
 };
 
+const initialState = {
+    email: '',
+    masterKey: '',
+    jwt: '',
+} as Account;
+
 const accountSlice = createSlice({
     name: 'account',
 
-    initialState: {
-        email: '',
-        masterKey: '',
-        jwt: '',
-    } as Account,
+    initialState: { ...initialState },
     reducers: {
         updateAccount(_state, action: PayloadAction<Account>) {
             return action.payload;
+        },
+        clearAccount(_state) {
+            return { ...initialState };
         },
         updateEmail(state, action: PayloadAction<{ email: string }>) {
             state.email = action.payload.email;
@@ -24,5 +29,6 @@ const accountSlice = createSlice({
     },
 });
 
-export const { updateAccount, updateEmail } = accountSlice.actions;
+export const { updateAccount, updateEmail, clearAccount } =
+    accountSlice.actions;
 export default accountSlice.reducer;

@@ -19,6 +19,8 @@ import MuiDrawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import React, { useState } from 'react';
 import { navWidth } from '../../../shared/constants';
+import { clearAccount } from '../../../store/slices/AccountSlice';
+import { useAppDispatch } from '../../../store/store';
 import styles from './DashboardNavigation.module.scss';
 
 const optionHeight = 48;
@@ -113,7 +115,7 @@ const getFeatureButtons = (features: Feature[], isNavOpen: boolean) => {
 };
 
 export default function DashboardNavigation(props: DashboardNavigationProps) {
-    const [state, setState] = useState({} as DashboardNavigationState);
+    const dispatch = useAppDispatch();
     const features = [
         {
             name: 'Credentials',
@@ -134,6 +136,10 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
     ] as Feature[];
 
     const featureButtons = getFeatureButtons(features, props.isNavOpen);
+
+    const onSignOutClick = () => {
+        dispatch(clearAccount());
+    };
 
     return (
         <Drawer
@@ -163,6 +169,7 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
                         sx={{
                             pl: 2.5,
                             height: optionHeight,
+                            mb: 1,
                         }}
                     >
                         <ListItemIcon
@@ -181,7 +188,7 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
                             sx={{ opacity: props.isNavOpen ? 1 : 0 }}
                         />
                         {props.isNavOpen && (
-                            <IconButton color='error'>
+                            <IconButton color='error' onClick={onSignOutClick}>
                                 <LogoutIcon />
                             </IconButton>
                         )}

@@ -143,13 +143,20 @@ export default function AuthForm() {
             );
             welcomeUser(masterKey, jwt);
         } catch (error: any) {
-            appDispatch(
-                sendToast({
-                    message:
-                        'Something went wrong and we were unable to authenticate. Please try again later.',
-                    severity: 'error',
-                })
-            );
+            if (JSON.parse(error.message).status) {
+                update({
+                    invalidInputText: 'Invalid username or password',
+                    isInputValid: false,
+                });
+            } else {
+                appDispatch(
+                    sendToast({
+                        message:
+                            'Something went wrong and we were unable to authenticate. Please try again later.',
+                        severity: 'error',
+                    })
+                );
+            }
         }
         update({ isLoading: false });
     };

@@ -9,6 +9,9 @@ import PasswordField from '../../shared/PasswordField';
 export type CredentialEditorProps = {
     isOpen: boolean;
     setIsOpen: (value: boolean) => void;
+    url?: string;
+    user?: string;
+    password?: string;
 };
 
 type CredentialEditorState = {
@@ -124,19 +127,11 @@ export default function CredentialEditor(props: CredentialEditorProps) {
                 cryptoWorker.encryptData(state.user, account.masterKey),
                 cryptoWorker.encryptData(state.password, account.masterKey),
             ]);
-            console.log(encryptedUser, encryptedPass);
-
-            const [decryptedUser, decryptedPass] = await Promise.all([
-                cryptoWorker.decryptData(
-                    encryptedUser.slice(0, 3) + '4' + encryptedUser.slice(4),
-                    account.masterKey
-                ),
-                cryptoWorker.decryptData(encryptedPass, account.masterKey),
-            ]);
-            console.log(decryptedUser, decryptedPass);
+            // check if username in use already
         } catch (error) {
             console.log(error);
         }
+        update(initState);
         props.setIsOpen(false);
     };
 
