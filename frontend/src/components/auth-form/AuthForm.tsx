@@ -139,7 +139,8 @@ export default function AuthForm() {
         try {
             const { masterKey, jwt } = await accountService.authenticateUser(
                 state.currentEmail,
-                state.currentPassword
+                state.currentPassword,
+                state.isSignUp
             );
             welcomeUser(masterKey, jwt);
         } catch (error: any) {
