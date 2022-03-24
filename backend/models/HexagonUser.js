@@ -33,10 +33,10 @@ hexagoUserScehma.pre('save', async function(next){
 
 hexagoUserScehma.statics.login = async function(username, password){
     const hexagonUser = await this.findOne({username:username});
-    if(user) {
+    if(hexagonUser) {
         const auth = await bcrypt.compare(password, hexagonUser.password);
         if(auth) {
-            return hexagonUser.UID;
+            return hexagonUser;
         }
         throw Error("Incorrect password");
     }

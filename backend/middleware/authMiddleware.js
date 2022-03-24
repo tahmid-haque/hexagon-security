@@ -2,22 +2,29 @@ const jwt = require('jsonwebtoken');
 const HexagonUser = require('../models/HexagonUser');
 
 const requireAuth = (req, res, next) => {
-    const token = req.cookies.jwt;
+    const token = req.headers.jwt;
     if(token){
         jwt.verify(token, 'secret',(err,decodedToken) =>{
-            if(err) res.redirect('/login');
+            if(err) {
+                //redirect?
+                console.log("fail");
+                next();
+            }
             else{
+                console.log("success");
                 next();
             }
         });
     } else {
-        res.redirect('/login');
+        console.log("fail");
+        //res.redirect('/login');
+        next();
     }
 }
 
 
 const checkUser = (req, res, next) =>{
-    const token = req.cookies.jwt;
+    const token = req.headers.jwt;
     if (token){
         jwt.verify(token, 'secret', async (err,decodedToken) =>{
             if(err){
