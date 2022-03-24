@@ -4,7 +4,6 @@ import KeyIcon from '@mui/icons-material/Key';
 import LockClockIcon from '@mui/icons-material/LockClock';
 import LogoutIcon from '@mui/icons-material/Logout';
 import NotesIcon from '@mui/icons-material/Notes';
-import SafetyCheckIcon from '@mui/icons-material/SafetyCheck';
 import SettingsIcon from '@mui/icons-material/Settings';
 import {
     CSSObject,
@@ -117,7 +116,7 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
     const [state, setState] = useState({} as DashboardNavigationState);
     const features = [
         {
-            name: 'Passwords',
+            name: 'Credentials',
             icon: <KeyIcon />,
         },
         {
@@ -127,10 +126,6 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
         {
             name: 'Notes',
             icon: <NotesIcon />,
-        },
-        {
-            name: 'Security Analyzer',
-            icon: <SafetyCheckIcon />,
         },
         {
             name: 'Settings',
@@ -148,7 +143,12 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
         >
             <div className={styles.options}>
                 <div>
-                    <DrawerHeader>
+                    <DrawerHeader
+                        sx={{
+                            transition: '195ms linear opacity',
+                            opacity: props.isNavOpen ? 1 : 0,
+                        }}
+                    >
                         <div className={styles.logo}></div>
                         <div className={styles['nav-title']}>HEXAGON</div>
                         <IconButton onClick={props.onNavClose}>

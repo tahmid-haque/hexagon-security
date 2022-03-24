@@ -2,10 +2,12 @@ import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import toastReducer from './slices/ToastSlice';
 import accountReducer from './slices/AccountSlice';
+import dashboardReducer from './slices/DashboardSlice';
 export const store = configureStore({
     reducer: {
         toast: toastReducer,
         account: accountReducer,
+        dashboard: dashboardReducer,
     },
 });
 

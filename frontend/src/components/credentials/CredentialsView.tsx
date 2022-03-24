@@ -1,12 +1,15 @@
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import { Box, IconButton, Input, InputAdornment, Tooltip } from '@mui/material';
-import Avatar from '@mui/material/Avatar';
+import LockIcon from '@mui/icons-material/Lock';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import { Box, Tooltip } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { RefObject, useEffect, useRef, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
-import { Account } from '../../store/slices/AccountSlice';
+import { clearEvent, DashboardEvent } from '../../store/slices/DashboardSlice';
+import { useAppDispatch, useAppSelector } from '../../store/store';
+import ActionMenu from './action-menu/ActionMenu';
+import CredentialEditor from './credential-editor/CredentialEditor';
+import CredentialName from './name-field/CredentialName';
+import CredentialPassword from './password-field/CredentialPassword';
+import CredentialUser from './user-field/CredentialUser';
 
 type Credentials = {
     id: number;
@@ -156,59 +159,6 @@ const testCredentials: Credentials[] = [
     },
 ];
 
-type CredentialsViewState = {
-    credentials: Credentials[];
-    numRows: number;
-};
-
-function CredentialName(props: { name: string }) {
-    return (
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Avatar
-                sx={{ bgcolor: 'none' }}
-                variant='rounded'
-                src={`https://logo.clearbit.com/${props.name}`}
-                alt={props.name.toUpperCase()}
-            ></Avatar>
-            <Box sx={{ ml: 1.5 }}>{props.name.toLowerCase()}</Box>
-        </Box>
-    );
-}
-
-function CredentialPassword(props: { password: string }) {
-    const [showPassword, setShowPassword] = useState(false);
-
-    return (
-        <Input
-            fullWidth
-            type={showPassword ? 'text' : 'password'}
-            value={showPassword ? props.password : 'password'}
-            sx={{
-                borderBottom: 'none',
-                '::after, ::before': {
-                    borderBottom: 'none!important', // override MUI styling
-                },
-            }}
-            endAdornment={
-                <InputAdornment position='end'>
-                    <Tooltip
-                        title={`${showPassword ? 'Hide' : 'Show'} Password`}
-                    >
-                        <IconButton
-                            aria-label='toggle password visibility'
-                            onClick={() => setShowPassword(!showPassword)}
-                            edge='end'
-                        >
-                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                    </Tooltip>
-                </InputAdornment>
-            }
-            readOnly={true}
-        />
-    );
-}
-
 const columns: GridColDef[] = [
     {
         field: 'name',
@@ -226,6 +176,9 @@ const columns: GridColDef[] = [
         headerName: 'User',
         hideable: false,
         width: 200,
+        renderCell: (params) => {
+            return <CredentialUser user={params.value} />;
+        },
     },
     {
         field: 'password',
@@ -240,37 +193,78 @@ const columns: GridColDef[] = [
         },
     },
     {
-        field: 'actions',
-        headerName: 'Actions',
-        width: 100,
+        field: 'security',
+        headerName: 'Security',
+        width: 70,
         sortable: false,
         filterable: false,
         renderCell: (params) => {
             return (
-                <Box>
-                    <Tooltip title='Edit Credential'>
-                        <IconButton>
-                            <EditIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title='Delete Credential'>
-                        <IconButton>
-                            <DeleteIcon />
-                        </IconButton>
+                <Box
+                    sx={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <Tooltip title='Secure'>
+                        <VerifiedUserIcon color='success' />
                     </Tooltip>
                 </Box>
             );
         },
     },
+    {
+        field: 'ownership',
+        headerName: 'Ownership',
+        width: 88,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+            return (
+                <Box
+                    sx={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <Tooltip title='Exclusive'>
+                        <LockIcon />
+                    </Tooltip>
+                </Box>
+            );
+        },
+    },
+    {
+        field: 'actions',
+        headerName: 'Actions',
+        width: 65,
+        sortable: false,
+        filterable: false,
+        renderCell: () => {
+            return <ActionMenu />;
+        },
+    },
 ];
 
+type CredentialsViewState = {
+    credentials: Credentials[];
+    numRows: number;
+    isCreateOpen: boolean;
+};
+
 export default function CredentialsView() {
-    const hexagonAccount = useOutletContext() as Account;
     const ref = useRef(null) as RefObject<HTMLDivElement>;
+    const event = useAppSelector((state) => state.dashboard);
+    const dispatch = useAppDispatch();
 
     const [state, setState] = useState({
         credentials: testCredentials, // TODO: Update this when reeady
         numRows: 0,
+        isCreateOpen: false,
     } as CredentialsViewState);
 
     const update = (update: Partial<CredentialsViewState>) => {
@@ -289,12 +283,20 @@ export default function CredentialsView() {
         window.addEventListener('resize', onResize);
     }, []);
 
+    useEffect(() => {
+        if (event === DashboardEvent.CREATE_CLICK) {
+            update({ isCreateOpen: true });
+            dispatch(clearEvent());
+        }
+    }, [event]);
+
     return (
         <Box
             ref={ref}
             sx={{ height: 'calc(100% - 64px)', width: 'calc(100vw - 66px)' }}
         >
             <DataGrid
+                disableSelectionOnClick
                 rows={state.credentials}
                 columns={columns}
                 pageSize={state.numRows}
@@ -307,6 +309,10 @@ export default function CredentialsView() {
                             outline: 'none',
                         },
                 }}
+            />
+            <CredentialEditor
+                isOpen={state.isCreateOpen}
+                setIsOpen={(value) => update({ isCreateOpen: value })}
             />
         </Box>
     );

@@ -56,7 +56,7 @@ export default function Dashboard() {
             ></DashboardNavigation>
             <Box sx={{ width: '100%', height: '100vh', overflowY: 'auto' }}>
                 <Offset />
-                <Outlet context={{ account }} />
+                <Outlet />
             </Box>
         </Box>
     );

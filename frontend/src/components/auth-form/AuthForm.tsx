@@ -98,12 +98,6 @@ export default function AuthForm() {
         });
     };
 
-    const onTogglePasswordViewClick = (
-        _event: React.MouseEvent<HTMLButtonElement>
-    ) => {
-        update({ showPassword: !state.showPassword });
-    };
-
     const onPasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
         update({
