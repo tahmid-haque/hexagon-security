@@ -66,40 +66,48 @@ window.addEventListener('load', function(){
         let usernameField = findUsernameField();
         let passwordField = findPasswordField() as HTMLInputElement;
 
-        console.log("1");
-        console.log( usernameField);
-        console.log( passwordField);
         if(usernameField){
-            usernameField.addEventListener("click", () => "click username");
-            console.log("hello");
             usernameField.onclick = function(){
                 console.log("username field clicked");
-                ReactDOM.render(<AutofillOverlay autofill={ () => {
-                    usernameField.value = "tt@tt.t";
-                    usernameField.setAttribute("value", "tt@tt.t");
-                    if(passwordField){
-                        passwordField.value = "password123";
-                        passwordField.setAttribute("value", "password");
+
+                chrome.runtime.sendMessage({message: "isValidSite"}, function(response) {
+                    console.log(response.valid);
+                    
+                    if(response.valid){
+                        ReactDOM.render(<AutofillOverlay autofill={ () => {
+                            usernameField.value = "tt@tt.t";
+                            usernameField.setAttribute("value", "tt@tt.t");
+                            if(passwordField){
+                                passwordField.value = "password123";
+                                passwordField.setAttribute("value", "password");
+                            }
+                            ReactDOM.render(<div></div>, root);
+                        }}/>, root);
                     }
-                    ReactDOM.render(<div></div>, root);
-                }}/>, root);
+                });   
             }
         }
         if(passwordField){
             passwordField.onclick = function(){
                 console.log("password field clicked");
-                ReactDOM.render(<AutofillOverlay autofill={ () => {
-                    passwordField.value = "password123";
-                    passwordField.setAttribute("value", "password");
 
-                    console.log(usernameField);
+                chrome.runtime.sendMessage({message: "isValidSite"}, function(response) {
+                    console.log(response.valid);
 
-                    if(usernameField){
-                        usernameField.value = "tt@tt.t";
-                        // usernameField.setAttribute("value", "tt@tt.t");
+                    if(response.valid){
+                        ReactDOM.render(<AutofillOverlay autofill={ () => {
+                            passwordField.value = "password123";
+                            passwordField.setAttribute("value", "password");
+        
+                            if(usernameField){
+                                usernameField.value = "tt@tt.t";
+                                usernameField.setAttribute("value", "tt@tt.t");
+                            }
+                            ReactDOM.render(<div></div>, root);
+                        }}/>, root);
                     }
-                    ReactDOM.render(<div></div>, root);
-                }}/>, root);
+                });
+
             }
         }
     });
