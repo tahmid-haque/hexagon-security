@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import CredentialService from '../../../services/CredentialService';
 import { sendToast } from '../../../store/slices/ToastSlice';
 import { useAppDispatch } from '../../../store/store';
-import parser from '../../../utils/parser';
+import parser from 'hexagon-shared/utils/parser';
 import AppModal from '../../shared/AppModal';
 import PasswordField from '../../shared/PasswordField';
 import { Credentials } from '../CredentialsView';

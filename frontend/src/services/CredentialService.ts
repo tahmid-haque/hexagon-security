@@ -1,8 +1,7 @@
-import { Credentials } from '../components/credentials/CredentialsView';
-import * as CryptoWorker from '../workers/CryptoWorker';
-import { v4 as uuid } from 'uuid';
-import { Account } from '../store/slices/AccountSlice';
 import { GridSortDirection } from '@mui/x-data-grid';
+import { Credentials } from '../components/credentials/CredentialsView';
+import { Account } from '../store/slices/AccountSlice';
+import * as CryptoWorker from '../workers/CryptoWorker';
 
 const encryptedCredentials: CredentialDto[] = [
     {
