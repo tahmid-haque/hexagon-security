@@ -1,37 +1,16 @@
-import React, { useState, useEffect, HTMLAttributes } from 'react'
+import React, { useState, useEffect, HTMLAttributes, HtmlHTMLAttributes } from 'react'
 import ReactDOM from 'react-dom'
-import { Card, Box, Button, Typography, Tab } from '@mui/material';
-import Header from '../sharedComponents/header/header'
+import { AutofillOverlay, SavePassOverlay } from './overlay'
 import './contentScript.css'
 
-const AutofillOverlay = ({autofill} : {autofill: () => void}) => {
-    const closeOverlay = () => ReactDOM.render(<div></div>, root);
-
-    return (
-        <div className='overlay'>
-            <Header url={chrome.runtime.getURL("icon.png")} clickAction ={closeOverlay} />
-            <Card className='overlay-body'>
-                <div>Username/Password fields detected. Autofill fields?</div>
-                <Button size='large' sx={{margin: "5px", fontSize: "15px"}} onClick={autofill}>Autofill</Button>
-            </Card>
-        </div>
-    )
+const closeOverlay = () => {
+    chrome.storage.local.set({'autofillClosed': true});
+    ReactDOM.render(<div></div>, root);
 }
 
-const SavePassOverlay = () => {
-    return (
-        <div className='overlay'>
-            <Header url={chrome.runtime.getURL("icon.png")} clickAction ={() => console.log("close overlay")} />
-            <Card className='overlay-body'>
-                <div>Username/Password detected. Save username and password?</div>
-                <Button size='large' sx={{margin: "5px", fontSize: "15px"}}>Save</Button>
-            </Card>
-        </div>
-    )
-}
-
-const root = document.createElement('div')
-document.body.appendChild(root)
+const root = document.createElement('div');
+root.id = "hexagon-extension-root";
+document.body.appendChild(root);
 // ReactDOM.render(<AutofillOverlay />, root);
 // ReactDOM.render(<SavePassOverlay />, root);
 
@@ -40,6 +19,7 @@ const findUsernameField = () => {
     let usernameSelectors: string[] = ["username", "email", "user"];
     for(let elmt of document.querySelectorAll("input")){
         if(elmt.clientWidth == 0 || elmt.clientHeight == 0) continue;
+        if(document.querySelector("#hexagon-extension-root").contains(elmt)) continue;
         for(let attr of elmt.attributes){
             for(let selector of usernameSelectors){
                 if (attr.nodeValue.toLowerCase().includes(selector)) return elmt;
@@ -52,13 +32,84 @@ const findUsernameField = () => {
 const findPasswordField = () => {
     for(let pass of document.querySelectorAll("[type='password']")){
         if(pass.clientWidth == 0 || pass.clientHeight == 0) continue;
+        if(document.querySelector("#hexagon-extension-root").contains(pass)) continue;
         return pass;
     }
     return null;
 }
 
+// set value of a field, taken from https://github.com/facebook/react/issues/10135
+function setNativeValue(element, value) {
+    const { set: valueSetter } = Object.getOwnPropertyDescriptor(element, 'value') || {}
+    const prototype = Object.getPrototypeOf(element)
+    const { set: prototypeValueSetter } = Object.getOwnPropertyDescriptor(prototype, 'value') || {}
+
+    if (prototypeValueSetter && valueSetter !== prototypeValueSetter) {
+      prototypeValueSetter.call(element, value)
+    } else if (valueSetter) {
+      valueSetter.call(element, value)
+    } else {
+      throw new Error('The given element does not have a value setter')
+    }
+}
+
+function fillFormFields(usernameField: HTMLInputElement , passField: HTMLInputElement){
+    chrome.runtime.sendMessage({message: "isValidSite"}, function(response) {
+        console.log(response.valid);
+
+        chrome.storage.local.get(['autofillClosed'], function(result) {
+            if(!result.autofillClosed && response.valid){
+                ReactDOM.render(<AutofillOverlay autofill={ () => {
+                    if(usernameField){
+                        setNativeValue(usernameField, 'tttt@tt.tt');
+                        usernameField.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                    if(passField){
+                        setNativeValue(passField, 'password321');
+                        passField.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                    ReactDOM.render(<div></div>, root);
+                }} 
+                closeOverlay={closeOverlay}/>, root);
+            }
+        });
+    }); 
+}
+
+function displaySavePass(){
+    chrome.storage.local.get(['url', 'username', 'password'], function(result) {
+        if(result.url != window.location.href && result.username && result.password){
+            chrome.runtime.sendMessage({message: "sameDomain", previous: result.url, current: window.location.href}, function(response) {
+                if(response.sameSite){
+                    console.log('prev url ' + result.url);
+                    console.log('username ' + result.username);
+                    console.log('password ' + result.password);
+                    ReactDOM.render(<SavePassOverlay username={result.username} password={result.password} closeOverlay={closeOverlay}/>, root);
+                }
+            });
+        }
+    });
+
+    chrome.storage.local.set({'url': window.location.href, 'username': null, 'password': null});
+}
+
+function setEventHandlers(field1: HTMLInputElement, field2: HTMLInputElement, key:string){
+    field1.onclick = function(){
+        console.log("username field clicked");
+        fillFormFields(field1, field2);  
+    }
+    chrome.storage.local.set({[key]: field1.value});
+
+    field1.addEventListener('input', function(e){
+        chrome.storage.local.set({[key]: field1.value});
+    });
+}
+
 window.addEventListener('load', function(){
     console.log("hello from content script");
+
+    displaySavePass();
+    chrome.storage.local.set({'autofillClosed': false});
 
     MutationObserver = window.MutationObserver;
 
@@ -66,49 +117,13 @@ window.addEventListener('load', function(){
         let usernameField = findUsernameField();
         let passwordField = findPasswordField() as HTMLInputElement;
 
-        if(usernameField){
-            usernameField.onclick = function(){
-                console.log("username field clicked");
+        displaySavePass();
 
-                chrome.runtime.sendMessage({message: "isValidSite"}, function(response) {
-                    console.log(response.valid);
-                    
-                    if(response.valid){
-                        ReactDOM.render(<AutofillOverlay autofill={ () => {
-                            usernameField.value = "tt@tt.t";
-                            usernameField.setAttribute("value", "tt@tt.t");
-                            if(passwordField){
-                                passwordField.value = "password123";
-                                passwordField.setAttribute("value", "password");
-                            }
-                            ReactDOM.render(<div></div>, root);
-                        }}/>, root);
-                    }
-                });   
-            }
+        if(usernameField){
+            setEventHandlers(usernameField, passwordField, 'username');
         }
         if(passwordField){
-            passwordField.onclick = function(){
-                console.log("password field clicked");
-
-                chrome.runtime.sendMessage({message: "isValidSite"}, function(response) {
-                    console.log(response.valid);
-
-                    if(response.valid){
-                        ReactDOM.render(<AutofillOverlay autofill={ () => {
-                            passwordField.value = "password123";
-                            passwordField.setAttribute("value", "password");
-        
-                            if(usernameField){
-                                usernameField.value = "tt@tt.t";
-                                usernameField.setAttribute("value", "tt@tt.t");
-                            }
-                            ReactDOM.render(<div></div>, root);
-                        }}/>, root);
-                    }
-                });
-
-            }
+            setEventHandlers(passwordField, usernameField, 'password');
         }
     });
 
@@ -118,32 +133,4 @@ window.addEventListener('load', function(){
         attributes: true
     });
 
-    // window.onclick = function(c) {
-    //     console.log("clicked document");
-    //     document.querySelectorAll("input").forEach(function(e){
-    //         e.onclick = function(t){
-    //             console.log("form field clicked");
-    //             ReactDOM.render(<AutofillOverlay autofill={ () => {
-    //                 let pass: HTMLInputElement = e;
-    //                 pass.click()
-    //                 pass.value = "john@gmail.com";
-    //                 pass.setAttribute("value", "john@gmail.com");
-    //                 ReactDOM.render(<div></div>, root);
-    //             }}/>, root);
-    //         } 
-    //     });
-    // };
 });
-// chrome.tabs.onUpdated.addListener(function
-//     (tabId, changeInfo, tab) {
-//       // read changeInfo data and do something with it (like read the url)
-//         if(changeInfo.url) {
-//           console.log(changeInfo.url);
-//           console.log(tabId);
-//           chrome.tabs.sendMessage(tabId, {message: "new page", changeInfo}, function(response){
-//             console.log(response);
-//           });
-//         }
-     
-//     }
-//   );

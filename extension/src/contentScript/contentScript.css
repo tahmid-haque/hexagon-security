@@ -1,19 +1,23 @@
-.overlay{
+.hexagon-overlay{
     width: 300px;
-    height: 150px;
-    background-color: aliceblue;
+    height: 250px;
+    background-color: aliceblue !important;
     position: fixed;
     right: 10%;
     top: 15%;
-    z-index: 9999;
+    z-index: 100001;
     font-family: 'Lato', 'Roboto', 'Helvetica', 'Ariel', sans-serif;
     font-size: 14px;
     /* shadow from https://getcssscan.com/css-box-shadow-examples */
     box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
 }
 
-.overlay-body{
-    height: 110px;
+.hexagon-save-overlay{
+    height: 300px;
+}
+
+.hexagon-overlay-body{
+    height: 210px;
     padding: 20px;
     text-align: center;
     background-color: aliceblue;
@@ -23,12 +27,20 @@
     justify-content: center;
 }
 
-.header img{
+.hexagon-save-overlay-body{
+    height: 260px;
+}
+
+.hexagon-header img{
     width: 55px;
     padding: 10px;
 }
 
-.header-container{
+.hexagon-header-container{
     width: 100%;
     border-bottom: solid rgba(184, 184, 184, 0.842) 1px;
+}
+
+.papajohns{
+    z-index: 100005;
 }
