@@ -4,11 +4,11 @@ import { Box, Collapse, styled, Tooltip, Typography } from '@mui/material';
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import IconButton from '@mui/material/IconButton';
 import Toolbar from '@mui/material/Toolbar';
-import React, { useState } from 'react';
+import React from 'react';
 import { navWidth } from '../../../shared/constants';
 import {
     createEvent,
-    DashboardEvent,
+    DashboardEventType,
 } from '../../../store/slices/DashboardSlice';
 import { useAppDispatch } from '../../../store/store';
 
@@ -45,7 +45,7 @@ export default function DashboardHeader(props: DashboardHeaderProps) {
     const dispatch = useAppDispatch();
 
     const onCreateClick = () => {
-        dispatch(createEvent(DashboardEvent.CREATE_CLICK));
+        dispatch(createEvent({ type: DashboardEventType.CREATE_CLICK }));
     };
 
     return (

@@ -1,4 +1,5 @@
 import { Box, styled } from '@mui/material';
+import { createWorkerFactory, useWorker } from '@shopify/react-web-worker';
 import React, { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { sendToast } from '../../store/slices/ToastSlice';
@@ -7,6 +8,10 @@ import DashboardHeader from './dashboard-header/DashboardHeader';
 import DashboardNavigation from './dashboard-navigation/DashboardNavigation';
 
 // Note: much of the dashboard header and navigation components are designed based on the MUI example here - https://mui.com/material-ui/react-drawer/
+
+const createCryptoWorker = createWorkerFactory(
+    () => import('../../workers/CryptoWorker')
+);
 
 const Offset = styled('div')(({ theme }) => theme.mixins.toolbar);
 
@@ -23,6 +28,7 @@ export default function Dashboard() {
     } as DashboardState);
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+    const cryptoWorker = useWorker(createCryptoWorker);
 
     const update = (update: Partial<DashboardState>) => {
         setState((state) => {
@@ -76,7 +82,7 @@ export default function Dashboard() {
             {state.isDashShown && (
                 <Box sx={{ width: '100%', height: '100vh', overflowY: 'auto' }}>
                     <Offset />
-                    <Outlet />
+                    <Outlet context={cryptoWorker} />
                 </Box>
             )}
         </Box>

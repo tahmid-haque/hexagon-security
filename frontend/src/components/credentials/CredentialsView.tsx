@@ -1,163 +1,33 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import LockIcon from '@mui/icons-material/Lock';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import { Box, Tooltip } from '@mui/material';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { Box, Button, LinearProgress, Tooltip } from '@mui/material';
+import { DataGrid, GridColDef, GridSortDirection } from '@mui/x-data-grid';
 import { RefObject, useEffect, useRef, useState } from 'react';
-import { clearEvent, DashboardEvent } from '../../store/slices/DashboardSlice';
+import { useOutletContext } from 'react-router-dom';
+import CredentialService from '../../services/CredentialService';
+import {
+    clearEvent,
+    DashboardEventType,
+} from '../../store/slices/DashboardSlice';
 import { useAppDispatch, useAppSelector } from '../../store/store';
+import AppModal from '../shared/AppModal';
 import ActionMenu from './action-menu/ActionMenu';
 import CredentialEditor from './credential-editor/CredentialEditor';
 import CredentialName from './name-field/CredentialName';
 import CredentialPassword from './password-field/CredentialPassword';
 import CredentialUser from './user-field/CredentialUser';
+import ConfirmationDialog from '../shared/ConfirmationDialog';
+import { sendToast } from '../../store/slices/ToastSlice';
 
-type Credentials = {
-    id: number;
+export type Credentials = {
+    id: string;
     name: string;
     user: string;
     password: string;
+    key: { secret: string; salt: Uint8Array };
+    shares: string[];
 };
-
-const testCredentials: Credentials[] = [
-    {
-        id: 0,
-        name: 'Apple.com',
-        user: 'john.doe@test.com',
-        password: 'password123',
-    },
-    {
-        id: 1,
-        name: 'Amazon.com',
-        user: 'TheRaggedGamer@gmail.com',
-        password: '65u563j5jm5j',
-    },
-    {
-        id: 2,
-        name: 'Twitter.com',
-        user: 'maiya.kling@gmail.com',
-        password: '6j53k6536yhgf',
-    },
-    {
-        id: 3,
-        name: 'Facebook.com',
-        user: 'unienow@gmail.com',
-        password: 'gj43589hu249hj9',
-    },
-    {
-        id: 4,
-        name: 'Instagram.com',
-        user: 'heichmann@yahoo.com',
-        password: '543hy456jhh56j56j3',
-    },
-    {
-        id: 5,
-        name: 'Reddit.com',
-        user: 'gerardo.mosciski@brakus.com',
-        password: '534y54n656',
-    },
-    {
-        id: 6,
-        name: 'yahoo.ca',
-        user: 'jett.ryan@bradtke.net',
-        password: 'fj43890fj394893g',
-    },
-    {
-        id: 7,
-        name: 'msn.com',
-        user: 'schamplin@bergstrom.net',
-        password: 'fj34298j9238',
-    },
-    {
-        id: 8,
-        name: 'yelp.com',
-        user: 'delia21@kulas.com',
-        password: 'gfj4389gj3948g',
-    },
-    {
-        id: 9,
-        name: 'youtube.com',
-        user: 'hansen.kenna@shanahan.com',
-        password: 'g34545hj5jkvhkghku',
-    },
-    {
-        id: 10,
-        name: 'Google.com',
-        user: 'flueilwitz@paucek.biz',
-        password: 'fj48903gj3489g398hg3',
-    },
-    {
-        id: 11,
-        name: 'rbc.ca',
-        user: 'cayla.west@bauch.com',
-        password: 'kg4839ghgh4537',
-    },
-    {
-        id: 12,
-        name: 'Apple.com',
-        user: 'uriel65@sauer.com',
-        password: 'rj34829y34gf83hg',
-    },
-    {
-        id: 13,
-        name: 'gmail.com',
-        user: 'lauryn67@hettinger.com',
-        password: 'password123',
-    },
-    {
-        id: 14,
-        name: 'Linkedin.com',
-        user: 'vfeeney@yahoo.ch',
-        password: 'hf7348ghkjshdfgkjdsnbvkj',
-    },
-    {
-        id: 15,
-        name: 'piazza.com',
-        user: 'misael48@hotmail.com',
-        password: 'gj4389gh398gh3',
-    },
-    {
-        id: 16,
-        name: 'utoronto.ca',
-        user: 'qoconner@ryan.net',
-        password: 'password123',
-    },
-    {
-        id: 17,
-        name: 'ryerson.ca',
-        user: 'dsatterfield@bernier.biz',
-        password: 'jf4389gh39gh398ghh',
-    },
-    {
-        id: 18,
-        name: 'uwaterloo.ca',
-        user: 'sreichel@gmail.com',
-        password: 'f48934g398g93h',
-    },
-    {
-        id: 19,
-        name: 'ebay.ca',
-        user: 'orland.monahan@yahoo.com',
-        password: 'fhj3489gh34g897hg458gkljfg',
-    },
-    {
-        id: 20,
-        name: 'Apple.com',
-        user: 'john.doe@test.com',
-        password: 'password123',
-    },
-    {
-        id: 21,
-        name: 'snapchat.com',
-        user: 'nigel.orn@harber.info',
-        password: 'gjn89374gh3489hgdfhgl',
-    },
-    {
-        id: 22,
-        name: 'etsy.com',
-        user: 'delbert.skiles@yahoo.com',
-        password: 'jf87394gh3jkfhjkghkfhkgl',
-    },
-];
 
 const columns: GridColDef[] = [
     {
@@ -175,6 +45,7 @@ const columns: GridColDef[] = [
         flex: 1.5,
         headerName: 'User',
         hideable: false,
+        sortable: false,
         width: 200,
         renderCell: (params) => {
             return <CredentialUser user={params.value} />;
@@ -195,7 +66,7 @@ const columns: GridColDef[] = [
     {
         field: 'security',
         headerName: 'Security',
-        width: 70,
+        width: 71,
         sortable: false,
         filterable: false,
         renderCell: (params) => {
@@ -241,11 +112,11 @@ const columns: GridColDef[] = [
     {
         field: 'actions',
         headerName: 'Actions',
-        width: 65,
+        width: 67,
         sortable: false,
         filterable: false,
-        renderCell: () => {
-            return <ActionMenu />;
+        renderCell: (params) => {
+            return <ActionMenu id={params.row.id} />;
         },
     },
 ];
@@ -253,18 +124,37 @@ const columns: GridColDef[] = [
 type CredentialsViewState = {
     credentials: Credentials[];
     numRows: number;
-    isCreateOpen: boolean;
+    currentPage: number;
+    totalCredentials: number;
+    isLoading: boolean;
+    sortType: GridSortDirection;
+    isEditorOpen: boolean;
+    isDeleteOpen: boolean;
+    isDeleteLoading: boolean;
+    currentId?: string;
+    isEdit?: boolean;
 };
 
 export default function CredentialsView() {
     const ref = useRef(null) as RefObject<HTMLDivElement>;
     const event = useAppSelector((state) => state.dashboard);
     const dispatch = useAppDispatch();
+    const account = useAppSelector((state) => state.account);
+    const cryptoWorker = useOutletContext();
+    const [credentialService] = useState<CredentialService>(
+        new CredentialService(cryptoWorker, account)
+    );
 
     const [state, setState] = useState({
-        credentials: testCredentials, // TODO: Update this when reeady
+        credentials: [],
         numRows: 0,
-        isCreateOpen: false,
+        currentPage: 0,
+        isEditorOpen: false,
+        isDeleteOpen: false,
+        isLoading: true,
+        totalCredentials: 0,
+        isDeleteLoading: false,
+        sortType: 'asc',
     } as CredentialsViewState);
 
     const update = (update: Partial<CredentialsViewState>) => {
@@ -273,22 +163,98 @@ export default function CredentialsView() {
         });
     };
 
+    const updateCredentials = async () => {
+        console.log('update');
+        update({ isLoading: true });
+        update({
+            credentials: await credentialService.getCredentials(
+                state.currentPage * state.numRows,
+                state.numRows,
+                state.sortType
+            ),
+        });
+        update({ isLoading: false });
+    };
+
     useEffect(() => {
-        const onResize = () => {
-            update({
-                numRows: Math.floor((ref.current!.clientHeight - 110) / 52),
-            });
+        const updateNumRows = () => {
+            const numRows = Math.floor((ref.current!.clientHeight - 110) / 52);
+            if (numRows !== state.numRows) {
+                update({
+                    numRows,
+                });
+            }
         };
-        onResize();
-        window.addEventListener('resize', onResize);
+        window.addEventListener('resize', updateNumRows);
+        credentialService.getCredentialCount().then((totalCredentials) => {
+            update({ totalCredentials });
+            updateNumRows();
+        });
     }, []);
 
     useEffect(() => {
-        if (event === DashboardEvent.CREATE_CLICK) {
-            update({ isCreateOpen: true });
-            dispatch(clearEvent());
+        if (state.totalCredentials && state.numRows) updateCredentials();
+    }, [
+        state.numRows,
+        state.sortType,
+        state.totalCredentials,
+        state.currentPage,
+    ]);
+
+    useEffect(() => {
+        switch (event.type) {
+            case DashboardEventType.CREATE_CLICK:
+                update({ isEditorOpen: true, isEdit: false });
+                dispatch(clearEvent());
+                break;
+
+            case DashboardEventType.DELETE_CLICK:
+                update({
+                    isDeleteOpen: true,
+                    currentId: event.param,
+                });
+                dispatch(clearEvent());
+                break;
+
+            case DashboardEventType.EDIT_CLICK:
+                update({
+                    isEditorOpen: true,
+                    currentId: event.param,
+                    isEdit: true,
+                });
+                dispatch(clearEvent());
+                break;
+
+            default:
+                break;
         }
     }, [event]);
+
+    const onDeleteAccept = async () => {
+        update({ isDeleteLoading: true });
+        try {
+            await credentialService.deleteCredential(state.currentId!);
+            dispatch(
+                sendToast({
+                    message: 'Successfully deleted your credential.',
+                    severity: 'success',
+                })
+            );
+        } catch (error) {
+            dispatch(
+                sendToast({
+                    message:
+                        'Something went wrong and we were unable to delete your credential. Please try again later.',
+                    severity: 'error',
+                })
+            );
+        }
+        update({ isDeleteLoading: false, isDeleteOpen: false });
+    };
+
+    const [editorCredential] = state.credentials.filter(
+        (c) => c.id === state.currentId
+    );
 
     return (
         <Box
@@ -296,11 +262,38 @@ export default function CredentialsView() {
             sx={{ height: 'calc(100% - 64px)', width: 'calc(100vw - 66px)' }}
         >
             <DataGrid
+                disableColumnMenu
                 disableSelectionOnClick
+                paginationMode='server'
+                loading={state.isLoading}
+                components={{
+                    LoadingOverlay: LinearProgress,
+                    NoRowsOverlay: () => (
+                        <Box
+                            sx={{
+                                width: '100%',
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '16px',
+                            }}
+                        >
+                            No credentials found.
+                        </Box>
+                    ),
+                }}
+                rowCount={state.totalCredentials}
                 rows={state.credentials}
                 columns={columns}
                 pageSize={state.numRows}
                 rowsPerPageOptions={[state.numRows]}
+                onPageChange={(currentPage) => update({ currentPage })}
+                sortModel={[{ field: 'name', sort: state.sortType }]}
+                onSortModelChange={(model) => {
+                    const sortType = model.length ? model[0].sort : 'asc';
+                    update({ sortType });
+                }}
                 sx={{
                     mx: 0,
                     // remove focus outlinees
@@ -311,8 +304,22 @@ export default function CredentialsView() {
                 }}
             />
             <CredentialEditor
-                isOpen={state.isCreateOpen}
-                setIsOpen={(value) => update({ isCreateOpen: value })}
+                isOpen={state.isEditorOpen}
+                isEdit={state.isEdit!}
+                onClose={(modified) => {
+                    update({ isEditorOpen: false });
+                    if (modified) updateCredentials();
+                }}
+                credentialService={credentialService}
+                credential={state.isEdit ? editorCredential : undefined}
+            />
+            <ConfirmationDialog
+                isOpen={state.isDeleteOpen}
+                onClose={() => update({ isDeleteOpen: false })}
+                onAccept={onDeleteAccept}
+                title='Delete Credential'
+                body='Are you sure you want to delete this credential? This action cannot be undone.'
+                isLoading={state.isDeleteLoading}
             />
         </Box>
     );

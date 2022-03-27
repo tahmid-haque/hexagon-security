@@ -22,7 +22,7 @@ export default function AppModal(props: AppModalProps) {
                         border: '1px solid #000',
                         boxShadow: 24,
                         borderRadius: '15px',
-                        p: 3,
+                        p: 2,
                     }}
                 >
                     <Box
@@ -32,7 +32,11 @@ export default function AppModal(props: AppModalProps) {
                             alignItems: 'center',
                         }}
                     >
-                        <Typography variant='h6' component='h2'>
+                        <Typography
+                            variant='h6'
+                            component='h2'
+                            sx={{ fontWeight: 'bold' }}
+                        >
                             {props.modalTitle}
                         </Typography>
                         <IconButton

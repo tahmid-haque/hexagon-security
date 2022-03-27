@@ -1,20 +1,33 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export enum DashboardEvent {
+export type DashboardEvent = {
+    type: DashboardEventType;
+    param?: string;
+};
+
+export enum DashboardEventType {
     CREATE_CLICK,
+    DELETE_CLICK,
+    EDIT_CLICK,
+    SHARE_CLICK,
     NO_EVENT,
 }
+
+const initState = {
+    type: DashboardEventType.NO_EVENT,
+    param: '',
+};
 
 const dashboardSlice = createSlice({
     name: 'dashboard',
 
-    initialState: DashboardEvent.NO_EVENT,
+    initialState: { ...initState },
     reducers: {
-        createEvent(_state, action: PayloadAction<DashboardEvent>) {
-            return action.payload;
+        createEvent(state, action: PayloadAction<DashboardEvent>) {
+            return { ...state, ...action.payload };
         },
         clearEvent(_state) {
-            return DashboardEvent.NO_EVENT;
+            return { ...initState };
         },
     },
 });

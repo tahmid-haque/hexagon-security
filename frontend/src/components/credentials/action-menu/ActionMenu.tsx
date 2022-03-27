@@ -11,16 +11,44 @@ import {
     MenuItem,
 } from '@mui/material';
 import { useState } from 'react';
+import {
+    createEvent,
+    DashboardEventType,
+} from '../../../store/slices/DashboardSlice';
+import { useAppDispatch } from '../../../store/store';
 
-export default function ActionMenu(props: any) {
+export default function ActionMenu(props: { id: string }) {
     // inspired from https://mui.com/material-ui/react-menu/
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
+    const dispatch = useAppDispatch();
+
     const onClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
+
     const onClose = () => {
         setAnchorEl(null);
+    };
+
+    const onDeleteClick = () => {
+        dispatch(
+            createEvent({
+                type: DashboardEventType.DELETE_CLICK,
+                param: props.id,
+            })
+        );
+        onClose();
+    };
+
+    const onEditClick = () => {
+        dispatch(
+            createEvent({
+                type: DashboardEventType.EDIT_CLICK,
+                param: props.id,
+            })
+        );
+        onClose();
     };
 
     return (
@@ -41,7 +69,7 @@ export default function ActionMenu(props: any) {
                     horizontal: 'right',
                 }}
             >
-                <MenuItem onClick={onClose}>
+                <MenuItem onClick={onEditClick}>
                     <ListItemIcon>
                         <EditIcon />
                     </ListItemIcon>
@@ -53,7 +81,7 @@ export default function ActionMenu(props: any) {
                     </ListItemIcon>
                     <ListItemText>Share</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={onClose}>
+                <MenuItem onClick={onDeleteClick}>
                     <ListItemIcon>
                         <DeleteIcon color='error' />
                     </ListItemIcon>
