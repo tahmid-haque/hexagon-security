@@ -25,7 +25,7 @@ export type Credentials = {
     name: string;
     user: string;
     password: string;
-    key: { secret: string; salt: Uint8Array };
+    key: ArrayBuffer;
     shares: string[];
 };
 
@@ -164,7 +164,6 @@ export default function CredentialsView() {
     };
 
     const updateCredentials = async () => {
-        console.log('update');
         update({ isLoading: true });
         update({
             credentials: await credentialService.getCredentials(

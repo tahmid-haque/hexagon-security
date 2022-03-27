@@ -21,6 +21,7 @@ const getPasswordKey = (password: string) =>
 const deriveKey = (
     passwordKey: CryptoKey,
     salt: Uint8Array,
+    keyType: string,
     keyUsage: KeyUsage[]
 ) =>
     window.crypto.subtle.deriveKey(
@@ -31,7 +32,7 @@ const deriveKey = (
             hash: 'SHA-256',
         },
         passwordKey,
-        { name: 'AES-GCM', length: 256 },
+        { name: keyType, length: 256 },
         false,
         keyUsage
     );
@@ -54,6 +55,22 @@ const encryptSingle = async (plainText: string, aesKey: CryptoKey) => {
     return buff;
 };
 
+const encryptMultiple = async (plainData: string[], aesKey: CryptoKey) => {
+    return await Promise.all(
+        plainData.map(async (plainText) =>
+            buff_to_base64(await encryptSingle(plainText, aesKey))
+        )
+    );
+};
+
+const decryptMultiple = async (encryptedData: string[], aesKey: CryptoKey) => {
+    return await Promise.all(
+        encryptedData.map((cipherText) =>
+            decryptSingle(base64_to_buf(cipherText), aesKey)
+        )
+    );
+};
+
 const decryptSingle = async (cipherBuff: Uint8Array, aesKey: CryptoKey) => {
     const iv = cipherBuff.slice(0, 12);
     const data = cipherBuff.slice(12);
@@ -69,62 +86,59 @@ const decryptSingle = async (cipherBuff: Uint8Array, aesKey: CryptoKey) => {
     return dec.decode(decryptedContent);
 };
 
-const getAESKey = (secret: string, salt: Uint8Array, isEncrypt: boolean) => {
+export const getWrapperKey = (
+    secret: string,
+    salt: Uint8Array,
+    isWrap: boolean
+) => {
     return getPasswordKey(secret).then((key) =>
-        deriveKey(key, salt, [isEncrypt ? 'encrypt' : 'decrypt'])
+        deriveKey(key, salt, 'AES-KW', [isWrap ? 'wrapKey' : 'unwrapKey'])
     );
 };
 
-export async function encryptData(
-    plainData: string[],
-    secret: string,
-    salt: Uint8Array
-) {
-    const aesKey = await getPasswordKey(secret).then((key) =>
-        deriveKey(key, salt, ['encrypt'])
+export async function encryptData(plainData: string[], key: ArrayBuffer) {
+    const aesKey = await window.crypto.subtle.importKey(
+        'raw',
+        key,
+        { name: 'AES-GCM' },
+        false,
+        ['encrypt']
     );
-
-    return await Promise.all(
-        plainData.map(async (plainText) =>
-            buff_to_base64(await encryptSingle(plainText, aesKey))
-        )
-    );
+    return await encryptMultiple(plainData, aesKey);
 }
 
-export async function decryptData(
-    encryptedData: string[],
-    secret: string,
-    salt: Uint8Array
-) {
-    const aesKey = await getAESKey(secret, salt, false);
-
-    return await Promise.all(
-        encryptedData.map((cipherText) =>
-            decryptSingle(base64_to_buf(cipherText), aesKey)
-        )
+export async function decryptData(encryptedData: string[], key: ArrayBuffer) {
+    const aesKey = await window.crypto.subtle.importKey(
+        'raw',
+        key,
+        { name: 'AES-GCM' },
+        false,
+        ['decrypt']
     );
+    return await decryptMultiple(encryptedData, aesKey);
 }
 
 export async function encryptWrappedData(plainData: string[], secret: string) {
-    const recordSecret = window.crypto
-        .getRandomValues(new Uint8Array(16))
-        .toString();
-    const recordSalt = window.crypto.getRandomValues(new Uint8Array(16));
+    const recordAES = await window.crypto.subtle.generateKey(
+        { name: 'AES-GCM', length: 256 },
+        true,
+        ['encrypt']
+    );
     const wrapperSalt = window.crypto.getRandomValues(new Uint8Array(16));
-    const passwordAES = getAESKey(secret, wrapperSalt, true);
+    const passwordAES = getWrapperKey(secret, wrapperSalt, true);
 
     const encryptedKey = passwordAES.then(async (key) => {
-        const encrypted = await encryptSingle(recordSecret, key);
-        const buff = new Uint8Array(
-            encrypted.length + wrapperSalt.length + recordSalt.length
+        const encrypted = new Uint8Array(
+            await window.crypto.subtle.wrapKey('raw', recordAES, key, 'AES-KW')
         );
+
+        const buff = new Uint8Array(encrypted.length + wrapperSalt.length);
         buff.set(wrapperSalt, 0);
-        buff.set(recordSalt, wrapperSalt.length);
-        buff.set(encrypted, wrapperSalt.length + recordSalt.length);
+        buff.set(encrypted, wrapperSalt.length);
         return buff_to_base64(buff);
     });
 
-    const encryptedRecords = encryptData(plainData, recordSecret, recordSalt);
+    const encryptedRecords = encryptMultiple(plainData, recordAES);
 
     const [encryptedKeyStr, encryptedRecordsStr] = await Promise.all([
         encryptedKey,
@@ -141,23 +155,18 @@ export async function decryptWrappedData(
 ) {
     const encryptedKeyBytes = base64_to_buf(encryptedKey);
     const wrapperSalt = encryptedKeyBytes.slice(0, 16);
-    const recordSalt = encryptedKeyBytes.slice(16, 32);
-    const passwordAES = await getAESKey(secret, wrapperSalt, false);
-    const recordSecret = await decryptSingle(
-        encryptedKeyBytes.slice(32),
-        passwordAES
+    const passwordAES = await getWrapperKey(secret, wrapperSalt, false);
+    const recordAES = await window.crypto.subtle.unwrapKey(
+        'raw',
+        encryptedKeyBytes.slice(16),
+        passwordAES,
+        'AES-KW',
+        'AES-GCM',
+        true,
+        ['decrypt']
     );
-    const recordAES = await getAESKey(recordSecret, recordSalt, false);
+    const decryptedData = decryptMultiple(encryptedData, recordAES);
+    const recordKey = window.crypto.subtle.exportKey('raw', recordAES);
 
-    return {
-        key: {
-            salt: recordSalt,
-            secret: recordSecret,
-        },
-        plainTexts: await Promise.all(
-            encryptedData.map((cipherText) =>
-                decryptSingle(base64_to_buf(cipherText), recordAES)
-            )
-        ),
-    };
+    return { key: await recordKey, plainTexts: await decryptedData };
 }
