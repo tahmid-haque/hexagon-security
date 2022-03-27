@@ -19,7 +19,7 @@
     "default_title": "Hexagon Password Manager",
     "default_icon": "icon.png"
   },
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage", "tabs", "unlimitedStorage"],
   "background": {
     "service_worker": "background.js"
   },

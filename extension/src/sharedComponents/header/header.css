@@ -1,28 +1,28 @@
-.header-top-border{
+.hexagon-header-top-border{
   height: 8px;
   width: 100%;
   display: block;
   background: linear-gradient(90deg, #3e9fff 0%, #3a5cb5 100%);
 }
 
-.header-container .header .title{
+.hexagon-header-container .hexagon-header .title{
   font-size: 24px;
   letter-spacing: 4px;
   font-weight: 300;
 }
 
-.header-container{
-  display: flex;
+.hexagon-header-container{
+  display: flex !important;
   justify-content: space-between;
 }
 
-.header-container .header{
-  display: flex;
+.hexagon-header-container .hexagon-header{
+  display: flex !important;
   align-items: center;
   justify-items: center;
 }
 
-.header-container .header img{
+.hexagon-header-container .hexagon-header img{
   width: 40px;
   padding: 10px;
 }

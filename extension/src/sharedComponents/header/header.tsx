@@ -4,17 +4,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import './header.css'
 
 const Header = ({url, clickAction} : {url: string, clickAction: () => void}) => {
-    // const onClickClose = () => {
-    //   console.log("close popup");
-    //   // window.close();
-    // }
-  
     return (
       <div>
-        <div className='header-top-border'></div>
+        <div className='hexagon-header-top-border'></div>
         <Card>
-          <div className='header-container'>
-            <div className='header'>
+          <div className='hexagon-header-container'>
+            <div className='hexagon-header'>
               <img src={url} className="icon"/> 
               <div className='title'>HEXAGON</div>
             </div>
