@@ -2,6 +2,7 @@ import { Box, styled } from '@mui/material';
 import { createWorkerFactory, useWorker } from '@shopify/react-web-worker';
 import React, { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
+import { Display } from '../../store/slices/DisplaySlice';
 import { sendToast } from '../../store/slices/ToastSlice';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import DashboardHeader from './dashboard-header/DashboardHeader';
@@ -18,10 +19,12 @@ const Offset = styled('div')(({ theme }) => theme.mixins.toolbar);
 type DashboardState = {
     isNavOpen: boolean;
     isDashShown: boolean;
+    currentPane: Display;
 };
 
 export default function Dashboard() {
     const account = useAppSelector((state) => state.account);
+    const display = useAppSelector((state) => state.display);
     const [state, setState] = React.useState({
         isNavOpen: false,
         isDashShown: false,
@@ -72,12 +75,14 @@ export default function Dashboard() {
                 isNavOpen={state.isNavOpen}
                 onNavOpen={onNavOpen}
                 isShown={state.isDashShown}
+                currentPane={display}
             ></DashboardHeader>
             <DashboardNavigation
                 isNavOpen={state.isNavOpen}
                 isShown={state.isDashShown}
                 onNavClose={onNavClose}
                 email={account.email}
+                currentPane={display}
             ></DashboardNavigation>
             {state.isDashShown && (
                 <Box sx={{ width: '100%', height: '100vh', overflowY: 'auto' }}>

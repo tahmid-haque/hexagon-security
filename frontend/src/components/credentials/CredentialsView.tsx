@@ -4,6 +4,7 @@ import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import { Box, Button, LinearProgress, Tooltip } from '@mui/material';
 import { DataGrid, GridColDef, GridSortDirection } from '@mui/x-data-grid';
 import { RefObject, useEffect, useRef, useState } from 'react';
+import { setDisplay, Display } from '../../store/slices/DisplaySlice';
 import { useOutletContext } from 'react-router-dom';
 import CredentialService from '../../services/CredentialService';
 import {
@@ -176,6 +177,7 @@ export default function CredentialsView() {
     };
 
     useEffect(() => {
+        dispatch(setDisplay(Display.CREDENTIALS));
         const updateNumRows = () => {
             const numRows = Math.floor((ref.current!.clientHeight - 110) / 52);
             if (numRows !== state.numRows) {

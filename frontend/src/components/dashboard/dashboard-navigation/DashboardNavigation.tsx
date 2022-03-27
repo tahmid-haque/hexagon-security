@@ -20,6 +20,7 @@ import IconButton from '@mui/material/IconButton';
 import React, { useState } from 'react';
 import { navWidth } from '../../../shared/constants';
 import { clearAccount } from '../../../store/slices/AccountSlice';
+import { Display } from '../../../store/slices/DisplaySlice';
 import { useAppDispatch } from '../../../store/store';
 import styles from './DashboardNavigation.module.scss';
 
@@ -78,6 +79,7 @@ const Drawer = styled(MuiDrawer)(({ theme, open }) => ({
 type Feature = {
     name: string;
     icon: JSX.Element;
+    isActive?: boolean;
 };
 
 type DashboardNavigationProps = {
@@ -85,6 +87,7 @@ type DashboardNavigationProps = {
     isNavOpen: boolean;
     isShown: boolean;
     email: string;
+    currentPane: Display;
 };
 
 type DashboardNavigationState = {
@@ -92,13 +95,17 @@ type DashboardNavigationState = {
 };
 
 const getFeatureButtons = (features: Feature[], isNavOpen: boolean) => {
-    return features.map(({ name, icon }) => (
+    return features.map(({ name, icon, isActive }) => (
         <ListItemButton
             key={name}
             sx={{
                 height: optionHeight,
                 px: 2.5,
+                // ...(isActive && {
+                //     background: (theme) => theme.palette.secondary,
+                // }),
             }}
+            selected={isActive}
         >
             <ListItemIcon
                 sx={{
@@ -120,14 +127,17 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
         {
             name: 'Credentials',
             icon: <KeyIcon />,
+            isActive: props.currentPane === Display.CREDENTIALS,
         },
         {
             name: 'Multi-Factor Authentication',
             icon: <LockClockIcon />,
+            isActive: props.currentPane === Display.MFA,
         },
         {
             name: 'Notes',
             icon: <NotesIcon />,
+            isActive: props.currentPane === Display.NOTES,
         },
         {
             name: 'Settings',
