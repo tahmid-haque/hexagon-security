@@ -29,13 +29,23 @@ body {
 	}
 }
 
-.greeting{
-  font-size: 20px !important;
-}
-
 .home-container{
   background-color: #dadada;
   margin-top: 3px;
   max-height: 440px !important;
   overflow: scroll;
+}
+
+.hexagon-subheading{
+  font-size: 16px !important;
+  font-weight: 300;
+  padding-bottom: 15px;
+}
+
+.MuiTabPanel-root{
+  background-color: #fafafa;
+}
+
+.MuiTabs-root{
+  background-color: #e3f2fd;
 }

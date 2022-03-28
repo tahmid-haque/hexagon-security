@@ -6,15 +6,7 @@ import './popup.css'
 import './signin.css'
 import PopupPasswords from './passwords/passwords'
 import Header from '../sharedComponents/header/header'
-// import { ThemeProvider, createTheme } from '@mui/material/styles';
-
-// const theme = createTheme({
-//   palette: {
-//     primary: {
-//       main: '#a3a3a3'
-//     }
-//   },
-// });
+import PasswordGenerator from './passwordGenerator';
 
 const SigninPage = () => {
   const onClickSignin = () => {
@@ -68,11 +60,13 @@ const PopupHome = ({ name }: User) => {
               <Tab label="2FA Keys" value="3" />
             </TabList>
           </Box>
-          <TabPanel value="1" sx={{ width: '100%', typography: 'body1', padding: '0'}}>
+          <TabPanel value="1" sx={{height: "337px", width: '100%', typography: 'body1', padding: '0'}}>
             <PopupPasswords />
           </TabPanel>
-          <TabPanel value="2" sx={{height: "440px"}}>Item Two</TabPanel>
-          <TabPanel value="3" sx={{height: "440px"}}>Item Three</TabPanel>
+          <TabPanel value="2" sx={{height: "337px", padding: '0'}}>
+            <PasswordGenerator />
+          </TabPanel>
+          <TabPanel value="3" sx={{height: "337px", padding: '0'}}>Item Three</TabPanel>
         </TabContext>
       </Box>
     </div>
@@ -85,10 +79,6 @@ const PopupBody = ({ name }: User) => {
     return <SigninPage />
   }
   return <PopupHome name={name} />
-}
-
-const PopupGenerator = () => {
-  
 }
 
 const App = () => {

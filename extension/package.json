@@ -32,7 +32,12 @@
   },
   "dependencies": {
     "@mui/lab": "^5.0.0-alpha.73",
+    "check-password-strength": "^2.0.5",
+    "crypto": "^1.0.1",
+    "generate-password": "^1.7.0",
+    "generate-password-ts": "^1.6.3",
     "material-ui-popup-state": "^2.0.0",
-    "psl": "^1.8.0"
+    "psl": "^1.8.0",
+    "react-password-strength-bar": "^0.4.0"
   }
 }
