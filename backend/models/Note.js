@@ -1,13 +1,18 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const WesbsiteScredentialsSchema = new Schema({
-    username: {
+const NoteScehma = new Schema({
+    title: {
         type: String,
         required: true
     },
-    password: {
+    note: {
         type: String,
+        required: true
+    },
+    lastModified: {
+        type: Date, 
+        default: new Date(),
         required: true
     },
     UIDs: [{
@@ -16,4 +21,4 @@ const WesbsiteScredentialsSchema = new Schema({
         }]
 });
 
-module.exports = mongoose.model('WebsiteCredentials', WesbsiteScredentialsSchema);
+module.exports = mongoose.model('Note', NoteScehma);

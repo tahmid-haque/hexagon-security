@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const WesbsiteScredentialsSchema = new Schema({
+const MFASeedScehma = new Schema({
     username: {
         type: String,
         required: true
     },
-    password: {
+    seed: {
         type: String,
         required: true
     },
@@ -16,4 +16,4 @@ const WesbsiteScredentialsSchema = new Schema({
         }]
 });
 
-module.exports = mongoose.model('WebsiteCredentials', WesbsiteScredentialsSchema);
+module.exports = mongoose.model('Seed', MFASeedScehma);
