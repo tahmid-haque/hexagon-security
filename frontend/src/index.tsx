@@ -11,6 +11,7 @@ import AuthForm from './components/auth-form/AuthForm';
 import NotFound from './components/not-found/NotFound';
 import Dashboard from './components/dashboard/Dashboard';
 import CredentialsView from './components/credentials/CredentialsView';
+import MFAView from './components/mfa/MFAView';
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 
 const muiTheme = createTheme({
@@ -51,6 +52,7 @@ ReactDOM.render(
                                         path='credentials'
                                         element={<CredentialsView />}
                                     />
+                                    <Route path='mfa' element={<MFAView />} />
                                 </Route>
                                 <Route
                                     path='authenticate'

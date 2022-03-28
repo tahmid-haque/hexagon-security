@@ -1,10 +1,21 @@
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { IconButton, Input, InputAdornment, Tooltip } from '@mui/material';
+import {
+    IconButton,
+    Input,
+    InputAdornment,
+    SxProps,
+    Theme,
+    Tooltip,
+} from '@mui/material';
 import { useState } from 'react';
 import { sendToast, Toast } from '../../../store/slices/ToastSlice';
 import { useAppDispatch } from '../../../store/store';
 
-export default function CredentialPassword(props: { password: string }) {
+export default function CredentialPassword(props: {
+    password: string;
+    shorten?: number;
+    sx?: SxProps<Theme>;
+}) {
     const [showPassword, setShowPassword] = useState(false);
     const dispatch = useAppDispatch();
 
@@ -32,13 +43,18 @@ export default function CredentialPassword(props: { password: string }) {
             <Input
                 fullWidth
                 type={showPassword ? 'text' : 'password'}
-                value={showPassword ? props.password : 'password'}
+                value={
+                    showPassword
+                        ? props.password
+                        : '********'.slice(props.shorten ?? 0)
+                }
                 sx={{
                     borderBottom: 'none',
                     '::after, ::before': {
                         borderBottom: 'none!important', // override MUI styling
                     },
                     textOverflow: 'ellipsis',
+                    ...props.sx,
                 }}
                 onDoubleClick={onDoubleClick}
                 endAdornment={
