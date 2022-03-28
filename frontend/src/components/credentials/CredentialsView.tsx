@@ -4,6 +4,7 @@ import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import { Box, Button, LinearProgress, Tooltip } from '@mui/material';
 import { DataGrid, GridColDef, GridSortDirection } from '@mui/x-data-grid';
 import { RefObject, useEffect, useRef, useState } from 'react';
+import { setDisplay, Display } from '../../store/slices/DisplaySlice';
 import { useOutletContext } from 'react-router-dom';
 import CredentialService from '../../services/CredentialService';
 import {
@@ -25,7 +26,7 @@ export type Credentials = {
     name: string;
     user: string;
     password: string;
-    key: { secret: string; salt: Uint8Array };
+    key: ArrayBuffer;
     shares: string[];
 };
 
@@ -164,7 +165,6 @@ export default function CredentialsView() {
     };
 
     const updateCredentials = async () => {
-        console.log('update');
         update({ isLoading: true });
         update({
             credentials: await credentialService.getCredentials(
@@ -177,6 +177,7 @@ export default function CredentialsView() {
     };
 
     useEffect(() => {
+        dispatch(setDisplay(Display.CREDENTIALS));
         const updateNumRows = () => {
             const numRows = Math.floor((ref.current!.clientHeight - 110) / 52);
             if (numRows !== state.numRows) {
@@ -257,10 +258,7 @@ export default function CredentialsView() {
     );
 
     return (
-        <Box
-            ref={ref}
-            sx={{ height: 'calc(100% - 64px)', width: 'calc(100vw - 66px)' }}
-        >
+        <Box ref={ref} sx={{ height: '100%', width: 'calc(100vw - 66px)' }}>
             <DataGrid
                 disableColumnMenu
                 disableSelectionOnClick

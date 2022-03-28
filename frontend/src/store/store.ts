@@ -3,11 +3,13 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import toastReducer from './slices/ToastSlice';
 import accountReducer from './slices/AccountSlice';
 import dashboardReducer from './slices/DashboardSlice';
+import displayReducer from './slices/DisplaySlice';
 export const store = configureStore({
     reducer: {
         toast: toastReducer,
         account: accountReducer,
         dashboard: dashboardReducer,
+        display: displayReducer,
     },
 });
 

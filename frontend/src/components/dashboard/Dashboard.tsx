@@ -2,6 +2,7 @@ import { Box, styled } from '@mui/material';
 import { createWorkerFactory, useWorker } from '@shopify/react-web-worker';
 import React, { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
+import { Display } from '../../store/slices/DisplaySlice';
 import { sendToast } from '../../store/slices/ToastSlice';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import DashboardHeader from './dashboard-header/DashboardHeader';
@@ -13,15 +14,15 @@ const createCryptoWorker = createWorkerFactory(
     () => import('../../workers/CryptoWorker')
 );
 
-const Offset = styled('div')(({ theme }) => theme.mixins.toolbar);
-
 type DashboardState = {
     isNavOpen: boolean;
     isDashShown: boolean;
+    currentPane: Display;
 };
 
 export default function Dashboard() {
     const account = useAppSelector((state) => state.account);
+    const display = useAppSelector((state) => state.display);
     const [state, setState] = React.useState({
         isNavOpen: false,
         isDashShown: false,
@@ -66,22 +67,49 @@ export default function Dashboard() {
         }
     }, [account]);
 
+    useEffect(() => {
+        switch (display) {
+            case Display.CREDENTIALS:
+                navigate('/app/credentials');
+                break;
+
+            case Display.MFA:
+                navigate('/app/mfa');
+                break;
+
+            default:
+                break;
+        }
+    }, [display]);
+
     return (
         <Box sx={{ display: 'flex' }}>
             <DashboardHeader
                 isNavOpen={state.isNavOpen}
                 onNavOpen={onNavOpen}
                 isShown={state.isDashShown}
+                currentPane={display}
             ></DashboardHeader>
             <DashboardNavigation
                 isNavOpen={state.isNavOpen}
                 isShown={state.isDashShown}
                 onNavClose={onNavClose}
                 email={account.email}
+                currentPane={display}
             ></DashboardNavigation>
             {state.isDashShown && (
-                <Box sx={{ width: '100%', height: '100vh', overflowY: 'auto' }}>
-                    <Offset />
+                <Box
+                    sx={{
+                        width: '100%',
+                        height: 'calc(100vh - 56px)',
+                        overflowY: 'auto',
+                        marginTop: '56px',
+                        '@media (min-width: 600px)': {
+                            height: 'calc(100vh - 64px)',
+                            marginTop: '64px',
+                        },
+                    }}
+                >
                     <Outlet context={cryptoWorker} />
                 </Box>
             )}

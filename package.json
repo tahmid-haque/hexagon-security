@@ -1,0 +1,16 @@
+{
+    "private": true,
+    "name": "hexagon",
+    "scripts": {
+        "client": "yarn workspace hexagon-frontend start",
+        "server": "yarn workspace hexagon-backend start",
+        "extension": "yarn workspace hexagon-extension start"
+    },
+    "workspaces": [
+        "backend",
+        "frontend",
+        "extension",
+        "shared"
+    ],
+    "packageManager": "yarn@3.2.0"
+}

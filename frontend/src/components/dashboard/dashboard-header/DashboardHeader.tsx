@@ -36,6 +36,7 @@ type DashboardHeaderProps = {
     onNavOpen: () => void;
     isNavOpen: boolean;
     isShown: boolean;
+    currentPane: string;
 };
 
 type DashboardHeaderState = {
@@ -85,7 +86,7 @@ export default function DashboardHeader(props: DashboardHeaderProps) {
                         component='div'
                         sx={{ ml: 1.5 }}
                     >
-                        Credentials
+                        {props.currentPane}
                     </Typography>
                     {
                         <Tooltip title='Create New'>
