@@ -62,7 +62,7 @@ export default function CredentialEditor(props: CredentialEditorProps) {
                 password: props.credential!.password,
             });
         }
-    }, [props.credential, props.isOpen]);
+    }, [props.credential]);
 
     const onURLChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;

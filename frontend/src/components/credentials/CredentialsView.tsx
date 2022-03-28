@@ -258,10 +258,7 @@ export default function CredentialsView() {
     );
 
     return (
-        <Box
-            ref={ref}
-            sx={{ height: 'calc(100% - 64px)', width: 'calc(100vw - 66px)' }}
-        >
+        <Box ref={ref} sx={{ height: '100%', width: 'calc(100vw - 66px)' }}>
             <DataGrid
                 disableColumnMenu
                 disableSelectionOnClick
