@@ -195,9 +195,9 @@ class CredentialController {
             .then((result) => console.log(result));
     }
 
-    async checkBreach(hash: string): Promise<string> {
+    async checkBreach(hashPrefix: string): Promise<string> {
         return fetch(
-            `https://api.pwnedpasswords.com/range/${hash.slice(0, 5)}`,
+            `https://api.pwnedpasswords.com/range/${hashPrefix}`,
             {
                 method: 'GET',
             }
