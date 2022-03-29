@@ -12,6 +12,8 @@ const requireAuth = (req, res, next) => {
             }
             else{
                 console.log("success");
+                const decodedToken = jwt.decode(token);
+                req.token = decodedToken;
                 next();
             }
         });

@@ -27,8 +27,8 @@ const handleErrors = (err) => {
 };
 
 const maxAge = 3 * 24 * 60 * 60;
-const createToken = (UID) => {
-    return jwt.sign({ UID }, 'secret', {
+const createToken = (UID, username) => {
+    return jwt.sign({ UID: UID, username: username }, 'secret', {
         expiresIn: maxAge,
     });
 };
@@ -43,7 +43,7 @@ module.exports.signup_post = async (req, res) => {
             UID: uuid.v4(),
             masterKey: uuid.v4(),
         });
-        const token = createToken(hexagonUser.UID);
+        const token = createToken(hexagonUser.UID, hexagonUser.username);
         res.status(201).json({ masterKey: hexagonUser.masterKey, jwt: token });
     } catch (err) {
         const { errors, status } = handleErrors(err);
@@ -56,7 +56,7 @@ module.exports.login_post = async (req, res) => {
 
     try {
         const hexagonUser = await HexagonUser.login(username, password);
-        const token = createToken(hexagonUser.UID);
+        const token = createToken(hexagonUser.UID, hexagonUser.username);
         res.status(200).json({ masterKey: hexagonUser.masterKey, jwt: token });
     } catch (err) {
         const { errors, status } = handleErrors(err);
