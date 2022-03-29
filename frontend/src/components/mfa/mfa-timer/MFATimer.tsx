@@ -3,31 +3,31 @@ import { useEffect, useState } from 'react';
 
 export default function MFATimer(props: any) {
     const [ticks, setTicks] = useState(0);
+    const [isMounted, setIsMounted] = useState(true);
 
-    const updateTicks = () => setTicks(60 - new Date().getSeconds());
+    const refreshTicks = () => {
+        if (!isMounted) return;
+        setTicks(60 - new Date().getSeconds());
+        setTimeout(refreshTicks, 1000 - new Date().getMilliseconds());
+    };
 
-    useEffect(() => {
-        const refreshTicks = () => {
-            updateTicks();
-            setTimeout(refreshTicks, 1000);
-        };
-        refreshTicks();
-    }, []);
+    useEffect(refreshTicks, []);
+    useEffect(() => () => setIsMounted(false), []);
+
     return (
         <Box
             sx={{
                 position: 'relative',
                 display: 'flex',
-                alignItems: 'end',
+                alignItems: 'center',
                 justifyContent: 'center',
-                height: 48,
-                mt: 1,
+                height: '100%',
             }}
         >
             <CircularProgress // taken from https://mui.com/api/circular-progress/#main-content
                 variant='determinate'
                 value={(ticks * 100) / 60}
-                size={48}
+                size={36}
             />
             <Box
                 sx={{

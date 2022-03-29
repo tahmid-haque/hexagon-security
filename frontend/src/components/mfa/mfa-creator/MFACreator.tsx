@@ -6,58 +6,44 @@ import { useAppDispatch } from '../../../store/store';
 import parser from 'hexagon-shared/utils/parser';
 import AppModal from '../../shared/AppModal';
 import PasswordField from '../../shared/PasswordField';
-import { Credentials } from '../CredentialsView';
+import { MFA } from '../MFAView';
 import { useComponentState } from '../../../utils/hooks';
+import MFAService from '../../../services/MFAService';
 
-export type CredentialEditorProps = {
+export type MFACreatorProps = {
     isOpen: boolean;
     onClose: (modified?: boolean) => void;
-    credentialService: CredentialService;
-    isEdit: boolean;
-    credential?: Credentials;
+    mfaService: MFAService;
 };
 
-type CredentialEditorState = {
+type MFACreatorState = {
     isURLValid: boolean;
     isUserValid: boolean;
-    isPassValid: boolean;
+    isSecretValid: boolean;
     urlError: string;
     userError: string;
-    passwordError: string;
+    secretError: string;
     url: string;
     user: string;
-    password: string;
+    secret: string;
     isLoading: boolean;
 };
 
-const initState: CredentialEditorState = {
+const initState: MFACreatorState = {
     isURLValid: true,
     isUserValid: true,
-    isPassValid: true,
+    isSecretValid: true,
     urlError: '',
     userError: '',
-    passwordError: '',
+    secretError: '',
     url: '',
     user: '',
-    password: '',
+    secret: '',
     isLoading: false,
 };
 
-const onCredentialChange = (
-    props: CredentialEditorProps,
-    update: (update: Partial<CredentialEditorState>) => void
-) => {
-    if (props.isEdit && props.isOpen) {
-        update({
-            url: props.credential!.name,
-            user: props.credential!.user,
-            password: props.credential!.password,
-        });
-    }
-};
-
 const onURLChange = (
-    update: (update: Partial<CredentialEditorState>) => void,
+    update: (update: Partial<MFACreatorState>) => void,
     event: React.ChangeEvent<HTMLInputElement>
 ) => {
     const value = event.target.value;
@@ -76,7 +62,7 @@ const onURLChange = (
 };
 
 const onUserChange = (
-    update: (update: Partial<CredentialEditorState>) => void,
+    update: (update: Partial<MFACreatorState>) => void,
     event: React.ChangeEvent<HTMLInputElement>
 ) => {
     const value = event.target.value;
@@ -87,20 +73,20 @@ const onUserChange = (
     });
 };
 
-const onPasswordChange = (
-    update: (update: Partial<CredentialEditorState>) => void,
+const onSecretChange = (
+    update: (update: Partial<MFACreatorState>) => void,
     event: React.ChangeEvent<HTMLInputElement>
 ) => {
-    const value = event.target.value;
+    const value = event.target.value.toUpperCase();
     update({
-        password: value,
-        isPassValid: value.length > 0,
-        passwordError: '',
+        secret: value.toUpperCase(),
+        isSecretValid: parser.isBase32(value),
+        secretError: '',
     });
 };
 
 const onClose = (
-    update: (update: Partial<CredentialEditorState>) => void,
+    update: (update: Partial<MFACreatorState>) => void,
     close: (modified: boolean) => void,
     modified: boolean
 ) => {
@@ -109,8 +95,8 @@ const onClose = (
 };
 
 const validateForm = (
-    state: CredentialEditorState,
-    update: (update: Partial<CredentialEditorState>) => void
+    state: MFACreatorState,
+    update: (update: Partial<MFACreatorState>) => void
 ) => {
     let error = false;
     if (!state.isURLValid || !state.url) {
@@ -124,10 +110,10 @@ const validateForm = (
         });
         error = true;
     }
-    if (!state.isPassValid || !state.password) {
+    if (!state.isSecretValid || !state.secret) {
         update({
-            passwordError: 'Please enter a password',
-            isPassValid: false,
+            secretError: 'Please enter a secret',
+            isSecretValid: false,
         });
         error = true;
     }
@@ -135,19 +121,15 @@ const validateForm = (
 };
 
 const onCreateSubmit = async (
-    state: CredentialEditorState,
-    update: (update: Partial<CredentialEditorState>) => void,
-    props: CredentialEditorProps,
+    state: MFACreatorState,
+    update: (update: Partial<MFACreatorState>) => void,
+    props: MFACreatorProps,
     dispatch: any
 ) => {
     if (validateForm(state, update)) return;
     update({ isLoading: true });
     try {
-        await props.credentialService.createCredential(
-            state.url,
-            state.user,
-            state.password
-        );
+        await props.mfaService.createMFA(state.url, state.user, state.secret);
         dispatch(
             sendToast({
                 message: 'Successfully created your credential.',
@@ -167,57 +149,18 @@ const onCreateSubmit = async (
     onClose(update, props.onClose, true);
 };
 
-const onEditSubmit = async (
-    state: CredentialEditorState,
-    update: (update: Partial<CredentialEditorState>) => void,
-    props: CredentialEditorProps,
-    dispatch: any
-) => {
-    if (validateForm(state, update)) return;
-    update({ isLoading: true });
-    try {
-        await props.credentialService.updateCredential(
-            state.user,
-            state.password,
-            props.credential!.key
-        );
-        dispatch(
-            sendToast({
-                message: 'Successfully updated your credential.',
-                severity: 'success',
-            })
-        );
-    } catch (error) {
-        update({ isLoading: false });
-        return dispatch(
-            sendToast({
-                message:
-                    'Something went wrong and we were unable to save your credential. Try again later.',
-                severity: 'error',
-            })
-        );
-    }
-    onClose(update, props.onClose, true);
-};
-
-export default function CredentialEditor(props: CredentialEditorProps) {
+export default function MFAEditor(props: MFACreatorProps) {
     const { state, update } = useComponentState(initState);
     const dispatch = useAppDispatch();
-
-    useEffect(onCredentialChange.bind(null, props, update), [
-        props.credential,
-        props.isOpen,
-    ]);
 
     return (
         <AppModal
             isOpen={props.isOpen}
-            modalTitle={`${props.isEdit ? 'Edit' : 'Create'} Credentials`}
+            modalTitle={'Create MFA Credential'}
             onClose={onClose.bind(null, update, props.onClose, false)}
         >
             <TextField
                 fullWidth
-                disabled={props.isEdit}
                 error={!state.isURLValid}
                 label='URL'
                 value={state.url}
@@ -238,18 +181,17 @@ export default function CredentialEditor(props: CredentialEditorProps) {
                 sx={{ my: 1 }}
             />
             <PasswordField
-                isError={!state.isPassValid}
-                password={state.password}
-                onPasswordChange={onPasswordChange.bind(null, update)}
-                errorMessage={state.passwordError}
+                isError={!state.isSecretValid}
+                password={state.secret}
+                onPasswordChange={onSecretChange.bind(null, update)}
+                errorMessage={state.secretError}
+                label='Secret'
             />
             <Box sx={{ float: 'right', mt: 2, position: 'relative' }}>
                 <Button
                     variant='contained'
                     onClick={() =>
-                        props.isEdit
-                            ? onEditSubmit(state, update, props, dispatch)
-                            : onCreateSubmit(state, update, props, dispatch)
+                        onCreateSubmit(state, update, props, dispatch)
                     }
                     disabled={state.isLoading}
                 >

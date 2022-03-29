@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import MuiDrawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { navWidth } from '../../../shared/constants';
 import { clearAccount } from '../../../store/slices/AccountSlice';
 import { Display, setDisplay } from '../../../store/slices/DisplaySlice';
@@ -91,37 +91,11 @@ type DashboardNavigationProps = {
     currentPane: Display;
 };
 
-type DashboardNavigationState = {
-    currentPane?: 'string';
-};
-
-const getFeatureButtons = (features: Feature[], isNavOpen: boolean) => {
-    return features.map(({ name, icon, isActive, onClick }) => (
-        <ListItemButton
-            key={name}
-            sx={{
-                height: optionHeight,
-                px: 2.5,
-            }}
-            selected={isActive}
-            onClick={onClick}
-        >
-            <ListItemIcon
-                sx={{
-                    minWidth: 0,
-                    mr: isNavOpen ? 3 : 'auto',
-                    justifyContent: 'center',
-                }}
-            >
-                {icon}
-            </ListItemIcon>
-            <ListItemText primary={name} sx={{ opacity: isNavOpen ? 1 : 0 }} />
-        </ListItemButton>
-    ));
-};
-
-export default function DashboardNavigation(props: DashboardNavigationProps) {
-    const dispatch = useAppDispatch();
+const getFeatureButtons = function (this: {
+    props: DashboardNavigationProps;
+    dispatch: any;
+}) {
+    const { props, dispatch } = this;
     const features = [
         {
             name: 'Credentials',
@@ -147,12 +121,45 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
         },
     ] as Feature[];
 
-    const featureButtons = getFeatureButtons(features, props.isNavOpen);
+    return features.map(({ name, icon, isActive, onClick }) => (
+        <ListItemButton
+            key={name}
+            sx={{
+                height: optionHeight,
+                px: 2.5,
+            }}
+            selected={isActive}
+            onClick={onClick}
+        >
+            <ListItemIcon
+                sx={{
+                    minWidth: 0,
+                    mr: props.isNavOpen ? 3 : 'auto',
+                    justifyContent: 'center',
+                }}
+            >
+                {icon}
+            </ListItemIcon>
+            <ListItemText
+                primary={name}
+                sx={{ opacity: props.isNavOpen ? 1 : 0 }}
+            />
+        </ListItemButton>
+    ));
+};
+
+export default function DashboardNavigation(props: DashboardNavigationProps) {
+    const dispatch = useAppDispatch();
+    const [featureButtons, setFeatureButtons] = useState([] as JSX.Element[]);
+
+    useEffect(
+        () => setFeatureButtons(getFeatureButtons.call({ props, dispatch })),
+        [props.isNavOpen, props.currentPane]
+    );
 
     const onSignOutClick = () => {
         dispatch(clearAccount());
     };
-
     return (
         <Drawer
             variant='permanent'

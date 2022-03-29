@@ -2,9 +2,11 @@ import { Box, styled } from '@mui/material';
 import { createWorkerFactory, useWorker } from '@shopify/react-web-worker';
 import React, { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
+import { Account } from '../../store/slices/AccountSlice';
 import { Display } from '../../store/slices/DisplaySlice';
 import { sendToast } from '../../store/slices/ToastSlice';
 import { useAppDispatch, useAppSelector } from '../../store/store';
+import { useComponentState } from '../../utils/hooks';
 import DashboardHeader from './dashboard-header/DashboardHeader';
 import DashboardNavigation from './dashboard-navigation/DashboardNavigation';
 
@@ -20,10 +22,52 @@ type DashboardState = {
     currentPane: Display;
 };
 
+type DashboardContext = {
+    account: Account;
+    display: Display;
+    state: DashboardState;
+    update: (update: Partial<DashboardState>) => void;
+    navigate: any;
+    dispatch: any;
+    cryptoWorker: any;
+};
+
+const handleDisplayChange = function (this: DashboardContext) {
+    const { display, navigate } = this;
+    switch (display) {
+        case Display.CREDENTIALS:
+            navigate('/app/credentials');
+            break;
+
+        case Display.MFA:
+            navigate('/app/mfa');
+            break;
+
+        default:
+            break;
+    }
+};
+
+const handleAccountChange = function (this: DashboardContext) {
+    const { state, account, update, navigate, dispatch } = this;
+    if (state.isDashShown && !account.email) {
+        update({ isDashShown: false });
+        setTimeout(() => {
+            dispatch(
+                sendToast({
+                    message: 'Successfully signed out.',
+                    severity: 'success',
+                })
+            );
+            navigate('/authenticate');
+        }, 300);
+    }
+};
+
 export default function Dashboard() {
     const account = useAppSelector((state) => state.account);
     const display = useAppSelector((state) => state.display);
-    const [state, setState] = React.useState({
+    const { state, update } = useComponentState({
         isNavOpen: false,
         isDashShown: false,
     } as DashboardState);
@@ -31,10 +75,14 @@ export default function Dashboard() {
     const dispatch = useAppDispatch();
     const cryptoWorker = useWorker(createCryptoWorker);
 
-    const update = (update: Partial<DashboardState>) => {
-        setState((state) => {
-            return { ...state, ...update };
-        });
+    const context = {
+        account,
+        display,
+        state,
+        update,
+        navigate,
+        dispatch,
+        cryptoWorker,
     };
 
     const onNavOpen = () => {
@@ -51,36 +99,8 @@ export default function Dashboard() {
             else navigate('/authenticate');
         }, 1);
     }, []);
-
-    useEffect(() => {
-        if (state.isDashShown && !account.email) {
-            update({ isDashShown: false });
-            setTimeout(() => {
-                dispatch(
-                    sendToast({
-                        message: 'Successfully signed out.',
-                        severity: 'success',
-                    })
-                );
-                navigate('/authenticate');
-            }, 300);
-        }
-    }, [account]);
-
-    useEffect(() => {
-        switch (display) {
-            case Display.CREDENTIALS:
-                navigate('/app/credentials');
-                break;
-
-            case Display.MFA:
-                navigate('/app/mfa');
-                break;
-
-            default:
-                break;
-        }
-    }, [display]);
+    useEffect(handleAccountChange.bind(context), [account]);
+    useEffect(handleDisplayChange.bind(context), [display]);
 
     return (
         <Box sx={{ display: 'flex' }}>

@@ -292,13 +292,10 @@ class CredentialService {
     async updateCredential(
         username: string,
         password: string,
-        credential: Credentials
+        key: ArrayBuffer
     ) {
         const [encryptedUser, encryptedPass] =
-            await this.cryptoWorker.encryptData(
-                [username, password],
-                credential.key
-            );
+            await this.cryptoWorker.encryptData([username, password], key);
         // TODO: connect to real api later
         return new Promise((resolve) => {
             setTimeout(resolve, 500);
