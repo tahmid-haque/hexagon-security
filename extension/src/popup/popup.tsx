@@ -11,7 +11,7 @@ import parser from '../utils/parser'
 
 const SigninPage = () => {
   const onClickSignin = () => {
-    console.log("signin to app")
+    chrome.tabs.create({active:true, url:"http://localhost:3000/authenticate"});
   }
 
   return (
@@ -29,11 +29,19 @@ type User = {
 }
 
 const GreetUser = ({ name }: User) => {
+  const clickAction = () => {
+    chrome.storage.local.remove("hexagonAccount");
+    window.close(); 
+  }
+  
   return (
     <div className='container'>
       <Box mb={"2px"}>
         <Card>
-          <div className='greeting'>Hello {name}...</div>
+          <Box display={"flex"} justifyContent={"space-between"} alignItems={"center"}>
+            <div className='greeting'>Hello {name}...</div>
+            <Button variant="outlined" color="primary" sx={{px:"8px", m:"10px", height:"30px", fontSize:13}} onClick={clickAction}>Sign Out</Button>
+          </Box>
         </Card>
       </Box>
     </div>
@@ -82,12 +90,11 @@ const PopupBody = ({ name, url }: {name:string, url:string}) => {
   return <PopupHome name={name} url={url}/>
 }
 
-const App = ({url} : {url:string}) => {
+const App = ({url, name} : {url:string, name:string}) => {
   return (
     <div>
       <Header url={"icon.png"} clickAction ={ () => window.close() } />
-      {/* <PopupBody name={null} /> */}
-      <PopupBody name={"Raisa"} url={url}/>
+      <PopupBody name={name} url={url} />
     </div>
   )
 }
@@ -95,13 +102,22 @@ const App = ({url} : {url:string}) => {
 const root = document.createElement('div')
 document.body.appendChild(root)
 
-{chrome.tabs.query({currentWindow: true, active: true}, function(result){
-  console.log(result[0].url);
-  try{
-    let currentURL = parser.extractDomain(result[0].url);
-    ReactDOM.render(<App url={currentURL}/>, root)
-  } catch{
-    let currentURL = "";
-    ReactDOM.render(<App url={currentURL}/>, root)
+chrome.storage.local.get(['hexagonAccount'], function(account){
+  if(!account.hexagonAccount){
+    ReactDOM.render(<App url={null} name={null} />, root)
+  } else {
+    console.log(account.hexagonAccount);
+
+    {chrome.tabs.query({currentWindow: true, active: true}, function(result){
+      console.log(result[0].url);
+      try{
+        let currentURL = parser.extractDomain(result[0].url);
+        ReactDOM.render(<App url={currentURL} name={account.hexagonAccount.username} />, root)
+      } catch{
+        let currentURL = null;
+        ReactDOM.render(<App url={currentURL} name={account.hexagonAccount.username} />, root)
+      }
+    })}
+
   }
-})}
+})
