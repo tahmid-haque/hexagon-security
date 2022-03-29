@@ -9,3 +9,4 @@ export const encryptWrappedData =
     cryptoService.encryptWrappedData.bind(cryptoService);
 export const decryptWrappedData =
     cryptoService.decryptWrappedData.bind(cryptoService);
+export const digestMessage = cryptoService.digestMessage.bind(cryptoService);

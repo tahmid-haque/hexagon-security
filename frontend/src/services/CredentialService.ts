@@ -1,7 +1,9 @@
 import { GridSortDirection } from '@mui/x-data-grid';
 import { Credentials } from '../components/credentials/CredentialsView';
 import { Account } from '../store/slices/AccountSlice';
+import CredentialController from '../controllers/CredentialController';
 import * as CryptoWorker from '../workers/CryptoWorker';
+import { ApolloClient, NormalizedCacheObject } from '@apollo/client';
 
 const encryptedCredentials: CredentialDto[] = [
     {
@@ -212,9 +214,44 @@ type CredentialDto = {
 
 class CredentialService {
     private cryptoWorker: typeof CryptoWorker;
-
+    private credentialController: CredentialController;
     private masterKey: string;
     private masterEmail: string;
+
+    // credits: https://www.geeksforgeeks.org/binary-search-in-javascript/
+    private binarySearchHash(data: string[], hash: string): number {
+        let start = 0,
+            end = data.length - 1;
+
+        // Iterate while start not meets end
+        while (start <= end) {
+            // Find the mid index
+            let mid = Math.floor((start + end) / 2);
+
+            // If element is present at mid, return True
+            if (data[mid] === hash) return mid;
+            // Else look in left or right half accordingly
+            else if (data[mid] < hash) start = mid + 1;
+            else end = mid - 1;
+        }
+
+        return -1;
+    }
+
+    private async calculatePasswordSecurity(password: string) {
+        const hash = await this.cryptoWorker.digestMessage(password);
+        let isBreached = false;
+        try {
+            const res = await this.credentialController.checkBreach(hash);
+            const data = res.split('\n');
+            const idx = this.binarySearchHash(data, hash);
+            if (idx !== -1) {
+                const [_, count] = data[idx].split(':');
+                isBreached = Number(count) >= 10;
+            }
+        } catch (error) {}
+        console.log(isBreached);
+    }
 
     private async createEncryptedCredential(
         username: string,
@@ -237,7 +274,7 @@ class CredentialService {
             credential.key,
             this.masterKey
         );
-
+        await this.calculatePasswordSecurity(password);
         return {
             ...credential,
             user,
@@ -247,10 +284,18 @@ class CredentialService {
         };
     }
 
-    constructor(cryptoWorker: any, account: Account) {
+    constructor(
+        cryptoWorker: any,
+        account: Account,
+        client: ApolloClient<NormalizedCacheObject>
+    ) {
         this.masterKey = account.masterKey;
         this.masterEmail = account.email;
         this.cryptoWorker = cryptoWorker;
+        this.credentialController = new CredentialController(
+            client,
+            account.jwt
+        );
     }
 
     async getCredentialCount() {

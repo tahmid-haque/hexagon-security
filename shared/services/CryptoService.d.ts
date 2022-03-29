@@ -44,4 +44,5 @@ export default class CryptoService {
         key: ArrayBuffer;
         plainTexts: string[];
     }>;
+    digestMessage(message: string): Promise<string>;
 }

@@ -1,3 +1,8 @@
+import {
+    ApolloClient,
+    NormalizedCacheObject,
+    useApolloClient,
+} from '@apollo/client';
 import LockIcon from '@mui/icons-material/Lock';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import { Box, Tooltip } from '@mui/material';
@@ -234,6 +239,8 @@ export default function CredentialsView() {
     const dispatch = useAppDispatch();
     const account = useAppSelector((state) => state.account);
     const cryptoWorker = useOutletContext();
+    const apolloClient =
+        useApolloClient() as ApolloClient<NormalizedCacheObject>;
 
     const { state, update } = useComponentState({
         credentials: [],
@@ -246,7 +253,11 @@ export default function CredentialsView() {
         isDeleteLoading: false,
         sortType: 'asc',
         rerenderTable: false,
-        credentialService: new CredentialService(cryptoWorker, account),
+        credentialService: new CredentialService(
+            cryptoWorker,
+            account,
+            apolloClient
+        ),
     } as CredentialsViewState);
 
     const context = { state, event, update, dispatch };
