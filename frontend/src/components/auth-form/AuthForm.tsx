@@ -116,6 +116,8 @@ export default function AuthForm() {
             })
         );
 
+        //send message to chrome extension here
+
         appDispatch(
             sendToast({
                 message: `Welcome to Hexagon, ${state.currentEmail}`,
