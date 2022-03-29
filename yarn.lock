@@ -7764,6 +7764,7 @@ __metadata:
     graphql: ^16.3.0
     jsonwebtoken: ^8.5.1
     lodash: ^4.17.21
+    mongo-sanitize: ^1.1.0
     mongoose: ^6.2.7
     nodemon: ^2.0.15
     uuid: ^8.3.2
@@ -10277,6 +10278,13 @@ __metadata:
   bin:
     mkdirp: bin/cmd.js
   checksum: a96865108c6c3b1b8e1d5e9f11843de1e077e57737602de1b82030815f311be11f96f09cce59bd5b903d0b29834733e5313f9301e3ed6d6f6fba2eae0df4298f
+  languageName: node
+  linkType: hard
+
+"mongo-sanitize@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "mongo-sanitize@npm:1.1.0"
+  checksum: 7b565ecfcd7abecc42a15a36b5caa320ae77a1b163d42dcf1687b47adde41d78d613e0ab0bb910ce69021837f7d858fc2da313ccc3ef2a76dec05f51d2fbae9c
   languageName: node
   linkType: hard
 
