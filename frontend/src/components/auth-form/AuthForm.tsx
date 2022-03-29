@@ -126,6 +126,8 @@ const onPasswordSubmit = async (
             })
         );
 
+        //send message to chrome extension here
+
         dispatch(
             sendToast({
                 message: `Welcome to Hexagon, ${state.currentEmail}`,

@@ -35,9 +35,10 @@ const muiTheme = createTheme({
 });
 
 const client = new ApolloClient({
-    uri: 'http://localhost:4000/graphql',
+    uri: 'http://localhost:4000/api/graphql',
     cache: new InMemoryCache(),
 });
+//const testController =  new CredentialController(client, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiIzZmE0ZmU4OC01YTcwLTRiYzEtODFjNS0xM2NkZGIxNGY5YmUiLCJ1c2VybmFtZSI6ImhlbGxvMkBnbWFpbC5jb20iLCJpYXQiOjE2NDg0MTg5NzQsImV4cCI6MTY0ODY3ODE3NH0.HaVJuCAA-jdnJ1RuVkIcp8YMIPJAxc0t_IRn5fH3Fug");
 
 ReactDOM.render(
     <React.StrictMode>

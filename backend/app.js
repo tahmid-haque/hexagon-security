@@ -5,7 +5,12 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const { requireAuth, checkUser } = require('./middleware/authMiddleware');
+var sanitize = require("mongo-sanitize");
 
+function cleanBody(req, res, next) {
+  req.body = sanitize(req.body);
+  next();
+}
 const app = express();
 
 app.use(cors());
@@ -23,7 +28,7 @@ mongoose.connection.once('open', () => {
 // app.use(bodyParser.json());
 
 app.use(
-    '/api/graphql',
+    '/api/graphql',requireAuth, cleanBody,
     graphqlHTTP({
         schema: schema,
         graphiql: true,

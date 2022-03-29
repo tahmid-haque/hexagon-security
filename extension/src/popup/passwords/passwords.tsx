@@ -53,10 +53,17 @@ const PasswordCard = ({ website, username, password } : PasswordInfo) => {
     )
 }
 
-const EmptyPasswordsPage = () => {
+const EmptyPasswordsPage = ({url} : {url:string}) => {
     return (
-        <Box className='hexagon-subheading'>
-            No passwords for this site yet...
+        <Box className='hexagon-subheading hexagon-empty-passwords' m={"auto"} width="100%" height="100%" 
+            display="flex"
+            justifyContent="center"
+            py={4}
+            >
+                <Box display="flex" flexDirection="column" fontSize={18}>
+                    <div>No passwords for this site yet...</div>
+                    <img src={'https://logo.clearbit.com/https:/' + url} ></img>
+                </Box>
         </Box>
         // <Grid container justify="center">
         //     <div>No passwords for this site yet...</div>
@@ -64,12 +71,14 @@ const EmptyPasswordsPage = () => {
     )
 }
 
-const PopupPasswords = () => {
+const PopupPasswords = ({url}: {url:string}) => {
     return (
+        
         <div>
-            <EmptyPasswordsPage />
-            {/* <PasswordCard website='amazon.com' username='sally' password='password'/> */}
-            {/* <PasswordCard website='google.com' username='saaaaallllyy' password='123456789'/>
+            <EmptyPasswordsPage url={url}/>
+
+            {/* <PasswordCard website='amazon.com' username='sally' password='password'/>
+            <PasswordCard website='google.com' username='saaaaallllyy' password='123456789'/>
             <PasswordCard website='heroku.com' username='sal123' password='smithysmith'/>
             <PasswordCard website='facebook.com' username='smithsally' password='abcdefghifgdfgfdgffgfdgfdgfdgfdgdgfdgdgdg'/>
             <PasswordCard website='netflix.com' username='sallyisme' password='cookies123'/> */}
