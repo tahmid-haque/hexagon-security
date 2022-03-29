@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Box, Typography, TextField, IconButton, Grid } from '@mui/material';
+import { Card, Box, Typography, TextField, IconButton, Avatar } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import EditIcon from '@mui/icons-material/Edit';
 import '../popup.css'
-import './password.css'
+import './passwords.css'
+
 
 type PasswordInfo = {
     website: string,
@@ -18,36 +20,46 @@ const PasswordCard = ({ website, username, password } : PasswordInfo) => {
         <Box mb={"2px"}>
         <Card sx={{display: "flex", padding: "10px", justifyContent: "space-between"}}>
             <div className='website-pass-container'>
-            <div className='site-icon-container'>
-                <img src={'https://logo.clearbit.com/https:/' + website} />
-            </div>
-            <div className='site-info'>
-                <Typography variant='button' sx={{ fontWeight: 'bold' }} display="block">{website}</Typography>
-                <Typography variant='caption' sx={{ fontWeight: 'light', color: "#424242" }} display="block" onDoubleClick={() => navigator.clipboard.writeText(username)}>{username}</Typography>
-                <div className='pass-info'>
-                    {showPass
-                        ? <TextField value={password} 
-                            InputProps={{ readOnly: true, disableUnderline: true, style: { fontSize: 14, width: 100, marginRight: 7 } }} 
-                            size="small" variant="standard"
-                            onDoubleClick={() => navigator.clipboard.writeText(password)}
-                            />
-                        : <TextField value="••••••••••••••••••" 
-                            InputProps={{ readOnly: true, disableUnderline: true, style: { fontSize: 14, width: 100, marginRight: 7 } }} 
-                            size="small" variant="standard"
-                            onDoubleClick={() => navigator.clipboard.writeText(password)}
-                            />
-                    }
-                    <IconButton onClick={() => setShowPass(showPass => !showPass)}>
-                        <VisibilityIcon fontSize='small' />
-                    </IconButton>
+                <div className='site-icon-container'>
+                    <Avatar
+                        sx={{ bgcolor: 'none', width: '60px', height: '60px', objectFit: "contain"}}
+                        variant='rounded'
+                        src={`https://logo.clearbit.com/${website}`}
+                        alt={website.toUpperCase()}
+                    >
+                    </Avatar>
+                </div>
+                <div className='site-info'>
+                    <Typography variant='button' sx={{ fontWeight: 'bold' }} display="block">{website}</Typography>
+                    <Typography variant='caption' sx={{ fontWeight: 'light', color: "#424242" }} display="block" onDoubleClick={() => navigator.clipboard.writeText(username)}>{username}</Typography>
+                    <div className='pass-info'>
+                        {showPass
+                            ? <TextField value={password} 
+                                InputProps={{ readOnly: true, disableUnderline: true, style: { fontSize: 14, width: 100, marginRight: 5 } }} 
+                                size="small" variant="standard"
+                                onDoubleClick={() => navigator.clipboard.writeText(password)}
+                                />
+                            : <TextField value="••••••••••••••••••" 
+                                InputProps={{ readOnly: true, disableUnderline: true, style: { fontSize: 14, width: 100, marginRight: 5 } }} 
+                                size="small" variant="standard"
+                                onDoubleClick={() => navigator.clipboard.writeText(password)}
+                                />
+                        }
+                        <IconButton onClick={() => setShowPass(showPass => !showPass)}>
+                            <VisibilityIcon fontSize='small' />
+                        </IconButton>
+                    </div>
                 </div>
             </div>
-            </div>
-            <div className='delete-pass-container'>
-                <IconButton onClick={() => console.log("delete pass")} >
-                    <DeleteOutlineIcon color='disabled' sx={{ fontSize: 28 }} />
+            <Box display={"flex"} flexDirection={"column"} justifyContent="space-between">
+                <IconButton onClick={() => console.log("delete pass")} sx={{ height:30, width:30 }}>
+                    <DeleteOutlineIcon color='disabled' sx={{ fontSize: 24 }} />
                 </IconButton>
-            </div>
+
+                <IconButton onClick={() => console.log("edit pass")} sx={{ height:30, width:30 }}>
+                    <EditIcon color='disabled' sx={{ fontSize: 22 }} />
+                </IconButton>
+            </Box>
         </Card>
         </Box>
     )
@@ -62,12 +74,12 @@ const EmptyPasswordsPage = ({url} : {url:string}) => {
             >
                 <Box display="flex" flexDirection="column" fontSize={18}>
                     <div>No passwords for this site yet...</div>
-                    <img src={'https://logo.clearbit.com/https:/' + url} ></img>
+                    {url
+                        ?<img src={'https://logo.clearbit.com/https:/' + url} ></img>
+                        :<img src='web-link.png'></img>
+                    }
                 </Box>
         </Box>
-        // <Grid container justify="center">
-        //     <div>No passwords for this site yet...</div>
-        // </Grid>
     )
 }
 
@@ -75,13 +87,14 @@ const PopupPasswords = ({url}: {url:string}) => {
     return (
         
         <div>
-            <EmptyPasswordsPage url={url}/>
+            {/* <EmptyPasswordsPage url={url}/> */}
 
-            {/* <PasswordCard website='amazon.com' username='sally' password='password'/>
+            <PasswordCard website='amazon.com' username='sally' password='password'/>
             <PasswordCard website='google.com' username='saaaaallllyy' password='123456789'/>
+            <PasswordCard website='grademy.work' username='sallyisme' password='cookies123'/>
             <PasswordCard website='heroku.com' username='sal123' password='smithysmith'/>
             <PasswordCard website='facebook.com' username='smithsally' password='abcdefghifgdfgfdgffgfdgfdgfdgfdgdgfdgdgdg'/>
-            <PasswordCard website='netflix.com' username='sallyisme' password='cookies123'/> */}
+            <PasswordCard website='netflix.com' username='sallyisme' password='cookies123'/>
         </div>
     )
 }

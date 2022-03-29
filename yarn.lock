@@ -7802,6 +7802,7 @@ __metadata:
     terser-webpack-plugin: ^5.1.1
     ts-loader: ^8.1.0
     typescript: ^4.2.4
+    valid-url: ^1.0.9
     webpack: ^5.34.0
     webpack-cli: ^4.6.0
     webpack-merge: ^5.7.3
@@ -14463,6 +14464,13 @@ __metadata:
     convert-source-map: ^1.6.0
     source-map: ^0.7.3
   checksum: 54ce92bec2727879626f623d02c8d193f0c7e919941fa373ec135189a8382265117f5316ea317a1e12a5f9c13d84d8449052a731fe3306fa4beaafbfa4cab229
+  languageName: node
+  linkType: hard
+
+"valid-url@npm:^1.0.9":
+  version: 1.0.9
+  resolution: "valid-url@npm:1.0.9"
+  checksum: 3ecb030559404441c2cf104cbabab8770efb0f36d117db03d1081052ef133015a68806148ce954bb4dd0b5c42c14b709a88783c93d66b0916cb67ba771c98702
   languageName: node
   linkType: hard
 
