@@ -11,7 +11,34 @@ query(){
 const findCredentialsContainsQuery = gql`
 query($name: String!, $contains: Boolean!, $getShares: Boolean!){
   findCredentialsContains(getShares:$getShares, contains: $contains, name: $name){
+    _id
     name
+    key
+    recordID
+    credentials{
+      _id
+      username
+      password 
+    }
+  }
+}
+`;
+
+const findCredentialsContainsWithSharesQuery = gql`
+query($name: String!, $contains: Boolean!, $getShares: Boolean!){
+  findCredentialsContains(getShares:$getShares, contains: $contains, name: $name){
+    _id
+    name
+    key
+    recordID
+    credentials{
+      _id
+      username
+      password
+      UIDs{
+        UID
+      }
+    }
   }
 }
 `;
@@ -20,6 +47,33 @@ const findCredentialsQuery = gql`
 query($offset: Int!, $limit: Int!, $sortType: String!, getShares: Boolean!){
   findCredentials(getShares:$getShares, offset:$offset, limit: $limit, sortType: $sortType){
     _id
+    name
+    key
+    recordID
+    credentials{
+      _id
+      username
+      password
+    }
+  }
+}
+`;
+
+const findCredentialsWithSharesQuery = gql`
+query($offset: Int!, $limit: Int!, $sortType: String!, getShares: Boolean!){
+  findCredentials(getShares:$getShares, offset:$offset, limit: $limit, sortType: $sortType){
+    _id
+    name
+    key
+    recordID
+    credentials{
+      _id
+      username
+      password
+      UIDs{
+        UID
+      }
+    }
   }
 }
 `;
@@ -48,91 +102,72 @@ class CredentialController {
       this.token = token;
   }
   
-  // private buildQuery(query: DocumentNode){
-  //     return {query,
-  //             context: { 
-  //                 headers: { 
-  //                     "jwt": this.token  // this header will reach the server
-  //                 } 
-  //             }
-  //           }
-  // }
+  private buildQuery(query: any, variables: any){
+      return {query,
+              context: { 
+                  headers: { 
+                      "jwt": this.token  // this header will reach the server
+                  } 
+              },
+              variables
+            }
+  }
 
   public findCredentials(offset: number, limit: number, sortType: string, getShares: boolean){
-    this.client.query({
-      query: findCredentialsQuery,
-      context: { 
-        headers: { 
-            "jwt": this.token  // this header will reach the server
-        } 
-      },
-      variables: {
+    if (getShares){
+      return this.client.query(this.buildQuery(findCredentialsWithSharesQuery,{
         offset: offset,
         limit: limit,
         sortType: sortType,
         getShares: getShares
-      }
-    }).then(result => console.log(result));
+      }));
+    } else {
+      return this.client.query(this.buildQuery(findCredentialsQuery,{
+        offset: offset,
+        limit: limit,
+        sortType: sortType,
+        getShares: getShares
+      }));
+    }
+
   }
 
   public findCredentialsContains(name: string, contains: boolean, getShares: boolean){
-    this.client.query({
-      query: findCredentialsContainsQuery,
-      context: { 
-        headers: { 
-            "jwt": this.token  // this header will reach the server
-        } 
-      },
-      variables: {
+    if (getShares){
+      return this.client.query(this.buildQuery(findCredentialsContainsWithSharesQuery,{
         name: name,
         contains: contains,
         getShares: getShares
-      }
-    }).then(result => console.log(result));
+      }));
+    } else {
+      return this.client.query(this.buildQuery(findCredentialsContainsQuery,{
+        name: name,
+        contains: contains,
+        getShares: getShares
+      }));
+    }
+
   }
   
   public countWebsiteCredentials(){
-    this.client.query({
-      query: countCredentialsQuery,
-      context: { 
-        headers: { 
-            "jwt": this.token  // this header will reach the server
-        } 
-      }
-    }).then(result => console.log(result));
+    return this.client.query(this.buildQuery(countCredentialsQuery,{}))
   }
 
   public addWebsiteCredentials(name: string, username: string, password: string, key: string,){
-    this.client.query({
-      query: addWebsiteCredentialsMutation,
-      context: { 
-        headers: { 
-            "jwt": this.token  // this header will reach the server
-        } 
-      },
-      variables: {
-        name: name,
-        username: username,
-        password: password,
-        key: key
-      }
-    }).then(result => console.log(result));
+    return this.client.query(this.buildQuery(addWebsiteCredentialsMutation,{
+      name: name,
+      username: username,
+      password: password,
+      key: key
+    }))
   }
 
   public updateCredentials(username: string, password: string, secureRecordID: string,){
-    this.client.query({
-      query: updateCredentialsMutation,
-      context: { 
-        headers: { 
-            "jwt": this.token  // this header will reach the server
-        } 
-      },
-      variables: {
-        username: username,
-        password: password,
-        secureRecordID: secureRecordID
-      }
-    }).then(result => console.log(result));
+    return this.client.query(this.buildQuery(updateCredentialsMutation,{
+      username: username,
+      password: password,
+      secureRecordID: secureRecordID
+    }))
   }
 }
 

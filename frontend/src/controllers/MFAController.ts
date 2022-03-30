@@ -11,7 +11,34 @@ query(){
 const findMFAContainsQuery = gql`
 query($name: String!, $contains: Boolean!, $getShares: Boolean!){
   findMFAContains(getShares:$getShares, contains: $contains, name: $name){
+    _id
     name
+    key
+    recordID
+    MFA{
+      _id
+      username
+      seed
+    }
+  }
+}
+`;
+
+const findMFAContainsWithSharesQuery = gql`
+query($name: String!, $contains: Boolean!, $getShares: Boolean!){
+  findMFAContains(getShares:$getShares, contains: $contains, name: $name){
+    _id
+    name
+    key
+    recordID
+    MFA{
+      _id
+      username
+      seed
+      UIDs {
+        UID
+      }
+    }
   }
 }
 `;
@@ -20,6 +47,33 @@ const findMFAQuery = gql`
 query($offset: Int!, $limit: Int!, $sortType: String!, getShares: Boolean!){
   findMFA(getShares:$getShares, offset:$offset, limit: $limit, sortType: $sortType){
     _id
+    name
+    key
+    recordID
+    MFA{
+      _id
+      username
+      seed
+    }
+  }
+}
+`;
+
+const findMFAWithSharesQuery = gql`
+query($offset: Int!, $limit: Int!, $sortType: String!, getShares: Boolean!){
+  findMFA(getShares:$getShares, offset:$offset, limit: $limit, sortType: $sortType){
+    _id
+    name
+    key
+    recordID
+    MFA{
+      _id
+      username
+      seed
+      UIDs {
+        UID
+      }
+    }
   }
 }
 `;
@@ -40,65 +94,62 @@ class MFAController {
       this.token = token;
   }
 
+  private buildQuery(query: any, variables: any){
+    return {query,
+            context: { 
+                headers: { 
+                    "jwt": this.token  // this header will reach the server
+                } 
+            },
+            variables
+          }
+}
+
   public findMFA(offset: number, limit: number, sortType: string, getShares: boolean){
-    this.client.query({
-      query: findMFAQuery,
-      context: { 
-        headers: { 
-            "jwt": this.token  // this header will reach the server
-        } 
-      },
-      variables: {
+    if (getShares){
+      return this.client.query(this.buildQuery(findMFAWithSharesQuery,{
         offset: offset,
         limit: limit,
         sortType: sortType,
         getShares: getShares
-      }
-    }).then(result => console.log(result));
+      }));
+    } else {
+      return this.client.query(this.buildQuery(findMFAQuery,{
+        offset: offset,
+        limit: limit,
+        sortType: sortType,
+        getShares: getShares
+      }));
+    }
   }
 
   public findMFAContains(name: string, contains: boolean, getShares: boolean){
-    this.client.query({
-      query: findMFAContainsQuery,
-      context: { 
-        headers: { 
-            "jwt": this.token  // this header will reach the server
-        } 
-      },
-      variables: {
+    if (getShares){
+      return this.client.query(this.buildQuery(findMFAContainsWithSharesQuery,{
         name: name,
         contains: contains,
         getShares: getShares
-      }
-    }).then(result => console.log(result));
+      }));
+    } else {
+      return this.client.query(this.buildQuery(findMFAContainsQuery,{
+        name: name,
+        contains: contains,
+        getShares: getShares
+      }));
+    }
   }
   
   public countMFAs(){
-    this.client.query({
-      query: countMFAsQuery,
-      context: { 
-        headers: { 
-            "jwt": this.token  // this header will reach the server
-        } 
-      }
-    }).then(result => console.log(result));
+    return this.client.query(this.buildQuery(countMFAsQuery,{}));
   }
 
   public addSeed(name: string, username: string, seed: string, key: string,){
-    this.client.query({
-      query: addSeedMutation,
-      context: { 
-        headers: { 
-            "jwt": this.token  // this header will reach the server
-        } 
-      },
-      variables: {
-        name: name,
-        username: username,
-        seed: seed,
-        key: key
-      }
-    }).then(result => console.log(result));
+    return this.client.query(this.buildQuery(addSeedMutation,{
+      name: name,
+      username: username,
+      seed: seed,
+      key: key
+    }));
   }
 }
 

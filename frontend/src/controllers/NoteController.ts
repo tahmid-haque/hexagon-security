@@ -12,6 +12,35 @@ const findNotesQuery = gql`
 query($offset: Int!, $limit: Int!, $sortType: String!, getShares: Boolean!){
   findNotes(getShares:$getShares, offset:$offset, limit: $limit, sortType: $sortType){
     _id
+    name
+    key
+    recordID
+    notes{
+      _id
+      lastModified
+      title
+      note
+    }
+  }
+}
+`;
+
+const findNotesWithSharesQuery = gql`
+query($offset: Int!, $limit: Int!, $sortType: String!, getShares: Boolean!){
+  findNotes(getShares:$getShares, offset:$offset, limit: $limit, sortType: $sortType){
+    _id
+    name
+    key
+    recordID
+    notes{
+      _id
+      lastModified
+      title
+      note
+      UIDs {
+        UID
+      }
+    }
   }
 }
 `;
@@ -40,64 +69,54 @@ class NoteController {
       this.token = token;
   }
 
+  private buildQuery(query: any, variables: any){
+    return {query,
+            context: { 
+                headers: { 
+                    "jwt": this.token  // this header will reach the server
+                } 
+            },
+            variables
+          }
+}
+
   public findNotes(offset: number, limit: number, sortType: string, getShares: boolean){
-    this.client.query({
-      query: findNotesQuery,
-      context: { 
-        headers: { 
-            "jwt": this.token  // this header will reach the server
-        } 
-      },
-      variables: {
+    if (getShares){
+      return this.client.query(this.buildQuery(findNotesWithSharesQuery,{
         offset: offset,
         limit: limit,
         sortType: sortType,
         getShares: getShares
-      }
-    }).then(result => console.log(result));
+      }));
+    } else {
+      return this.client.query(this.buildQuery(findNotesQuery,{
+        offset: offset,
+        limit: limit,
+        sortType: sortType,
+        getShares: getShares
+      }));
+    }
+
   }
   
   public countNotes(){
-    this.client.query({
-      query: countNotesQuery,
-      context: { 
-        headers: { 
-            "jwt": this.token  // this header will reach the server
-        } 
-      }
-    }).then(result => console.log(result));
+    return this.client.query(this.buildQuery(countNotesQuery,{}));
   }
 
   public addNote(title: string, note: string, key: string,){
-    this.client.query({
-      query: addNoteMutation,
-      context: { 
-        headers: { 
-            "jwt": this.token  // this header will reach the server
-        } 
-      },
-      variables: {
-        title: title,
-        note: note,
-        key: key
-      }
-    }).then(result => console.log(result));
+    return this.client.query(this.buildQuery(addNoteMutation,{
+      title: title,
+      note: note,
+      key: key
+    }));
   }
 
   public updateNote(title: string, note: string, secureRecordID: string,){
-    this.client.query({
-      query: updateNoteMutation,
-      context: { 
-        headers: { 
-            "jwt": this.token  // this header will reach the server
-        } 
-      },
-      variables: {
-        title: title,
-        note: note,
-        secureRecordID: secureRecordID
-      }
-    }).then(result => console.log(result));
+    return this.client.query(this.buildQuery(updateNoteMutation,{
+      title: title,
+      note: note,
+      secureRecordID: secureRecordID
+    }));
   }
 }
 

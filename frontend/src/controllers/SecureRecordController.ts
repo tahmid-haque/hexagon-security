@@ -15,19 +15,21 @@ class SecureRecordController {
       this.client = client;
       this.token = token;
   }
+  private buildQuery(query: any, variables: any){
+    return {query,
+            context: { 
+                headers: { 
+                    "jwt": this.token  // this header will reach the server
+                } 
+            },
+            variables
+          }
+  }
 
   public deleteSecureRecord(secureRecordID: string){
-    this.client.query({
-      query: deleteSecureRecordMutation,
-      context: { 
-        headers: { 
-            "jwt": this.token  // this header will reach the server
-        } 
-      },
-      variables: {
-        secureRecordID: secureRecordID
-      }
-    }).then(result => console.log(result));
+    return this.client.query(this.buildQuery(deleteSecureRecordMutation,{
+      secureRecordID: secureRecordID
+    }));
   }
 }
 

@@ -58,7 +58,6 @@ const SecureRecordType = new GraphQLObjectType({
         MFA: {
             type: MFAType, 
             resolve(parent, args){
-                //return _.find(WebsiteCredentials,{id:parent.recordID})
                 return Seed.findById(parent.recordID);
             }
         },
@@ -146,7 +145,7 @@ const RootQuery = new GraphQLObjectType({
         },
         findCredentialsContains: {
             type:  new GraphQLList(SecureRecordType),
-            args: {UID: {type: new GraphQLNonNull(GraphQLString)}, name: {type: new GraphQLNonNull(GraphQLString)}, contains: {type: GraphQLBoolean}, getShares: {type: GraphQLBoolean}},
+            args: {name: {type: new GraphQLNonNull(GraphQLString)}, contains: {type: GraphQLBoolean}, getShares: {type: GraphQLBoolean}},
             resolve(parent, args, context){
                 if(args.contains){
                     return SecureRecord.find({ "name": { "$regex": args.name, "$options": "i" }, type: "account", UID: context.token.UID});
@@ -156,7 +155,7 @@ const RootQuery = new GraphQLObjectType({
         },
         findMFAContains: {
             type:  new GraphQLList(SecureRecordType),
-            args: {UID: {type: new GraphQLNonNull(GraphQLString)}, name: {type: new GraphQLNonNull(GraphQLString)}, contains: {type: GraphQLBoolean}, getShares: {type: GraphQLBoolean}},
+            args: {name: {type: new GraphQLNonNull(GraphQLString)}, contains: {type: GraphQLBoolean}, getShares: {type: GraphQLBoolean}},
             resolve(parent, args, context){
                 if(args.contains){
                     return SecureRecord.find({ "name": { "$regex": args.name, "$options": "i" }, type: "seed", UID: context.token.UID});
@@ -166,42 +165,42 @@ const RootQuery = new GraphQLObjectType({
         },
         findCredentials: {
             type:  new GraphQLList(SecureRecordType),
-            args: {UID: {type: new GraphQLNonNull(GraphQLString)}, sortType: {type: GraphQLString}, offset: {type: GraphQLInt}, limit: {type: GraphQLInt}, getShares: {type: GraphQLBoolean}},
+            args: {sortType: {type: GraphQLString}, offset: {type: GraphQLInt}, limit: {type: GraphQLInt}, getShares: {type: GraphQLBoolean}},
             resolve(parent, args, context){
                 return SecureRecord.find({type: "account", UID: context.token.UID}).sort({name: args.sortType }).skip(args.offset).limit(args.limit);
             }
         },
         findNotes: {
             type:  new GraphQLList(SecureRecordType),
-            args: {UID: {type: new GraphQLNonNull(GraphQLString)}, sortType: {type: GraphQLString}, offset: {type: GraphQLInt}, limit: {type: GraphQLInt}, getShares: {type: GraphQLBoolean}},
+            args: {sortType: {type: GraphQLString}, offset: {type: GraphQLInt}, limit: {type: GraphQLInt}, getShares: {type: GraphQLBoolean}},
             resolve(parent, args, context){
                 return SecureRecord.find({type: "note", UID: context.token.UID}).sort({name: args.sortType }).skip(args.offset).limit(args.limit);
             }
         },
         findMFA: {
             type:  new GraphQLList(SecureRecordType),
-            args: {UID: {type: new GraphQLNonNull(GraphQLString)}, sortType: {type: GraphQLString}, offset: {type: GraphQLInt}, limit: {type: GraphQLInt}, getShares: {type: GraphQLBoolean}},
+            args: {sortType: {type: GraphQLString}, offset: {type: GraphQLInt}, limit: {type: GraphQLInt}, getShares: {type: GraphQLBoolean}},
             resolve(parent, args, context){
                 return SecureRecord.find({type: "seed", UID: context.token.UID}).sort({name: args.sortType }).skip(args.offset).limit(args.limit);
             }
         },
         countMFAs: {
             type:  new GraphQLList(SecureRecordType),
-            args: {UID: {type: new GraphQLNonNull(GraphQLString)}},
+            args: {},
             resolve(parent, args, context){
                 return SecureRecord.find({type: "seed", UID: context.token.UID}).count();
             }
         },
         countNotes: {
             type:  new GraphQLList(SecureRecordType),
-            args: {UID: {type: new GraphQLNonNull(GraphQLString)}},
+            args: {},
             resolve(parent, args,context){
                 return SecureRecord.find({type: "note", UID: context.token.UID}).count();
             }
         },
         countWebsiteCredentials: {
             type:  new GraphQLList(SecureRecordType),
-            args: {UID: {type: new GraphQLNonNull(GraphQLString)}},
+            args: {},
             resolve(parent, args, context){
                 return SecureRecord.find({type: "acount", UID: context.token.UID}).count();
             }
