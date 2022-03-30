@@ -1,10 +1,10 @@
 .hexagon-overlay{
-    width: 300px;
-    height: 250px;
+    width: 300px !important;
+    height: 250px !important;
     background-color: aliceblue !important;
     position: fixed;
-    right: 10%;
-    top: 15%;
+    right: 15px;
+    top: 15px;
     z-index: 100001;
     font-family: 'Lato', 'Roboto', 'Helvetica', 'Ariel', sans-serif;
     font-size: 14px;
@@ -13,12 +13,13 @@
 }
 
 .hexagon-save-overlay{
-    height: 300px;
+    height: 350px !important;
+    width: 350px !important;
 }
 
 .hexagon-overlay-body{
-    height: 210px;
-    padding: 20px;
+    height: 210px !important;
+    padding: 20px !important;
     text-align: center;
     background-color: aliceblue;
     display: flex;
@@ -28,7 +29,7 @@
 }
 
 .hexagon-save-overlay-body{
-    height: 260px;
+    height: 310px !important;
 }
 
 .hexagon-header img{

@@ -38,7 +38,7 @@ body {
 
 .hexagon-subheading{
   font-size: 16px !important;
-  font-weight: 300;
+  font-weight: 375;
   padding-bottom: 15px;
 }
 
@@ -48,4 +48,10 @@ body {
 
 .MuiTabs-root{
   background-color: #e3f2fd;
+}
+
+.hexagon-mfa-subheading{
+  font-size: 18px !important;
+  font-weight: 500;
+  padding-bottom: 20px;
 }

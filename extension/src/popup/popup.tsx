@@ -8,6 +8,7 @@ import PopupPasswords from './passwords/passwords'
 import Header from '../sharedComponents/header/header'
 import PasswordGenerator from './passwordGenerator';
 import parser from '../utils/parser'
+import MFAKeyForm from './mfaKeys';
 
 const SigninPage = () => {
   const onClickSignin = () => {
@@ -75,7 +76,9 @@ const PopupHome = ({ name, url }: {name:string, url:string}) => {
           <TabPanel value="2" sx={{height: "337px", padding: '0'}}>
             <PasswordGenerator />
           </TabPanel>
-          <TabPanel value="3" sx={{height: "337px", padding: '0'}}>Item Three</TabPanel>
+          <TabPanel value="3" sx={{height: "337px", padding: '0'}}>
+            <MFAKeyForm url={url} />
+          </TabPanel>
         </TabContext>
       </Box>
     </div>
