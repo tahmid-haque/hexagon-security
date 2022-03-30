@@ -8,30 +8,32 @@ export type PasswordFieldProps = {
     readonly?: boolean;
     errorMessage?: string;
     isError?: boolean;
+    label?: string;
     onPasswordChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onPasswordViewToggle?: (isPassViewable: boolean) => void;
+};
+
+const onTogglePasswordViewClick = function (this: {
+    props: PasswordFieldProps;
+    setShowPassword: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+    const { setShowPassword, props } = this;
+    setShowPassword((showPassword) => {
+        if (props.onPasswordViewToggle)
+            props.onPasswordViewToggle(showPassword);
+        return !showPassword;
+    });
 };
 
 export default function PasswordField(props: PasswordFieldProps) {
     const [showPassword, setShowPassword] = useState(false);
 
-    const onTogglePasswordViewClick = (
-        _event: React.MouseEvent<HTMLButtonElement>
-    ) => {
-        setShowPassword((showPassword) => {
-            if (props.onPasswordViewToggle)
-                props.onPasswordViewToggle(showPassword);
-            return !showPassword;
-        });
-    };
-
     return (
         <TextField
             fullWidth
-            id='password'
             error={props.isError}
             value={props.password}
-            label='Password'
+            label={`${props.label ?? 'Password'}`}
             type={showPassword ? 'text' : 'password'}
             helperText={props.errorMessage ?? ''}
             variant='standard'
@@ -40,11 +42,16 @@ export default function PasswordField(props: PasswordFieldProps) {
                 endAdornment: (
                     <InputAdornment position='end'>
                         <Tooltip
-                            title={`${showPassword ? 'Hide' : 'Show'} Password`}
+                            title={`${showPassword ? 'Hide' : 'Show'} ${
+                                props.label ?? 'Password'
+                            }`}
                         >
                             <IconButton
                                 aria-label='toggle password visibility'
-                                onClick={onTogglePasswordViewClick}
+                                onClick={onTogglePasswordViewClick.bind({
+                                    setShowPassword,
+                                    props,
+                                })}
                                 edge='end'
                             >
                                 {showPassword ? (

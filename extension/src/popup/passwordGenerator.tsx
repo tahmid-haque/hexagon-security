@@ -56,7 +56,7 @@ const StrengthChecker = () => {
     const copyIcon = <IconButton sx={{m:0}} onClick={() => navigator.clipboard.writeText(checkPass)}><ContentCopyIcon fontSize='small' /></IconButton>;
 
     return (
-        <Box p={3} pt={1} className='hexagon-check-strength'>
+        <Box px={3} py={1} className='hexagon-check-strength'>
             <div className='hexagon-subheading'>Check Password Strength</div>
             <Tooltip title="Double click to copy" placement="top">
                 <TextField
@@ -68,7 +68,7 @@ const StrengthChecker = () => {
                     }}
                     onChange={e => setCheckPass(checkPass => checkPass=e.target.value)}
                     onDoubleClick={() => navigator.clipboard.writeText(checkPass)}
-                    sx={{mb:2}}
+                    sx={{mb:2}} 
                 />
             </Tooltip>
             

@@ -1,15 +1,45 @@
-import { Box, Grid, LinearProgress } from '@mui/material';
+import { Box, Grid, LinearProgress, Tooltip } from '@mui/material';
+import { GridColDef, GridSortDirection } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
+import LockIcon from '@mui/icons-material/Lock';
 import {
     clearEvent,
+    DashboardEvent,
     DashboardEventType,
 } from '../../store/slices/DashboardSlice';
 import { useAppDispatch, useAppSelector } from '../../store/store';
-import MFAItem from './mfa-item/MFAItem';
+import { useComponentState } from '../../utils/hooks';
+import ActionMenu from '../credentials/action-menu/ActionMenu';
+import CredentialName from '../credentials/name-field/CredentialName';
+import CredentialPassword from '../credentials/password-field/CredentialPassword';
+import CredentialUser from '../credentials/user-field/CredentialUser';
+import ConfirmationDialog from '../shared/ConfirmationDialog';
+import MFATimer from './mfa-timer/MFATimer';
+import AppTable from '../shared/AppTable';
+import MFAService from '../../services/MFAService';
+import { useOutletContext } from 'react-router-dom';
+import MFACreator from './mfa-creator/MFACreator';
+import MFACode from './mfa-code/MFACode';
+import { sendToast } from '../../store/slices/ToastSlice';
+import { Display, setDisplay } from '../../store/slices/DisplaySlice';
 
-type MFAState = {
+type MFAViewContext = {
+    state: MFAViewState;
+    event: DashboardEvent;
+    update: (update: Partial<MFAViewState>) => void;
+    dispatch: any;
+};
+
+type MFAViewState = {
     content: MFA[];
+    totalMFA: number;
     isLoading: boolean;
+    isCreatorOpen: boolean;
+    isDeleteOpen: boolean;
+    isDeleteLoading: boolean;
+    rerenderTable: boolean;
+    mfaService: MFAService;
+    currentId?: string;
 };
 
 export type MFA = {
@@ -21,240 +51,209 @@ export type MFA = {
     shares: string[];
 };
 
-const testCredentials: MFA[] = [
+const columnDef: GridColDef[] = [
     {
-        id: '0',
-        name: 'Apple.com',
-        user: 'john.doe@test.com',
-        seed: 'password123',
-        key: new ArrayBuffer(0),
-        shares: [],
+        field: 'name',
+        headerName: 'Name',
+        width: 300,
+        flex: 1.5,
+        sortable: true,
+        hideable: false,
+        renderCell: (params) => {
+            return <CredentialName name={params.value} />;
+        },
     },
     {
-        id: '1',
-        name: 'Amazon.com',
-        user: 'TheRaggedGamer@gmail.com',
-        seed: '65u563j5jm5j',
-        key: new ArrayBuffer(0),
-        shares: [],
+        field: 'user',
+        flex: 1.5,
+        headerName: 'User',
+        hideable: false,
+        sortable: false,
+        width: 200,
+        renderCell: (params) => {
+            return <CredentialUser user={params.value} />;
+        },
     },
     {
-        id: '2',
-        name: 'Twitter.com',
-        user: 'maiya.kling@gmail.com',
-        seed: '6j53k6536yhgf',
-        key: new ArrayBuffer(0),
-        shares: [],
+        field: 'seed',
+        headerName: 'Code',
+        width: 150,
+        sortable: false,
+        filterable: false,
+        hideable: false,
+        renderCell: (params) => {
+            return <MFACode seed={params.value} name={params.row.name} />;
+        },
     },
     {
-        id: '3',
-        name: 'Facebook.com',
-        user: 'unienow@gmail.com',
-        seed: 'gj43589hu249hj9',
-        key: new ArrayBuffer(0),
-        shares: [],
+        field: 'timer',
+        headerName: 'Expiry',
+        width: 60,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+            return <MFATimer />;
+        },
     },
     {
-        id: '4',
-        name: 'Instagram.com',
-        user: 'heichmann@yahoo.com',
-        seed: '543hy456jhh56j56j3',
-        key: new ArrayBuffer(0),
-        shares: [],
+        field: 'ownership',
+        headerName: 'Ownership',
+        width: 88,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+            return (
+                <Box
+                    sx={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <Tooltip title='Exclusive'>
+                        <LockIcon />
+                    </Tooltip>
+                </Box>
+            );
+        },
     },
     {
-        id: '5',
-        name: 'Reddit.com',
-        user: 'gerardo.mosciski@brakus.com',
-        seed: '534y54n656',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '6',
-        name: 'yahoo.ca',
-        user: 'jett.ryan@bradtke.net',
-        seed: 'fj43890fj394893g',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '7',
-        name: 'msn.com',
-        user: 'schamplin@bergstrom.net',
-        seed: 'fj34298j9238',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '8',
-        name: 'yelp.com',
-        user: 'delia21@kulas.com',
-        seed: 'gfj4389gj3948g',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '9',
-        name: 'youtube.com',
-        user: 'hansen.kenna@shanahan.com',
-        seed: 'g34545hj5jkvhkghku',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '10',
-        name: 'Google.com',
-        user: 'flueilwitz@paucek.biz',
-        seed: 'fj48903gj3489g398hg3',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '11',
-        name: 'rbc.ca',
-        user: 'cayla.west@bauch.com',
-        seed: 'kg4839ghgh4537',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '12',
-        name: 'Apple.com',
-        user: 'uriel65@sauer.com',
-        seed: 'rj34829y34gf83hg',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '13',
-        name: 'gmail.com',
-        user: 'lauryn67@hettinger.com',
-        seed: 'password123',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '14',
-        name: 'Linkedin.com',
-        user: 'vfeeney@yahoo.ch',
-        seed: 'hf7348ghkjshdfgkjdsnbvkj',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '15',
-        name: 'piazza.com',
-        user: 'misael48@hotmail.com',
-        seed: 'gj4389gh398gh3',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '16',
-        name: 'utoronto.ca',
-        user: 'qoconner@ryan.net',
-        seed: 'password123',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '17',
-        name: 'ryerson.ca',
-        user: 'dsatterfield@bernier.biz',
-        seed: 'jf4389gh39gh398ghh',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '18',
-        name: 'uwaterloo.ca',
-        user: 'sreichel@gmail.com',
-        seed: 'f48934g398g93h',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '19',
-        name: 'ebay.ca',
-        user: 'orland.monahan@yahoo.com',
-        seed: 'fhj3489gh34g897hg458gkljfg',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '20',
-        name: 'Apple.com',
-        user: 'john.doe@test.com',
-        seed: 'password123',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '21',
-        name: 'snapchat.com',
-        user: 'nigel.orn@harber.info',
-        seed: 'gjn89374gh3489hgdfhgl',
-        key: new ArrayBuffer(0),
-        shares: [],
-    },
-    {
-        id: '22',
-        name: 'etsy.com',
-        user: 'delbert.skiles@yahoo.com',
-        seed: 'jf87394gh3jkfhjkghkfhkgl',
-        key: new ArrayBuffer(0),
-        shares: [],
+        field: 'actions',
+        headerName: 'Actions',
+        width: 67,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+            return <ActionMenu id={params.row.id} hideEdit />;
+        },
     },
 ];
 
-export default function MFAView(props: any) {
-    const [state, setState] = useState({
-        isLoading: false,
-        content: testCredentials,
-    } as MFAState);
-    const dispatch = useAppDispatch();
-    const event = useAppSelector((state) => state.dashboard);
+const handleEvent = function (this: MFAViewContext) {
+    const { event, update, dispatch } = this;
+    switch (event.type) {
+        case DashboardEventType.CREATE_CLICK:
+            dispatch(clearEvent());
+            update({
+                isCreatorOpen: true,
+            });
+            break;
 
-    const update = (update: Partial<MFAState>) => {
-        setState((state) => {
-            return { ...state, ...update };
-        });
+        case DashboardEventType.DELETE_CLICK:
+            dispatch(clearEvent());
+            update({
+                isDeleteOpen: true,
+                currentId: event.param,
+            });
+            break;
+
+        default:
+            break;
+    }
+};
+
+const updateMFA = async function (
+    this: MFAViewContext,
+    offset: number,
+    limit: number,
+    sortType: GridSortDirection
+) {
+    const { update, state } = this;
+    update({ isLoading: true });
+    update({
+        content: await state.mfaService.getMFAs(offset, limit, sortType),
+    });
+    update({ isLoading: false });
+};
+
+const onDeleteAccept = async function (this: MFAViewContext) {
+    const { update, state, dispatch } = this;
+    update({ isDeleteLoading: true });
+    try {
+        await state.mfaService.deleteMFA(state.currentId!);
+        dispatch(
+            sendToast({
+                message: 'Successfully deleted your credential.',
+                severity: 'success',
+            })
+        );
+    } catch (error) {
+        dispatch(
+            sendToast({
+                message:
+                    'Something went wrong and we were unable to delete your credential. Please try again later.',
+                severity: 'error',
+            })
+        );
+    }
+    update({ isDeleteLoading: false, isDeleteOpen: false });
+};
+
+const init = function (this: MFAViewContext) {
+    const { state, update, dispatch } = this;
+    dispatch(setDisplay(Display.MFA));
+    state.mfaService.getMFACount().then((totalMFA) => {
+        update({ totalMFA });
+    });
+};
+
+export default function MFAView() {
+    const event = useAppSelector((state) => state.dashboard);
+    const dispatch = useAppDispatch();
+    const account = useAppSelector((state) => state.account);
+    const cryptoWorker = useOutletContext();
+    const { state, update } = useComponentState({
+        content: [],
+        totalMFA: 0,
+        isLoading: true,
+        isCreatorOpen: false,
+        isDeleteOpen: false,
+        isDeleteLoading: false,
+        rerenderTable: false,
+        mfaService: new MFAService(cryptoWorker, account),
+    } as MFAViewState);
+
+    const context = {
+        state,
+        update,
+        dispatch,
+        event,
     };
 
-    useEffect(() => {
-        switch (event.type) {
-            case DashboardEventType.CREATE_CLICK:
-                dispatch(clearEvent());
-                break;
-
-            case DashboardEventType.DELETE_CLICK:
-                dispatch(clearEvent());
-                break;
-
-            case DashboardEventType.EDIT_CLICK:
-                dispatch(clearEvent());
-                break;
-
-            default:
-                break;
-        }
-    }, [event]);
-
-    console.log(state.content);
+    useEffect(init.bind(context), []);
+    useEffect(handleEvent.bind(context), [event]);
 
     return (
-        <Box sx={{ m: 1 }}>
-            {state.isLoading && <LinearProgress />}
-            <Grid container spacing={2}>
-                {state.content.map((mfa) => {
-                    return (
-                        <Grid item xs={12} md={6} lg={4} xl={3} key={mfa.id}>
-                            <MFAItem mfa={mfa} />
-                        </Grid>
-                    );
-                })}
-            </Grid>
+        <Box sx={{ height: '100%' }}>
+            <AppTable
+                columnDef={columnDef}
+                content={state.content}
+                contentCount={state.totalMFA}
+                isLoading={state.isLoading}
+                sortField='name'
+                updateContent={updateMFA.bind(context)}
+                rerender={state.rerenderTable}
+                clearRerender={() => update({ rerenderTable: false })}
+            />
+            <MFACreator
+                isOpen={state.isCreatorOpen}
+                onClose={(modified) => {
+                    update({
+                        isCreatorOpen: false,
+                        ...(modified && { rerenderTable: true }),
+                    });
+                }}
+                mfaService={state.mfaService}
+            />
+            <ConfirmationDialog
+                isOpen={state.isDeleteOpen}
+                onClose={() => update({ isDeleteOpen: false })}
+                onAccept={onDeleteAccept.bind(context)}
+                title='Delete MFA Credential'
+                body='Are you sure you want to delete this credential? This action cannot be undone.'
+                isLoading={state.isDeleteLoading}
+            />
         </Box>
     );
 }

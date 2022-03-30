@@ -11,6 +11,27 @@ import { useState } from 'react';
 import { sendToast, Toast } from '../../../store/slices/ToastSlice';
 import { useAppDispatch } from '../../../store/store';
 
+const onDoubleClick = function (this: any) {
+    const { dispatch, password } = this;
+    navigator.clipboard
+        .writeText(password)
+        .then(
+            () =>
+                ({
+                    message: 'Copied to clipboard!',
+                    severity: 'success',
+                } as Toast)
+        )
+        .catch(
+            () =>
+                ({
+                    message: 'Unable to copy.',
+                    severity: 'error',
+                } as Toast)
+        )
+        .then((toast) => dispatch(sendToast(toast)));
+};
+
 export default function CredentialPassword(props: {
     password: string;
     shorten?: number;
@@ -19,25 +40,6 @@ export default function CredentialPassword(props: {
     const [showPassword, setShowPassword] = useState(false);
     const dispatch = useAppDispatch();
 
-    const onDoubleClick = () => {
-        navigator.clipboard
-            .writeText(props.password)
-            .then(
-                () =>
-                    ({
-                        message: 'Copied to clipboard!',
-                        severity: 'success',
-                    } as Partial<Toast>)
-            )
-            .catch(
-                () =>
-                    ({
-                        message: 'Unable to copy.',
-                        severity: 'error',
-                    } as Partial<Toast>)
-            )
-            .then((toast) => dispatch(sendToast(toast)));
-    };
     return (
         <Tooltip title='Double click to copy'>
             <Input
@@ -56,7 +58,10 @@ export default function CredentialPassword(props: {
                     textOverflow: 'ellipsis',
                     ...props.sx,
                 }}
-                onDoubleClick={onDoubleClick}
+                onDoubleClick={onDoubleClick.bind({
+                    dispatch,
+                    password: props.password,
+                })}
                 endAdornment={
                     <InputAdornment position='end' sx={{ mr: 1 }}>
                         <IconButton

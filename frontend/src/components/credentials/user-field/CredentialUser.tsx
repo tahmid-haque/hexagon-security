@@ -2,31 +2,36 @@ import { Box, Tooltip } from '@mui/material';
 import { sendToast, Toast } from '../../../store/slices/ToastSlice';
 import { useAppDispatch } from '../../../store/store';
 
+const onDoubleClick = function (this: any) {
+    const { user, dispatch } = this;
+    navigator.clipboard
+        .writeText(user)
+        .then(
+            () =>
+                ({
+                    message: 'Copied to clipboard!',
+                    severity: 'success',
+                } as Toast)
+        )
+        .catch(
+            () =>
+                ({
+                    message: 'Unable to copy.',
+                    severity: 'error',
+                } as Toast)
+        )
+        .then((toast) => dispatch(sendToast(toast)));
+};
+
 export default function CredentialUser(props: { user: string }) {
     const dispatch = useAppDispatch();
-    const onDoubleClick = () => {
-        navigator.clipboard
-            .writeText(props.user)
-            .then(
-                () =>
-                    ({
-                        message: 'Copied to clipboard!',
-                        severity: 'success',
-                    } as Partial<Toast>)
-            )
-            .catch(
-                () =>
-                    ({
-                        message: 'Unable to copy.',
-                        severity: 'error',
-                    } as Partial<Toast>)
-            )
-            .then((toast) => dispatch(sendToast(toast)));
-    };
     return (
         <Tooltip title='Double click to copy'>
             <Box
-                onDoubleClick={onDoubleClick}
+                onDoubleClick={onDoubleClick.bind({
+                    dispatch,
+                    user: props.user,
+                })}
                 sx={{
                     width: '100%',
                     textOverflow: 'ellipsis',

@@ -1,4 +1,5 @@
 {
+  "key": "MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCDItW+EUcu8SS54wKGOG0gwxnYwLsfE+L8C4T+ozDk7W8mHDb0qwjCHvq8nT17cqHNRaKrvKrhCJMiSN8P9EPWfe60snaSodcxfRqcN1yA14Hg9xfrUeuJHqdIPZc1iDtEDXzfx/hAgIx0hxyjXKaIUfKwYdNV+4I2BZUsxG2sIzcD/XU8Na8pDAWDDxtLUgU4A8ONJvJAXWP6i7UkgYtu+JgbousifBW0ZQunRiXFZ8ZuEdzAVONF4Pv7Gs8GOR/d0idj+WaNoKeLRmqVNu7dXe+8cJOc4HTYELMXuoVektzS/zyHa0MUtKTdCJPthKkvR/+bJnQlT4b0skh6j1sXAgMBAAECggEAE21ctvy+S/EDnNpJrHK9kAX3VUowLol2rhpSyJqKis+2ELJLXfHcqU2Hndu5mQlBeTSgxcp8kjv/+CtNiIKKbkNX0sNBl7WMONOs1onJFXlXz2krzPvk5fp5k9U0CoU1Kn7JCioI2B1zMWw2zOjT7wwc5Q6JDYrmHnSzRd+P09lpaePJ+VdacTbbihhAN9VyLa9G16/YCBPloyDk9LkHoSqWZ5/XzcE/mBSkUdJ546Ngowa9XG5ZXh6f+4k1Hh605vmRiNVokb0rWGURXscwnCE51xDyPolgNPmAw/6E1Cx+LKhv8f0H/7A0WYEanljmd/ujLxmdyeyFC1zIlyAMMQKBgQC4qDB2mam+52oOmcbSqaSdVG/cMISzb+EPAh99jTZ/8ODUDJPQbnx9iAj+Bkjm65zlGV/F1YtyCwevzlOQNpjKOr9MGVwgHArVQIKveJD9cUNzmJOmvfhjtWXA40h8U1GmEXv1zZ2edAYYObPwtqLmN9ciRpQuHPHxNItWWzZjHwKBgQC1zRG83xqJ23OXR0LKg7uk0gFQaPtfzUwPmO7JJgUHy8PgXygClnB2rZsWPR2G1JdTLJTCRg0856JELm820CiFXsUcxvbID7d9gZ++6bEc0Hzw8IFRL361w3aPqD46cCCkH5n9LRuqClSHy0qdYBSMwi0YoyayrZMqBFesfSVBCQKBgEdL6SphukCTaUep6DJ+faihaW9C7Hm7wNHip/X6CAjuIGC/WnMntbliRNaP5qYCYtmyKmBgSy8FQzqGF42fBu9OL35abE+ZhDVCazMFAjZY/Qos5xWCU91rtJX9K4eVQ/ky1wHZGfqMIa5I2Ukfu1XYSaBaT+xeEKxo9UOqhB1RAoGAaC8V7CvatIfrjRUMZKvre7/Revg+nh8zaHjW1rUQCvCt1sYRUrJNzuUcTDlH032/Hq4crdyhN3by2anWmA3gOtYdlak7wVioaadAGZMoqX+dKiJZqWHTdmyGZDshNjINsqBdieYwxVhYKt3Ia7mk7SlV2Jme0qSAAoMsjy/EiqkCgYBGxfB+hOBek9h8tPALyAfJpDTdKVGC9pzmtql604xoUTIXMc+/iHAWjL766eI7LGsEGLWHeEZlObYh+ERSXhAxowrZ7cKq01ZEI7HpP9tK496Oj7/OttiRj5BkTQrdm8pHkLK4dSmktTf5xdldqwG2YRwxgkpd1fVftYOC6Mo/eQ==",
   "name": "Hexagon",
   "description": "Password managing chrome extension in React",
   "version": "1.0.0",
@@ -25,8 +26,11 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": ["<all_urls>", "http://localhost:3000/*"],
       "js": ["contentScript.js"]
     }
-  ]
+  ],
+  "externally_connectable": {
+    "matches": ["http://localhost:3000/*"]
+  }
 }

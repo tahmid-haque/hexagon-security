@@ -7,6 +7,7 @@ import parser from 'hexagon-shared/utils/parser';
 import AppModal from '../../shared/AppModal';
 import PasswordField from '../../shared/PasswordField';
 import { Credentials } from '../CredentialsView';
+import { useComponentState } from '../../../utils/hooks';
 
 export type CredentialEditorProps = {
     isOpen: boolean;
@@ -29,7 +30,7 @@ type CredentialEditorState = {
     isLoading: boolean;
 };
 
-const initState = {
+const initState: CredentialEditorState = {
     isURLValid: true,
     isUserValid: true,
     isPassValid: true,
@@ -42,149 +43,177 @@ const initState = {
     isLoading: false,
 };
 
-export default function CredentialEditor(props: CredentialEditorProps) {
-    const [state, setState] = useState({
-        ...initState,
+const onCredentialChange = (
+    props: CredentialEditorProps,
+    update: (update: Partial<CredentialEditorState>) => void
+) => {
+    if (props.isEdit && props.isOpen) {
+        update({
+            url: props.credential!.name,
+            user: props.credential!.user,
+            password: props.credential!.password,
+        });
+    }
+};
+
+const onURLChange = (
+    update: (update: Partial<CredentialEditorState>) => void,
+    event: React.ChangeEvent<HTMLInputElement>
+) => {
+    const value = event.target.value;
+    let isURLValid = true;
+    try {
+        parser.extractDomain(value);
+    } catch (error: any) {
+        isURLValid = false;
+    }
+
+    update({
+        url: value,
+        isURLValid,
+        urlError: '',
     });
+};
+
+const onUserChange = (
+    update: (update: Partial<CredentialEditorState>) => void,
+    event: React.ChangeEvent<HTMLInputElement>
+) => {
+    const value = event.target.value;
+    update({
+        user: value,
+        isUserValid: value.length > 0,
+        userError: '',
+    });
+};
+
+const onPasswordChange = (
+    update: (update: Partial<CredentialEditorState>) => void,
+    event: React.ChangeEvent<HTMLInputElement>
+) => {
+    const value = event.target.value;
+    update({
+        password: value,
+        isPassValid: value.length > 0,
+        passwordError: '',
+    });
+};
+
+const onClose = (
+    update: (update: Partial<CredentialEditorState>) => void,
+    close: (modified: boolean) => void,
+    modified: boolean
+) => {
+    update(initState);
+    close(modified);
+};
+
+const validateForm = (
+    state: CredentialEditorState,
+    update: (update: Partial<CredentialEditorState>) => void
+) => {
+    let error = false;
+    if (!state.isURLValid || !state.url) {
+        update({ urlError: 'Please enter a valid URL', isURLValid: false });
+        error = true;
+    }
+    if (!state.isUserValid || !state.user) {
+        update({
+            userError: 'Please enter a username',
+            isUserValid: false,
+        });
+        error = true;
+    }
+    if (!state.isPassValid || !state.password) {
+        update({
+            passwordError: 'Please enter a password',
+            isPassValid: false,
+        });
+        error = true;
+    }
+    return error;
+};
+
+const onCreateSubmit = async (
+    state: CredentialEditorState,
+    update: (update: Partial<CredentialEditorState>) => void,
+    props: CredentialEditorProps,
+    dispatch: any
+) => {
+    if (validateForm(state, update)) return;
+    update({ isLoading: true });
+    try {
+        await props.credentialService.createCredential(
+            state.url,
+            state.user,
+            state.password
+        );
+        dispatch(
+            sendToast({
+                message: 'Successfully created your credential.',
+                severity: 'success',
+            })
+        );
+    } catch (error) {
+        update({ isLoading: false });
+        return dispatch(
+            sendToast({
+                message:
+                    'Something went wrong and we were unable to save your credential. Try again later.',
+                severity: 'error',
+            })
+        );
+    }
+    onClose(update, props.onClose, true);
+};
+
+const onEditSubmit = async (
+    state: CredentialEditorState,
+    update: (update: Partial<CredentialEditorState>) => void,
+    props: CredentialEditorProps,
+    dispatch: any
+) => {
+    if (validateForm(state, update)) return;
+    update({ isLoading: true });
+    try {
+        await props.credentialService.updateCredential(
+            state.user,
+            state.password,
+            props.credential!.key
+        );
+        dispatch(
+            sendToast({
+                message: 'Successfully updated your credential.',
+                severity: 'success',
+            })
+        );
+    } catch (error) {
+        update({ isLoading: false });
+        return dispatch(
+            sendToast({
+                message:
+                    'Something went wrong and we were unable to save your credential. Try again later.',
+                severity: 'error',
+            })
+        );
+    }
+    onClose(update, props.onClose, true);
+};
+
+export default function CredentialEditor(props: CredentialEditorProps) {
+    const { state, update } = useComponentState(initState);
     const dispatch = useAppDispatch();
 
-    const update = (update: Partial<CredentialEditorState>) => {
-        setState((state) => {
-            return { ...state, ...update };
-        });
-    };
-
-    useEffect(() => {
-        if (props.isEdit) {
-            update({
-                url: props.credential!.name,
-                user: props.credential!.user,
-                password: props.credential!.password,
-            });
-        }
-    }, [props.credential]);
-
-    const onURLChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const value = event.target.value;
-        let isURLValid = true;
-        try {
-            parser.extractDomain(value);
-        } catch (error: any) {
-            isURLValid = false;
-        }
-
-        update({
-            url: value,
-            isURLValid,
-            urlError: '',
-        });
-    };
-
-    const onUserChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const value = event.target.value;
-        update({
-            user: value,
-            isUserValid: value.length > 0,
-            userError: '',
-        });
-    };
-
-    const onPasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const value = event.target.value;
-        update({
-            password: value,
-            isPassValid: value.length > 0,
-            passwordError: '',
-        });
-    };
-
-    const onClose = (modified: boolean) => {
-        update(initState);
-        props.onClose(modified);
-    };
-
-    const validateForm = () => {
-        let error = false;
-        if (!state.isURLValid || !state.url) {
-            update({ urlError: 'Please enter a valid URL', isURLValid: false });
-            error = true;
-        }
-        if (!state.isUserValid || !state.user) {
-            update({
-                userError: 'Please enter a username',
-                isUserValid: false,
-            });
-            error = true;
-        }
-        if (!state.isPassValid || !state.password) {
-            update({
-                passwordError: 'Please enter a password',
-                isPassValid: false,
-            });
-            error = true;
-        }
-        return error;
-    };
-
-    const onCreateSubmit = async () => {
-        if (validateForm()) return;
-        update({ isLoading: true });
-        try {
-            await props.credentialService.createCredential(
-                state.url,
-                state.user,
-                state.password
-            );
-            dispatch(
-                sendToast({
-                    message: 'Successfully created your credential.',
-                    severity: 'success',
-                })
-            );
-        } catch (error) {
-            update({ isLoading: false });
-            return dispatch(
-                sendToast({
-                    message:
-                        'Something went wrong and we were unable to save your credential. Try again later.',
-                })
-            );
-        }
-        onClose(true);
-    };
-
-    const onEditSubmit = async () => {
-        if (validateForm()) return;
-        update({ isLoading: true });
-        try {
-            await props.credentialService.updateCredential(
-                state.user,
-                state.password,
-                props.credential!
-            );
-            dispatch(
-                sendToast({
-                    message: 'Successfully updated your credential.',
-                    severity: 'success',
-                })
-            );
-        } catch (error) {
-            update({ isLoading: false });
-            return dispatch(
-                sendToast({
-                    message:
-                        'Something went wrong and we were unable to save your credential. Try again later.',
-                })
-            );
-        }
-        onClose(true);
-    };
+    useEffect(onCredentialChange.bind(null, props, update), [
+        props.credential,
+        props.isOpen,
+    ]);
 
     return (
         <AppModal
             isOpen={props.isOpen}
             modalTitle={`${props.isEdit ? 'Edit' : 'Create'} Credentials`}
-            onClose={() => onClose(false)}
+            onClose={onClose.bind(null, update, props.onClose, false)}
         >
             <TextField
                 fullWidth
@@ -195,7 +224,7 @@ export default function CredentialEditor(props: CredentialEditorProps) {
                 type='url'
                 helperText={state.urlError ?? ''}
                 variant='standard'
-                onChange={onURLChange}
+                onChange={onURLChange.bind(null, update)}
             />
             <TextField
                 fullWidth
@@ -205,20 +234,22 @@ export default function CredentialEditor(props: CredentialEditorProps) {
                 type='text'
                 helperText={state.userError ?? ''}
                 variant='standard'
-                onChange={onUserChange}
+                onChange={onUserChange.bind(null, update)}
                 sx={{ my: 1 }}
             />
             <PasswordField
                 isError={!state.isPassValid}
                 password={state.password}
-                onPasswordChange={onPasswordChange}
+                onPasswordChange={onPasswordChange.bind(null, update)}
                 errorMessage={state.passwordError}
             />
             <Box sx={{ float: 'right', mt: 2, position: 'relative' }}>
                 <Button
                     variant='contained'
                     onClick={() =>
-                        props.isEdit ? onEditSubmit() : onCreateSubmit()
+                        props.isEdit
+                            ? onEditSubmit(state, update, props, dispatch)
+                            : onCreateSubmit(state, update, props, dispatch)
                     }
                     disabled={state.isLoading}
                 >

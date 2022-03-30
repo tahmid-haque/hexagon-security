@@ -10,14 +10,14 @@ import {
     Menu,
     MenuItem,
 } from '@mui/material';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
     createEvent,
     DashboardEventType,
 } from '../../../store/slices/DashboardSlice';
 import { useAppDispatch } from '../../../store/store';
 
-export default function ActionMenu(props: { id: string }) {
+export default function ActionMenu(props: { id: string; hideEdit?: boolean }) {
     // inspired from https://mui.com/material-ui/react-menu/
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -27,11 +27,11 @@ export default function ActionMenu(props: { id: string }) {
         setAnchorEl(event.currentTarget);
     };
 
-    const onClose = () => {
+    const onClose = useCallback(() => {
         setAnchorEl(null);
-    };
+    }, []);
 
-    const onDeleteClick = () => {
+    const onDeleteClick = useCallback(() => {
         dispatch(
             createEvent({
                 type: DashboardEventType.DELETE_CLICK,
@@ -39,9 +39,9 @@ export default function ActionMenu(props: { id: string }) {
             })
         );
         onClose();
-    };
+    }, []);
 
-    const onEditClick = () => {
+    const onEditClick = useCallback(() => {
         dispatch(
             createEvent({
                 type: DashboardEventType.EDIT_CLICK,
@@ -49,7 +49,7 @@ export default function ActionMenu(props: { id: string }) {
             })
         );
         onClose();
-    };
+    }, []);
 
     return (
         <Box>
@@ -69,12 +69,14 @@ export default function ActionMenu(props: { id: string }) {
                     horizontal: 'right',
                 }}
             >
-                <MenuItem onClick={onEditClick}>
-                    <ListItemIcon>
-                        <EditIcon />
-                    </ListItemIcon>
-                    <ListItemText>Edit</ListItemText>
-                </MenuItem>
+                {!props.hideEdit && (
+                    <MenuItem onClick={onEditClick}>
+                        <ListItemIcon>
+                            <EditIcon />
+                        </ListItemIcon>
+                        <ListItemText>Edit</ListItemText>
+                    </MenuItem>
+                )}
                 <MenuItem onClick={onClose}>
                     <ListItemIcon>
                         <ShareIcon />

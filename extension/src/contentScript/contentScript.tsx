@@ -1,7 +1,6 @@
 import React, { useState, useEffect, HTMLAttributes, HtmlHTMLAttributes } from 'react'
 import ReactDOM from 'react-dom'
 import { AutofillOverlay, SavePassOverlay } from './overlay'
-import './contentScript.css'
 
 const closeOverlay = () => {
     chrome.storage.local.set({'autofillClosed': true});
@@ -59,13 +58,13 @@ function fillFormFields(usernameField: HTMLInputElement , passField: HTMLInputEl
 
         chrome.storage.local.get(['autofillClosed'], function(result) {
             if(!result.autofillClosed && response.valid){
-                ReactDOM.render(<AutofillOverlay autofill={ () => {
+                ReactDOM.render(<AutofillOverlay autofill={ (username:string, password:string) => {
                     if(usernameField){
-                        setNativeValue(usernameField, 'tttt@tt.tt');
+                        setNativeValue(usernameField, username);
                         usernameField.dispatchEvent(new Event('input', { bubbles: true }));
                     }
                     if(passField){
-                        setNativeValue(passField, 'password321');
+                        setNativeValue(passField, password);
                         passField.dispatchEvent(new Event('input', { bubbles: true }));
                     }
                     ReactDOM.render(<div></div>, root);
@@ -107,6 +106,9 @@ function setEventHandlers(field1: HTMLInputElement, field2: HTMLInputElement, ke
 
 window.addEventListener('load', function(){
     console.log("hello from content script");
+
+    // ReactDOM.render(<SavePassOverlay username={"dsf"} password={"sdf"} closeOverlay={closeOverlay}/>, root);
+    // ReactDOM.render(<AutofillOverlay autofill={() => console.log("abc")} closeOverlay={closeOverlay} />, root);
 
     displaySavePass();
     chrome.storage.local.set({'autofillClosed': false});

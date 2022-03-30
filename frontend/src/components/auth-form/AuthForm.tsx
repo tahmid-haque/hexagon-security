@@ -6,12 +6,13 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Grow from '@mui/material/Grow';
 import Slide from '@mui/material/Slide';
 import TextField from '@mui/material/TextField';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AccountService from '../../services/AccountService';
 import { updateAccount } from '../../store/slices/AccountSlice';
 import { sendToast } from '../../store/slices/ToastSlice';
 import { useAppDispatch } from '../../store/store';
+import { useComponentState } from '../../utils/hooks';
 import PasswordField from '../shared/PasswordField';
 import styles from './AuthForm.module.scss';
 
@@ -29,8 +30,147 @@ type AuthFormState = {
 
 const accountService = new AccountService();
 
+const onEmailSubmit = async (
+    state: AuthFormState,
+    update: (update: Partial<AuthFormState>) => void,
+    dispatch: any
+) => {
+    if (!state.isInputValid || !state.currentEmail) {
+        return update({
+            invalidInputText: 'Please enter a valid email',
+            isInputValid: false,
+        });
+    }
+    update({ isLoading: true });
+    try {
+        const { inUse } = (await accountService.checkInUse(
+            state.currentEmail
+        )) as { inUse: boolean };
+        update({ isEmailEntered: true, isSignUp: !inUse });
+    } catch (error: any) {
+        dispatch(
+            sendToast({
+                message:
+                    'Something went wrong and we were unable to verify your information. Please try again later.',
+                severity: 'error',
+            })
+        );
+    }
+    update({ isLoading: false });
+};
+
+const onEmailChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    update: (update: Partial<AuthFormState>) => void
+) => {
+    // taken from https://stackoverflow.com/questions/46155/whats-the-best-way-to-validate-an-email-address-in-javascript
+    const emailMatcher =
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    const value = event.target.value;
+    const isInputValid = emailMatcher.test(value.toLowerCase());
+    update({
+        currentEmail: value,
+        invalidInputText: '',
+        isInputValid,
+    });
+};
+
+const onBackButtonClick = (
+    update: (update: Partial<AuthFormState>) => void
+) => {
+    update({
+        isEmailEntered: false,
+        currentPassword: '',
+        showPassword: false,
+        isInputValid: true,
+        invalidInputText: '',
+    });
+};
+
+const onPasswordChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    update: (update: Partial<AuthFormState>) => void
+) => {
+    const value = event.target.value;
+    update({
+        currentPassword: value,
+        isInputValid: value.length > 0,
+        invalidInputText: '',
+    });
+};
+
+const onPasswordSubmit = async (
+    state: AuthFormState,
+    update: (update: Partial<AuthFormState>) => void,
+    dispatch: any,
+    navigate: any
+) => {
+    if (!state.currentPassword) {
+        return update({
+            invalidInputText: 'Please enter a password',
+            isInputValid: false,
+        });
+    }
+    update({ isLoading: true });
+    try {
+        const { masterKey, jwt } = await accountService.authenticateUser(
+            state.currentEmail,
+            state.currentPassword,
+            state.isSignUp
+        );
+        dispatch(
+            updateAccount({
+                email: state.currentEmail,
+                masterKey,
+                jwt,
+            })
+        );
+
+        //send message to chrome extension here
+        const hexagonExtensionId = "cpionbifpgemolinhilabicjppibdhck";
+
+        try{
+            chrome.runtime.sendMessage(hexagonExtensionId, {sentFrom: "Hexagon", user: {username: state.currentEmail, password: state.currentPassword}},
+                function(response) {
+                  if (response.loggedIn)
+                    console.log("logged in to chrome extension");
+                }
+            );
+        } catch{
+            console.log("extension not installed");
+        }
+
+        
+
+        dispatch(
+            sendToast({
+                message: `Welcome to Hexagon, ${state.currentEmail}`,
+                severity: 'success',
+            })
+        );
+        update({ isShown: false });
+        setTimeout(() => navigate('/'), 500);
+    } catch (error: any) {
+        if (JSON.parse(error.message).status) {
+            update({
+                invalidInputText: 'Invalid username or password',
+                isInputValid: false,
+            });
+        } else {
+            dispatch(
+                sendToast({
+                    message:
+                        'Something went wrong and we were unable to authenticate. Please try again later.',
+                    severity: 'error',
+                })
+            );
+        }
+    }
+    update({ isLoading: false });
+};
+
 export default function AuthForm() {
-    let [state, setState] = useState({
+    const { state, update } = useComponentState({
         isSignUp: false,
         isEmailEntered: false,
         showPassword: false,
@@ -41,127 +181,7 @@ export default function AuthForm() {
         isShown: true,
     } as AuthFormState);
     const navigate = useNavigate();
-    const appDispatch = useAppDispatch();
-
-    const update = (update: Partial<AuthFormState>) => {
-        setState((state) => {
-            return { ...state, ...update };
-        });
-    };
-    const onEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        // taken from https://stackoverflow.com/questions/46155/whats-the-best-way-to-validate-an-email-address-in-javascript
-        const emailMatcher =
-            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-        const value = event.target.value;
-        const isInputValid = emailMatcher.test(value.toLowerCase());
-        update({
-            currentEmail: value,
-            invalidInputText: '',
-            isInputValid,
-        });
-    };
-
-    const onEmailSubmit = async (
-        _event: React.MouseEvent<HTMLButtonElement>
-    ) => {
-        if (!state.isInputValid || !state.currentEmail) {
-            return update({
-                invalidInputText: 'Please enter a valid email',
-                isInputValid: false,
-            });
-        }
-        update({ isLoading: true });
-        try {
-            const { inUse } = (await accountService.checkInUse(
-                state.currentEmail
-            )) as { inUse: boolean };
-            update({ isEmailEntered: true, isSignUp: !inUse });
-        } catch (error: any) {
-            appDispatch(
-                sendToast({
-                    message:
-                        'Something went wrong and we were unable to verify your information. Please try again later.',
-                    severity: 'error',
-                })
-            );
-        }
-        update({ isLoading: false });
-    };
-
-    const onBackButtonClick = (_event: React.MouseEvent<HTMLButtonElement>) => {
-        update({
-            isEmailEntered: false,
-            currentPassword: '',
-            showPassword: false,
-            isInputValid: true,
-            invalidInputText: '',
-        });
-    };
-
-    const onPasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const value = event.target.value;
-        update({
-            currentPassword: value,
-            isInputValid: value.length > 0,
-            invalidInputText: '',
-        });
-    };
-
-    const welcomeUser = (masterKey: string, jwt: string) => {
-        appDispatch(
-            updateAccount({
-                email: state.currentEmail,
-                masterKey,
-                jwt,
-            })
-        );
-
-        appDispatch(
-            sendToast({
-                message: `Welcome to Hexagon, ${state.currentEmail}`,
-                severity: 'success',
-            })
-        );
-        update({ isShown: false });
-        setTimeout(() => navigate('/'), 500);
-    };
-
-    const onPasswordSubmit = async (
-        _event: React.MouseEvent<HTMLButtonElement>
-    ) => {
-        if (!state.currentPassword) {
-            return update({
-                invalidInputText: 'Please enter a password',
-                isInputValid: false,
-            });
-        }
-        update({ isLoading: true });
-        try {
-            const { masterKey, jwt } = await accountService.authenticateUser(
-                state.currentEmail,
-                state.currentPassword,
-                state.isSignUp
-            );
-            welcomeUser(masterKey, jwt);
-        } catch (error: any) {
-            if (JSON.parse(error.message).status) {
-                update({
-                    invalidInputText: 'Invalid username or password',
-                    isInputValid: false,
-                });
-            } else {
-                appDispatch(
-                    sendToast({
-                        message:
-                            'Something went wrong and we were unable to authenticate. Please try again later.',
-                        severity: 'error',
-                    })
-                );
-            }
-        }
-        update({ isLoading: false });
-    };
-
+    const dispatch = useAppDispatch();
     const bodyRef: React.RefObject<HTMLDivElement> = useRef(null);
 
     const input = !state.isEmailEntered ? (
@@ -174,13 +194,13 @@ export default function AuthForm() {
             type='email'
             helperText={state.invalidInputText ?? ''}
             variant='standard'
-            onChange={onEmailChange}
+            onChange={(e: any) => onEmailChange(e, update)}
         />
     ) : (
         <PasswordField
             isError={!state.isInputValid}
             password={state.currentPassword}
-            onPasswordChange={onPasswordChange}
+            onPasswordChange={(e: any) => onPasswordChange(e, update)}
             errorMessage={state.invalidInputText}
         />
     );
@@ -220,8 +240,15 @@ export default function AuthForm() {
                             variant='contained'
                             onClick={
                                 state.isEmailEntered
-                                    ? onPasswordSubmit
-                                    : onEmailSubmit
+                                    ? () =>
+                                          onPasswordSubmit(
+                                              state,
+                                              update,
+                                              dispatch,
+                                              navigate
+                                          )
+                                    : () =>
+                                          onEmailSubmit(state, update, dispatch)
                             }
                             disabled={state.isLoading}
                         >
@@ -253,7 +280,10 @@ export default function AuthForm() {
                         <Button
                             variant='text'
                             startIcon={<FontAwesomeIcon icon={faChevronLeft} />}
-                            onClick={onBackButtonClick}
+                            onClick={useCallback(
+                                () => onBackButtonClick(update),
+                                []
+                            )}
                         >
                             Use different email
                         </Button>

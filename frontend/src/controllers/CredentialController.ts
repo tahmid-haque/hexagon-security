@@ -1,11 +1,11 @@
-import { ApolloClient, gql, NormalizedCacheObject } from "@apollo/client";
+import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
 
 const countCredentialsQuery = gql`
-query(){
-  countWebsiteCredentials(){
-    name
-  }
-}
+    query {
+        countWebsiteCredentials {
+            name
+        }
+    }
 `;
 
 const findCredentialsContainsQuery = gql`
@@ -79,19 +79,37 @@ query($offset: Int!, $limit: Int!, $sortType: String!, getShares: Boolean!){
 `;
 
 const addWebsiteCredentialsMutation = gql`
-mutation($name: String!, $username: String!, $password: String!, $key: String!){
-  addWebsiteCredentials(name: $name, username: $username, password: $password, key: $key ){
-    _id
-  }
-}
+    mutation (
+        $name: String!
+        $username: String!
+        $password: String!
+        $key: String!
+    ) {
+        addWebsiteCredentials(
+            name: $name
+            username: $username
+            password: $password
+            key: $key
+        ) {
+            _id
+        }
+    }
 `;
 
 const updateCredentialsMutation = gql`
-mutation($username: String!, $password: String!, $secureRecordID: String!){
-  updateCredentials(username: $username, password: $password, secureRecordID: $secureRecordID ){
-    _id
-  }
-}
+    mutation (
+        $username: String!
+        $password: String!
+        $secureRecordID: String!
+    ) {
+        updateCredentials(
+            username: $username
+            password: $password
+            secureRecordID: $secureRecordID
+        ) {
+            _id
+        }
+    }
 `;
 
 class CredentialController {
