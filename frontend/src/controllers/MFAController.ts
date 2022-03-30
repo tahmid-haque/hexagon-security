@@ -1,8 +1,8 @@
 import { ApolloClient, gql, NormalizedCacheObject } from "@apollo/client";
 
 const countMFAsQuery = gql`
-query(){
-  countMFAs(){
+query{
+  countMFAs{
     _id
   }
 }

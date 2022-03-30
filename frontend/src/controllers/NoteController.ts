@@ -1,8 +1,8 @@
 import { ApolloClient, gql, NormalizedCacheObject } from "@apollo/client";
 
 const countNotesQuery = gql`
-query(){
-  countNotes(){
+query{
+  countNotes{
     _id
   }
 }
