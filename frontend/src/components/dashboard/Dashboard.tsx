@@ -57,6 +57,7 @@ const handleAccountChange = function (this: DashboardContext) {
     if (state.isDashShown && !account.email) {
         update({ isDashShown: false });
         setTimeout(() => {
+            window.localStorage.setItem('lastUser', '');
             dispatch(
                 sendToast({
                     message: 'Successfully signed out.',

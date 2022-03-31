@@ -6,7 +6,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Grow from '@mui/material/Grow';
 import Slide from '@mui/material/Slide';
 import TextField from '@mui/material/TextField';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AccountService from '../../services/AccountService';
 import { updateAccount } from '../../store/slices/AccountSlice';
@@ -148,6 +148,8 @@ const onPasswordSubmit = async (
             console.log('extension not installed');
         }
 
+        window.localStorage.setItem('lastUser', state.currentEmail);
+
         dispatch(
             sendToast({
                 message: `Welcome to Hexagon, ${state.currentEmail}`,
@@ -189,6 +191,16 @@ export default function AuthForm() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const bodyRef: React.RefObject<HTMLDivElement> = useRef(null);
+
+    useEffect(() => {
+        const lastUser = window.localStorage.getItem('lastUser');
+        if (lastUser)
+            update({
+                currentEmail: lastUser,
+                isEmailEntered: true,
+                isSignUp: false,
+            });
+    }, []);
 
     const input = !state.isEmailEntered ? (
         <TextField
