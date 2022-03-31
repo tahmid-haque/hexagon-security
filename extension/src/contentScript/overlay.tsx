@@ -5,6 +5,16 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import Header from '../sharedComponents/header/header'
 import './overlay.css'
 
+const autofillFormSubmit = (e: SyntheticEvent, autofill: (uname: string, pass: string) => void) => {
+    e.preventDefault();
+    let form = document.querySelector("#hexagon-autofill-login-form") as HTMLFormElement;
+    if(form.reportValidity()){
+        let account = document.querySelector("#hexagon-autofill-username") as HTMLSelectElement;
+        console.log(account.innerHTML);
+        autofill(account.innerHTML, "abc");
+    }
+}
+
 const AutofillOverlay = ({autofill, closeOverlay} : {autofill: (uname: string, pass: string) => void, closeOverlay: () => void}) => {
     const [username, setUsername] = React.useState('');
 
@@ -12,20 +22,13 @@ const AutofillOverlay = ({autofill, closeOverlay} : {autofill: (uname: string, p
       setUsername(event.target.value);
     };
 
-    const onFormSubmit = (e: SyntheticEvent) => {
-        e.preventDefault();
-        let account = document.querySelector("#hexagon-autofill-username") as HTMLSelectElement;
-        console.log(account.innerHTML);
-        autofill(account.innerHTML, "abc");
-    }
-
     return (
         <div className='hexagon-overlay'>
             <Header url={chrome.runtime.getURL("icon.png")} clickAction={closeOverlay} />
             <Card className='hexagon-overlay-body'>
                 <div>Username/Password fields detected. Autofill fields?</div>
 
-                <Box component={"form"} id="hexagon-autofill-login-form" onSubmit={onFormSubmit}>
+                <Box component={"form"} id="hexagon-autofill-login-form">
                     <div>
                         <FormControl required sx={{ mt: 2, width: 180}}>
                             <InputLabel id="demo-simple-select-helper-label">Account</InputLabel>
@@ -46,7 +49,7 @@ const AutofillOverlay = ({autofill, closeOverlay} : {autofill: (uname: string, p
                         </FormControl>
                     </div>
 
-                    <Button size='large' type='submit' sx={{margin: "5px", fontSize: "15px"}}>Autofill</Button>
+                    <Button size='large' onClick={e => autofillFormSubmit(e, autofill)} sx={{margin: "5px", fontSize: "15px"}}>Autofill</Button>
                 </Box>
 
             </Card>
@@ -54,27 +57,30 @@ const AutofillOverlay = ({autofill, closeOverlay} : {autofill: (uname: string, p
     )
 }
 
-const SavePassOverlay = ({username, password, closeOverlay} : {username:string, password:string, closeOverlay: () => void}) => {
-    const [showPass, setShowPass] = useState(false);
-
-    const icon = <IconButton sx={{m:0}} onClick={() => setShowPass(showPass => !showPass)}><VisibilityIcon fontSize='small' /></IconButton>;
-
-    const onFormSubmit = (e: SyntheticEvent) => {
-        e.preventDefault();
+const saveFormSubmit = (e: SyntheticEvent, closeOverlay: () => void) => {
+    e.preventDefault();
+    let form = document.querySelector("#hexagon-save-login-form") as HTMLFormElement;
+    if(form.reportValidity()){
         let username = document.querySelector("#hexagon-save-username") as HTMLInputElement;
         let password = document.querySelector("#hexagon-save-password") as HTMLInputElement;
         console.log(username.value);
         console.log(password.value);
         closeOverlay();
     }
+}
+
+const SavePassOverlay = ({username, password, closeOverlay} : {username:string, password:string, closeOverlay: () => void}) => {
+    const [showPass, setShowPass] = useState(false);
+
+    const icon = <IconButton sx={{m:0}} onClick={() => setShowPass(showPass => !showPass)}><VisibilityIcon fontSize='small' /></IconButton>;
 
     return (
         <div className='hexagon-overlay hexagon-save-overlay'>
-            <Header url={chrome.runtime.getURL("icon.png")} clickAction ={closeOverlay} />
+            <Header url={chrome.runtime.getURL("icon.png")} clickAction={closeOverlay} />
             <Card className='hexagon-overlay-body hexagon-save-overlay-body'>
                 <div>Username/Password detected. Save username and password?</div>
 
-                <Box component={"form"} id="hexagon-save-login-form" onSubmit={onFormSubmit}>
+                <Box component={"form"} id="hexagon-save-login-form">
                     <TextField required id="hexagon-save-username" label="Username" defaultValue={username} sx={{mt:3, mb:2, width:"240px"}}/>
 
                     {showPass
@@ -92,7 +98,7 @@ const SavePassOverlay = ({username, password, closeOverlay} : {username:string, 
                             /> 
                     }
 
-                    <Button type='submit' size='large' sx={{margin: "5px", fontSize: "15px"}}>Save</Button>
+                    <Button onClick={e => saveFormSubmit(e, closeOverlay)} size='large' sx={{margin: "5px", fontSize: "15px"}}>Save</Button>
                 </Box>
                 
                 
