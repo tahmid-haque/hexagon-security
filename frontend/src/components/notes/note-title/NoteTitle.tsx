@@ -21,16 +21,21 @@ export default function NoteTitle(props: { title: string; id: string }) {
                 sx={{
                     width: '100%',
                     height: '100%',
-                    whiteSpace: 'nowrap',
-                    textOverflow: 'ellipsis',
-                    overflow: 'hidden',
-                    fontStyle: 'italic',
-                    fontSize: '15px',
                     display: 'flex',
                     alignItems: 'center',
                 }}
             >
-                {props.title}
+                <Box
+                    sx={{
+                        whiteSpace: 'nowrap',
+                        textOverflow: 'ellipsis',
+                        overflow: 'hidden',
+                        fontStyle: 'italic',
+                        fontSize: '15px',
+                    }}
+                >
+                    {props.title}
+                </Box>
             </Box>
         </Tooltip>
     );
