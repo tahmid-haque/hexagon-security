@@ -1,20 +1,21 @@
 import { Box, Button, CircularProgress, TextField } from '@mui/material';
-import { useEffect, useState } from 'react';
+import parser from 'hexagon-shared/utils/parser';
+import { useEffect } from 'react';
 import CredentialService from '../../../services/CredentialService';
 import { sendToast } from '../../../store/slices/ToastSlice';
 import { useAppDispatch } from '../../../store/store';
-import parser from 'hexagon-shared/utils/parser';
-import AppModal from '../../shared/AppModal';
-import PasswordField from '../../shared/PasswordField';
-import { Credentials } from '../CredentialsView';
 import { useComponentState } from '../../../utils/hooks';
+import AppModal from '../../shared/AppModal';
+import ConfirmationDialog from '../../shared/ConfirmationDialog';
+import PasswordField from '../../shared/PasswordField';
+import { Credential } from '../CredentialsView';
 
 export type CredentialEditorProps = {
     isOpen: boolean;
     onClose: (modified?: boolean) => void;
     credentialService: CredentialService;
     isEdit: boolean;
-    credential?: Credentials;
+    credential?: Credential;
 };
 
 type CredentialEditorState = {
@@ -27,7 +28,11 @@ type CredentialEditorState = {
     url: string;
     user: string;
     password: string;
+    id: string;
+    key: ArrayBuffer;
     isLoading: boolean;
+    isExists: boolean;
+    isOverwriteLoading: boolean;
 };
 
 const initState: CredentialEditorState = {
@@ -40,7 +45,11 @@ const initState: CredentialEditorState = {
     url: '',
     user: '',
     password: '',
+    id: '',
+    key: new ArrayBuffer(0),
     isLoading: false,
+    isExists: false,
+    isOverwriteLoading: false,
 };
 
 const onCredentialChange = (
@@ -52,6 +61,8 @@ const onCredentialChange = (
             url: props.credential!.name,
             user: props.credential!.user,
             password: props.credential!.password,
+            id: props.credential!.password,
+            key: props.credential!.key,
         });
     }
 };
@@ -144,7 +155,7 @@ const onCreateSubmit = async (
     update({ isLoading: true });
     try {
         await props.credentialService.createCredential(
-            state.url,
+            parser.extractDomain(state.url),
             state.user,
             state.password
         );
@@ -154,8 +165,17 @@ const onCreateSubmit = async (
                 severity: 'success',
             })
         );
-    } catch (error) {
+    } catch (error: any) {
         update({ isLoading: false });
+
+        if (error.status === 409) {
+            return update({
+                isExists: true,
+                id: error.id,
+                key: error.key,
+            });
+        }
+
         return dispatch(
             sendToast({
                 message:
@@ -174,12 +194,15 @@ const onEditSubmit = async (
     dispatch: any
 ) => {
     if (validateForm(state, update)) return;
-    update({ isLoading: true });
+
+    update({ isLoading: !state.isExists, isOverwriteLoading: true });
     try {
         await props.credentialService.updateCredential(
+            state.isExists ? state.id : props.credential!.id,
+            parser.extractDomain(state.url),
             state.user,
             state.password,
-            props.credential!.key
+            state.isExists ? state.key : props.credential!.key
         );
         dispatch(
             sendToast({
@@ -187,8 +210,12 @@ const onEditSubmit = async (
                 severity: 'success',
             })
         );
-    } catch (error) {
-        update({ isLoading: false });
+    } catch (error: any) {
+        update({ isLoading: false, isOverwriteLoading: false });
+
+        if (error.status == 409)
+            return update({ isExists: true, id: error.id, key: error.key });
+
         return dispatch(
             sendToast({
                 message:
@@ -268,6 +295,14 @@ export default function CredentialEditor(props: CredentialEditorProps) {
                     />
                 )}
             </Box>
+            <ConfirmationDialog
+                isOpen={state.isExists}
+                onClose={() => update({ isExists: false })}
+                onAccept={() => onEditSubmit(state, update, props, dispatch)}
+                title='Error'
+                body='This credential already exists. Would you like to update it instead?'
+                isLoading={state.isOverwriteLoading}
+            />
         </AppModal>
     );
 }

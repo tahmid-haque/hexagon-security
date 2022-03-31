@@ -8,7 +8,7 @@ export default function CredentialName(props: { name: string }) {
     };
 
     return (
-        <Tooltip title='Double click to launch'>
+        <Tooltip arrow title={props.name ? 'Double click to launch' : ''}>
             <Box
                 sx={{ display: 'flex', alignItems: 'center', width: '100%' }}
                 onDoubleClick={onDoubleClick}
@@ -24,6 +24,7 @@ export default function CredentialName(props: { name: string }) {
                         ml: 1.5,
                         textOverflow: 'ellipsis',
                         overflow: 'hidden',
+                        whiteSpace: 'nowrap',
                     }}
                 >
                     {props.name.toLowerCase()}

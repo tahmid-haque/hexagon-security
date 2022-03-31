@@ -43,6 +43,10 @@ const handleDisplayChange = function (this: DashboardContext) {
             navigate('/app/mfa');
             break;
 
+        case Display.NOTES:
+            navigate('/app/notes');
+            break;
+
         default:
             break;
     }

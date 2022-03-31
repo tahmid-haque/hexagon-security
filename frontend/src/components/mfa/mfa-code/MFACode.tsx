@@ -18,7 +18,7 @@ export default function MFACode(props: { seed: string; name: string }) {
             setIsError(true);
             dispatch(
                 sendToast({
-                    message: `There were errors in loading a MFA credential for ${props.name}`,
+                    message: `There were errors in generating tokens for ${props.name}`,
                     severity: 'error',
                 })
             );

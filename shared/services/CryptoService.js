@@ -3,7 +3,7 @@
 export default class CryptoService {
     crypto;
     enc = new TextEncoder();
-    dec = new TextDecoder();
+    dec = new TextDecoder('utf-8');
 
     constructor(crypto) {
         this.crypto = crypto;

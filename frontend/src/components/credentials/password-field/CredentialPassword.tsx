@@ -41,7 +41,7 @@ export default function CredentialPassword(props: {
     const dispatch = useAppDispatch();
 
     return (
-        <Tooltip title='Double click to copy'>
+        <Tooltip arrow title={props.password ? 'Double click to copy' : ''}>
             <Input
                 fullWidth
                 type={showPassword ? 'text' : 'password'}

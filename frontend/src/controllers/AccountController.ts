@@ -12,10 +12,7 @@ const doPOST = (url: string, body: any) => {
         },
         body: JSON.stringify(body),
     }).then((res) => {
-        if (!res.ok)
-            throw new Error(
-                JSON.stringify({ status: res.status, errors: res.json() })
-            );
+        if (!res.ok) throw { status: res.status, errors: res.json() };
         else return res.json();
     });
 };

@@ -127,20 +127,26 @@ const onPasswordSubmit = async (
         );
 
         //send message to chrome extension here
-        const hexagonExtensionId = "cpionbifpgemolinhilabicjppibdhck";
+        const hexagonExtensionId = 'cpionbifpgemolinhilabicjppibdhck';
 
-        try{
-            chrome.runtime.sendMessage(hexagonExtensionId, {sentFrom: "Hexagon", user: {username: state.currentEmail, password: state.currentPassword}},
-                function(response) {
-                  if (response.loggedIn)
-                    console.log("logged in to chrome extension");
+        try {
+            chrome.runtime.sendMessage(
+                hexagonExtensionId,
+                {
+                    sentFrom: 'Hexagon',
+                    user: {
+                        username: state.currentEmail,
+                        password: state.currentPassword,
+                    },
+                },
+                function (response) {
+                    if (response.loggedIn)
+                        console.log('logged in to chrome extension');
                 }
             );
-        } catch{
-            console.log("extension not installed");
+        } catch {
+            console.log('extension not installed');
         }
-
-        
 
         dispatch(
             sendToast({
@@ -151,7 +157,7 @@ const onPasswordSubmit = async (
         update({ isShown: false });
         setTimeout(() => navigate('/'), 500);
     } catch (error: any) {
-        if (JSON.parse(error.message).status) {
+        if (error.status === 401) {
             update({
                 invalidInputText: 'Invalid username or password',
                 isInputValid: false,

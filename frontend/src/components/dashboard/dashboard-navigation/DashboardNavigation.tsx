@@ -198,7 +198,7 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
                                 justifyContent: 'center',
                             }}
                         >
-                            <Tooltip title={props.email} placement='top'>
+                            <Tooltip arrow title={props.email} placement='top'>
                                 <AccountCircleIcon />
                             </Tooltip>
                         </ListItemIcon>

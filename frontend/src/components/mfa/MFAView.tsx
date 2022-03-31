@@ -38,6 +38,7 @@ type MFAViewState = {
     isDeleteOpen: boolean;
     isDeleteLoading: boolean;
     rerenderTable: boolean;
+    tableErrorText: string;
     mfaService: MFAService;
     currentId?: string;
 };
@@ -50,6 +51,8 @@ export type MFA = {
     key: ArrayBuffer;
     shares: string[];
 };
+
+const loadErrorText = 'Unable to load MFA credentials. Please try again later.';
 
 const columnDef: GridColDef[] = [
     {
@@ -111,7 +114,7 @@ const columnDef: GridColDef[] = [
                         justifyContent: 'center',
                     }}
                 >
-                    <Tooltip title='Exclusive'>
+                    <Tooltip arrow title='Exclusive'>
                         <LockIcon />
                     </Tooltip>
                 </Box>
@@ -125,10 +128,17 @@ const columnDef: GridColDef[] = [
         sortable: false,
         filterable: false,
         renderCell: (params) => {
-            return <ActionMenu id={params.row.id} hideEdit />;
+            return (
+                <ActionMenu
+                    id={params.row.id}
+                    hideOptions={{ edit: true, share: !isMFAValid(params.row) }}
+                />
+            );
         },
     },
 ];
+
+const isMFAValid = (mfa: MFA) => mfa.user && mfa.seed && mfa.key.byteLength;
 
 const handleEvent = function (this: MFAViewContext) {
     const { event, update, dispatch } = this;
@@ -159,11 +169,24 @@ const updateMFA = async function (
     limit: number,
     sortType: GridSortDirection
 ) {
-    const { update, state } = this;
+    const { update, state, dispatch } = this;
     update({ isLoading: true });
-    update({
-        content: await state.mfaService.getMFAs(offset, limit, sortType),
-    });
+
+    try {
+        const content = await state.mfaService.getMFAs(offset, limit, sortType);
+        content.forEach((mfa) => {
+            if (!isMFAValid(mfa))
+                dispatch(
+                    sendToast({
+                        message: `There were errors in loading a MFA credential for ${mfa.name}`,
+                        severity: 'error',
+                    })
+                );
+        });
+        update({ content });
+    } catch (error) {
+        update({ tableErrorText: loadErrorText });
+    }
     update({ isLoading: false });
 };
 
@@ -193,9 +216,20 @@ const onDeleteAccept = async function (this: MFAViewContext) {
 const init = function (this: MFAViewContext) {
     const { state, update, dispatch } = this;
     dispatch(setDisplay(Display.MFA));
-    state.mfaService.getMFACount().then((totalMFA) => {
-        update({ totalMFA });
-    });
+    state.mfaService
+        .getMFACount()
+        .then((totalMFA) => {
+            update({ totalMFA });
+        })
+        .catch(() =>
+            dispatch(
+                sendToast({
+                    message:
+                        'Unable to load MFA credentials. Please try again later.',
+                    severity: 'error',
+                })
+            )
+        );
 };
 
 export default function MFAView() {
@@ -211,6 +245,7 @@ export default function MFAView() {
         isDeleteOpen: false,
         isDeleteLoading: false,
         rerenderTable: false,
+        tableErrorText: '',
         mfaService: new MFAService(cryptoWorker, account),
     } as MFAViewState);
 
@@ -227,6 +262,7 @@ export default function MFAView() {
     return (
         <Box sx={{ height: '100%' }}>
             <AppTable
+                errorText={state.tableErrorText}
                 columnDef={columnDef}
                 content={state.content}
                 contentCount={state.totalMFA}

@@ -8,6 +8,7 @@ export type AppTableProps = {
     content: any[];
     contentCount: number;
     isLoading: boolean;
+    errorText: string;
     updateContent: (
         offset: number,
         limit: number,
@@ -91,6 +92,7 @@ export default function AppTable(props: AppTableProps) {
                 disableSelectionOnClick
                 paginationMode='server'
                 loading={props.isLoading}
+                {...(props.errorText.length && { error: props.errorText })}
                 components={{
                     LoadingOverlay: LinearProgress,
                     NoRowsOverlay: () => (
@@ -107,6 +109,20 @@ export default function AppTable(props: AppTableProps) {
                             No data found.
                         </Box>
                     ),
+                    ErrorOverlay: () => (
+                        <Box
+                            sx={{
+                                width: '100%',
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '16px',
+                            }}
+                        >
+                            {props.errorText}
+                        </Box>
+                    ),
                 }}
                 rowCount={props.contentCount}
                 rows={props.content}
@@ -119,11 +135,11 @@ export default function AppTable(props: AppTableProps) {
                         sortModel: [
                             { field: props.sortField, sort: state.sortType },
                         ],
-                        onSortModelChange: (model) => {
-                            const sortType = model.length
-                                ? model[0].sort
-                                : props.initialSort ?? 'asc';
-                            update({ sortType });
+                        onSortModelChange: () => {
+                            update({
+                                sortType:
+                                    state.sortType === 'asc' ? 'desc' : 'asc',
+                            });
                         },
                     }),
                 }}

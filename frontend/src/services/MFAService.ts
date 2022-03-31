@@ -213,22 +213,54 @@ class MFAService {
     }
 
     private async decryptMFA(mfa: MFADto): Promise<MFA> {
-        const {
-            key,
-            plainTexts: [user, seed, ...shares],
-        } = await this.cryptoWorker.decryptWrappedData(
-            [mfa.user, mfa.seed, ...mfa.shares],
-            mfa.key,
-            this.masterKey
-        );
+        let user = '';
+        let seed = '';
+        let key = new ArrayBuffer(0);
+        let shares: string[] = [];
+
+        try {
+            const { key: decryptedKey, plainTexts } =
+                await this.cryptoWorker.decryptWrappedData(
+                    [mfa.user, mfa.seed, ...mfa.shares],
+                    mfa.key,
+                    this.masterKey
+                );
+            key = decryptedKey;
+            user = plainTexts[0];
+            seed = plainTexts[1];
+            shares = plainTexts.slice(2);
+        } catch (error) {}
 
         return {
-            ...mfa,
+            id: mfa.id,
+            name: mfa.name,
             user,
             seed,
             key,
             shares,
         };
+    }
+
+    private async checkMFAExists(url: string, username: string) {
+        // TODO: connect to real api later
+        const domainMatches = encryptedMFAs.filter(({ name }) => name === url);
+        try {
+            await Promise.all(
+                domainMatches.map(async (mfaDto) =>
+                    this.decryptMFA
+                        .call(this, mfaDto)
+                        .catch(() => ({
+                            user: '',
+                        }))
+                        .then(({ user }) => {
+                            if (user === username) throw new Error();
+                        })
+                )
+            );
+            return false;
+        } catch (error) {
+            return true;
+        }
     }
 
     constructor(cryptoWorker: any, account: Account) {
@@ -261,6 +293,7 @@ class MFAService {
     }
 
     async createMFA(url: string, username: string, seed: string) {
+        if (await this.checkMFAExists(url, username)) throw { status: 409 };
         const [encryptedKey, encryptedUser, encryptedSeed, encryptedEmail] =
             await this.createEncryptedMFA(username, seed);
         // TODO: connect to real api later
