@@ -137,7 +137,7 @@ const onEditSubmit = async (
     onClose(update, props.onClose, true);
 };
 
-export default function CredentialEditor(props: NoteEditorProps) {
+export default function NoteEditor(props: NoteEditorProps) {
     const { state, update } = useComponentState(initState);
     const dispatch = useAppDispatch();
 
@@ -149,7 +149,7 @@ export default function CredentialEditor(props: NoteEditorProps) {
     return (
         <AppModal
             isOpen={props.isOpen}
-            modalTitle={`${props.isEdit ? 'Edit' : 'Create'} Credentials`}
+            modalTitle={`${props.isEdit ? 'Edit' : 'Create'} Note`}
             onClose={onClose.bind(null, update, props.onClose, false)}
         >
             <TextField
@@ -188,7 +188,7 @@ export default function CredentialEditor(props: NoteEditorProps) {
                     }
                     disabled={state.isLoading}
                 >
-                    Submit
+                    Save
                 </Button>
                 {state.isLoading && (
                     <CircularProgress

@@ -239,7 +239,7 @@ export default function CredentialEditor(props: CredentialEditorProps) {
     return (
         <AppModal
             isOpen={props.isOpen}
-            modalTitle={`${props.isEdit ? 'Edit' : 'Create'} Credentials`}
+            modalTitle={`${props.isEdit ? 'Edit' : 'Create'} Credential`}
             onClose={onClose.bind(null, update, props.onClose, false)}
         >
             <TextField
@@ -280,7 +280,7 @@ export default function CredentialEditor(props: CredentialEditorProps) {
                     }
                     disabled={state.isLoading}
                 >
-                    Submit
+                    Save
                 </Button>
                 {state.isLoading && (
                     <CircularProgress

@@ -202,7 +202,7 @@ export default function MFAEditor(props: MFACreatorProps) {
                     }
                     disabled={state.isLoading}
                 >
-                    Submit
+                    Save
                 </Button>
                 {state.isLoading && (
                     <CircularProgress
