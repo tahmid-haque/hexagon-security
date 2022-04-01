@@ -89,7 +89,7 @@ export default function DashboardHeader(props: DashboardHeaderProps) {
                         {props.currentPane}
                     </Typography>
                     {
-                        <Tooltip title='Create New'>
+                        <Tooltip arrow title='Create New'>
                             <IconButton
                                 size='large'
                                 aria-label='account of current user'

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, HTMLAttributes, HtmlHTMLAttributes } from 'react'
 import ReactDOM from 'react-dom'
 import { AutofillOverlay, SavePassOverlay } from './overlay'
+import parser from '../utils/parser'
 
 const closeOverlay = () => {
     chrome.storage.local.set({'autofillClosed': true});
@@ -52,7 +53,7 @@ function setNativeValue(element, value) {
     }
 }
 
-function fillFormFields(usernameField: HTMLInputElement , passField: HTMLInputElement){
+function fillFormFields(usernameField: HTMLInputElement, passField: HTMLInputElement){
     chrome.runtime.sendMessage({message: "isValidSite"}, function(response) {
         console.log(response.valid);
 
@@ -75,27 +76,45 @@ function fillFormFields(usernameField: HTMLInputElement , passField: HTMLInputEl
     }); 
 }
 
-function displaySavePass(){
+function displaySavePassSamePage(){
     chrome.storage.local.get(['url', 'username', 'password'], function(result) {
+        let current = parser.extractDomain(window.location.href);
+        let prev = parser.extractDomain(result.url);
         if(result.url != window.location.href && result.username && result.password){
-            chrome.runtime.sendMessage({message: "sameDomain", previous: result.url, current: window.location.href}, function(response) {
-                if(response.sameSite){
-                    console.log('prev url ' + result.url);
-                    console.log('username ' + result.username);
-                    console.log('password ' + result.password);
-                    ReactDOM.render(<SavePassOverlay username={result.username} password={result.password} closeOverlay={closeOverlay}/>, root);
-                }
-            });
+            if(current === prev){
+                console.log('prev url ' + result.url);
+                console.log('username ' + result.username);
+                console.log('password ' + result.password);
+                ReactDOM.render(<SavePassOverlay username={result.username} password={result.password} closeOverlay={closeOverlay}/>, root);
+                chrome.storage.local.set({'username': null, 'password': null});
+            }
         }
+        chrome.storage.local.set({'url': window.location.href});
+    });
+}
+
+function displaySavePassDiffPage(){
+    chrome.storage.local.get(['url', 'username', 'password'], function(result) {
+        let current = parser.extractDomain(window.location.href);
+        let prev = parser.extractDomain(result.url);
+        if(current === prev && result.username && result.password){
+            console.log('prev url ' + result.url);
+            console.log('username ' + result.username);
+            console.log('password ' + result.password);
+            ReactDOM.render(<SavePassOverlay username={result.username} password={result.password} closeOverlay={closeOverlay}/>, root);
+            chrome.storage.local.set({'username': null, 'password': null});
+        }
+        if(current !== prev) chrome.storage.local.set({'username': null, 'password': null});
+
+        chrome.storage.local.set({'url': window.location.href});
     });
 
-    chrome.storage.local.set({'url': window.location.href, 'username': null, 'password': null});
 }
 
 function setEventHandlers(field1: HTMLInputElement, field2: HTMLInputElement, key:string){
     field1.onclick = function(){
-        console.log("username field clicked");
-        fillFormFields(field1, field2);  
+        if(key === 'username') fillFormFields(field1, field2); 
+        else fillFormFields(field2, field1); 
     }
     chrome.storage.local.set({[key]: field1.value});
 
@@ -110,7 +129,7 @@ window.addEventListener('load', function(){
     // ReactDOM.render(<SavePassOverlay username={"dsf"} password={"sdf"} closeOverlay={closeOverlay}/>, root);
     // ReactDOM.render(<AutofillOverlay autofill={() => console.log("abc")} closeOverlay={closeOverlay} />, root);
 
-    displaySavePass();
+    displaySavePassDiffPage();
     chrome.storage.local.set({'autofillClosed': false});
 
     MutationObserver = window.MutationObserver;
@@ -119,13 +138,22 @@ window.addEventListener('load', function(){
         let usernameField = findUsernameField();
         let passwordField = findPasswordField() as HTMLInputElement;
 
-        displaySavePass();
+        displaySavePassSamePage();
 
         if(usernameField){
             setEventHandlers(usernameField, passwordField, 'username');
         }
         if(passwordField){
             setEventHandlers(passwordField, usernameField, 'password');
+        }
+        if(usernameField && passwordField){
+            let loginForm = document.querySelector("form") as HTMLFormElement;
+            if (loginForm){
+                loginForm.onsubmit = function(e){
+                    ReactDOM.render(<div></div>, root);
+                }
+            }
+            
         }
     });
 

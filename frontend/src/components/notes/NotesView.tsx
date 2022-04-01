@@ -23,116 +23,50 @@ import { useAppDispatch, useAppSelector } from '../../store/store';
 import { useComponentState } from '../../utils/hooks';
 import AppTable from '../shared/AppTable';
 import ConfirmationDialog from '../shared/ConfirmationDialog';
-import ActionMenu from './action-menu/ActionMenu';
-import CredentialEditor from './credential-editor/CredentialEditor';
-import CredentialName from './name-field/CredentialName';
-import CredentialPassword from './password-field/CredentialPassword';
-import CredentialUser from './user-field/CredentialUser';
+import ActionMenu from '../credentials/action-menu/ActionMenu';
+import NoteService from '../../services/NoteService';
+import NoteEditor from './note-editor/NoteEditor';
+import NoteTitle from './note-title/NoteTitle';
 
-export type Credential = {
+export type Note = {
     id: string;
-    name: string;
-    user: string;
-    password: string;
+    lastModified: Date | undefined;
+    title: string;
+    body: string;
     key: ArrayBuffer;
-    strength: CredentialStrength;
     shares: string[];
 };
 
-export enum CredentialStrength {
-    BREACHED = 'Potentially Breached Password',
-    WEAK = 'Weak Password',
-    MODERATE = 'Moderately Secure Password',
-    STRONG = 'Secure Password',
-    UNKNOWN = 'Security Unknown',
-}
+const loadErrorText = 'Unable to load notes. Please try again later.';
 
-const loadErrorText = 'Unable to load credentials. Please try again later.';
+const dateFormat: Intl.DateTimeFormatOptions = {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+};
 
 const columnDef: GridColDef[] = [
     {
-        field: 'name',
-        headerName: 'Name',
-        width: 300,
-        flex: 1.5,
+        field: 'title',
+        headerName: 'Title',
+        width: 500,
+        flex: 2,
+        sortable: false,
+        hideable: false,
+        renderCell: ({ row: { title, id } }) => (
+            <NoteTitle id={id} title={title} />
+        ),
+    },
+    {
+        field: 'lastModified',
+        headerName: 'Last Modified',
+        hideable: false,
         sortable: true,
-        hideable: false,
-        renderCell: (params) => {
-            return <CredentialName name={params.value} />;
-        },
-    },
-    {
-        field: 'user',
-        flex: 1.5,
-        headerName: 'User',
-        hideable: false,
-        sortable: false,
-        width: 200,
-        renderCell: (params) => {
-            return <CredentialUser user={params.value} />;
-        },
-    },
-    {
-        field: 'password',
-        headerName: 'Password',
-        width: 200,
-        sortable: false,
-        filterable: false,
-        hideable: false,
-        flex: 1.5,
-        renderCell: (params) => {
-            return <CredentialPassword password={params.value} />;
-        },
-    },
-    {
-        field: 'strength',
-        headerName: 'Security',
-        width: 71,
-        sortable: false,
-        filterable: false,
-        renderCell: ({ value }) => {
-            let icon: ReactElement<any, any>;
-
-            switch (value) {
-                case CredentialStrength.STRONG:
-                    icon = <GppGoodIcon color='success' />;
-                    break;
-
-                case CredentialStrength.MODERATE:
-                    icon = <GppGoodOutlinedIcon color='success' />;
-                    break;
-
-                case CredentialStrength.WEAK:
-                    icon = <GppBadIcon color='warning' />;
-                    break;
-
-                case CredentialStrength.BREACHED:
-                    icon = <GppMaybeIcon color='error' />;
-                    break;
-
-                case CredentialStrength.UNKNOWN:
-                    icon = <GppMaybeIcon color='warning' />;
-                    break;
-
-                default:
-                    break;
-            }
-
-            return (
-                <Box
-                    sx={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    <Tooltip arrow title={value}>
-                        {icon!}
-                    </Tooltip>
-                </Box>
-            );
-        },
+        width: 250,
+        valueFormatter: ({ value }) =>
+            new Date(value as Date).toLocaleDateString('en-US', dateFormat),
     },
     {
         field: 'ownership',
@@ -168,7 +102,7 @@ const columnDef: GridColDef[] = [
                 <ActionMenu
                     id={params.row.id}
                     hideOptions={{
-                        ...(!isCredentialValid(params.row) && {
+                        ...(!isNoteValid(params.row) && {
                             edit: true,
                             share: true,
                         }),
@@ -179,34 +113,31 @@ const columnDef: GridColDef[] = [
     },
 ];
 
-const isCredentialValid = (credential: Credential) =>
-    credential.user && credential.password && credential.key.byteLength;
+const isNoteValid = (note: Note) =>
+    note.title && note.lastModified && note.key.byteLength;
 
-const updateCredentials = async function (
-    this: CredentialsViewContext,
+const updateNotes = async function (
+    this: NotesViewContext,
     offset: number,
     limit: number,
     sortType: GridSortDirection
 ) {
     const { update, state, dispatch } = this;
-
     update({ isLoading: true });
     try {
-        const credentials = await state.credentialService.getCredentials(
-            offset,
-            limit,
-            sortType
-        );
-        credentials.forEach((credential) => {
-            if (!isCredentialValid(credential))
+        const notes = await state.noteService.getNotes(offset, limit, sortType);
+        for (const note of notes) {
+            if (!isNoteValid(note)) {
                 dispatch(
                     sendToast({
-                        message: `There were errors in loading a credential for ${credential.name}`,
+                        message: `There were errors in loading note(s)`,
                         severity: 'error',
                     })
                 );
-        });
-        update({ credentials });
+                break;
+            }
+        }
+        update({ notes });
     } catch (error) {
         update({ tableErrorText: loadErrorText });
     }
@@ -214,14 +145,14 @@ const updateCredentials = async function (
     update({ isLoading: false });
 };
 
-const onDeleteAccept = async function (this: CredentialsViewContext) {
+const onDeleteAccept = async function (this: NotesViewContext) {
     const { update, state, dispatch } = this;
     update({ isDeleteLoading: true });
     try {
-        await state.credentialService.deleteCredential(state.currentId!);
+        await state.noteService.deleteNote(state.currentId!);
         dispatch(
             sendToast({
-                message: 'Successfully deleted your credential.',
+                message: 'Successfully deleted your note.',
                 severity: 'success',
             })
         );
@@ -229,7 +160,7 @@ const onDeleteAccept = async function (this: CredentialsViewContext) {
         dispatch(
             sendToast({
                 message:
-                    'Something went wrong and we were unable to delete your credential. Please try again later.',
+                    'Something went wrong and we were unable to delete your note. Please try again later.',
                 severity: 'error',
             })
         );
@@ -237,7 +168,7 @@ const onDeleteAccept = async function (this: CredentialsViewContext) {
     update({ isDeleteLoading: false, isDeleteOpen: false });
 };
 
-const handleEvent = function (this: CredentialsViewContext) {
+const handleEvent = function (this: NotesViewContext) {
     const { event, update, dispatch, state } = this;
     switch (event.type) {
         case DashboardEventType.CREATE_CLICK:
@@ -255,13 +186,13 @@ const handleEvent = function (this: CredentialsViewContext) {
 
         case DashboardEventType.EDIT_CLICK:
             dispatch(clearEvent());
-            const [currentCredential] = state.credentials.filter(
+            const [currentCredential] = state.notes.filter(
                 (c) => c.id === event.param
             );
             update({
                 isEditorOpen: true,
                 isEdit: true,
-                currentCredential,
+                currentNote: currentCredential,
             });
             break;
 
@@ -270,43 +201,43 @@ const handleEvent = function (this: CredentialsViewContext) {
     }
 };
 
-const init = function (this: CredentialsViewContext) {
+const init = function (this: NotesViewContext) {
     const { state, update, dispatch } = this;
-    dispatch(setDisplay(Display.CREDENTIALS));
-    state.credentialService
-        .getCredentialCount()
+    dispatch(setDisplay(Display.NOTES));
+    state.noteService
+        .getNoteCount()
         .then((totalCredentials) => {
-            update({ totalCredentials });
+            update({ totalNotes: totalCredentials });
         })
         .catch(() => update({ tableErrorText: loadErrorText }));
 };
 
-type CredentialsViewState = {
-    credentials: Credential[];
-    totalCredentials: number;
+type NotesViewState = {
+    notes: Note[];
+    totalNotes: number;
     isLoading: boolean;
     isEditorOpen: boolean;
     isDeleteOpen: boolean;
     isDeleteLoading: boolean;
     rerenderTable: boolean;
-    credentialService: CredentialService;
+    noteService: NoteService;
     tableErrorText: string;
     currentId?: string;
-    currentCredential?: Credential;
+    currentNote?: Note;
     isEdit?: boolean;
 };
 
-type CredentialsViewContext = {
-    state: CredentialsViewState;
+type NotesViewContext = {
+    state: NotesViewState;
     event: {
         type: DashboardEventType;
         param: string;
     };
-    update: (update: Partial<CredentialsViewState>) => void;
+    update: (update: Partial<NotesViewState>) => void;
     dispatch: any;
 };
 
-export default function CredentialsView() {
+export default function NotesView() {
     const event = useAppSelector((state) => state.dashboard);
     const dispatch = useAppDispatch();
     const account = useAppSelector((state) => state.account);
@@ -315,23 +246,19 @@ export default function CredentialsView() {
         useApolloClient() as ApolloClient<NormalizedCacheObject>;
 
     const { state, update } = useComponentState({
-        credentials: [],
+        notes: [],
         numRows: 0,
         currentPage: 0,
         isEditorOpen: false,
         isDeleteOpen: false,
         isLoading: true,
-        totalCredentials: 0,
+        totalNotes: 0,
         isDeleteLoading: false,
-        sortType: 'asc',
         tableErrorText: '',
+        sortType: 'asc',
         rerenderTable: false,
-        credentialService: new CredentialService(
-            cryptoWorker,
-            account,
-            apolloClient
-        ),
-    } as CredentialsViewState);
+        noteService: new NoteService(cryptoWorker, account, apolloClient),
+    } as NotesViewState);
 
     const context = { state, event, update, dispatch };
     useEffect(init.bind(context), []);
@@ -340,17 +267,18 @@ export default function CredentialsView() {
     return (
         <Box sx={{ height: '100%' }}>
             <AppTable
-                columnDef={columnDef}
-                content={state.credentials}
-                contentCount={state.totalCredentials}
                 errorText={state.tableErrorText}
+                columnDef={columnDef}
+                content={state.notes}
+                contentCount={state.totalNotes}
                 isLoading={state.isLoading}
-                sortField='name'
-                updateContent={updateCredentials.bind(context)}
+                sortField='lastModified'
+                updateContent={updateNotes.bind(context)}
                 rerender={state.rerenderTable}
                 clearRerender={() => update({ rerenderTable: false })}
+                initialSort='desc'
             />
-            <CredentialEditor
+            <NoteEditor
                 isOpen={state.isEditorOpen}
                 isEdit={state.isEdit!}
                 onClose={(modified) => {
@@ -359,15 +287,15 @@ export default function CredentialsView() {
                         ...(modified && { rerenderTable: true }),
                     });
                 }}
-                credentialService={state.credentialService}
-                credential={state.currentCredential}
+                noteService={state.noteService}
+                note={state.currentNote}
             />
             <ConfirmationDialog
                 isOpen={state.isDeleteOpen}
                 onClose={() => update({ isDeleteOpen: false })}
                 onAccept={onDeleteAccept.bind(context)}
-                title='Delete Credential'
-                body='Are you sure you want to delete this credential? This action cannot be undone.'
+                title='Delete Note'
+                body='Are you sure you want to delete this note? This action cannot be undone.'
                 isLoading={state.isDeleteLoading}
             />
         </Box>

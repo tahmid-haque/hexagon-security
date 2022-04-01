@@ -129,19 +129,26 @@ const onCreateSubmit = async (
     if (validateForm(state, update)) return;
     update({ isLoading: true });
     try {
-        await props.mfaService.createMFA(state.url, state.user, state.secret);
+        await props.mfaService.createMFA(
+            parser.extractDomain(state.url),
+            state.user,
+            state.secret
+        );
         dispatch(
             sendToast({
                 message: 'Successfully created your credential.',
                 severity: 'success',
             })
         );
-    } catch (error) {
+    } catch (error: any) {
         update({ isLoading: false });
+        const message =
+            error.status == 409
+                ? 'This MFA credential already exists. Cannot overwrite it.'
+                : 'Something went wrong and we were unable to save your credential. Try again later.';
         return dispatch(
             sendToast({
-                message:
-                    'Something went wrong and we were unable to save your credential. Try again later.',
+                message,
                 severity: 'error',
             })
         );
@@ -195,7 +202,7 @@ export default function MFAEditor(props: MFACreatorProps) {
                     }
                     disabled={state.isLoading}
                 >
-                    Submit
+                    Save
                 </Button>
                 {state.isLoading && (
                     <CircularProgress

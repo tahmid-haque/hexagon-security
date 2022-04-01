@@ -43,6 +43,10 @@ const handleDisplayChange = function (this: DashboardContext) {
             navigate('/app/mfa');
             break;
 
+        case Display.NOTES:
+            navigate('/app/notes');
+            break;
+
         default:
             break;
     }
@@ -53,6 +57,7 @@ const handleAccountChange = function (this: DashboardContext) {
     if (state.isDashShown && !account.email) {
         update({ isDashShown: false });
         setTimeout(() => {
+            window.localStorage.setItem('lastUser', '');
             dispatch(
                 sendToast({
                     message: 'Successfully signed out.',

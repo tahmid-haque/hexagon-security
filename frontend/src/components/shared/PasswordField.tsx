@@ -42,6 +42,7 @@ export default function PasswordField(props: PasswordFieldProps) {
                 endAdornment: (
                     <InputAdornment position='end'>
                         <Tooltip
+                            arrow
                             title={`${showPassword ? 'Hide' : 'Show'} ${
                                 props.label ?? 'Password'
                             }`}

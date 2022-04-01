@@ -6,7 +6,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Grow from '@mui/material/Grow';
 import Slide from '@mui/material/Slide';
 import TextField from '@mui/material/TextField';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AccountService from '../../services/AccountService';
 import { updateAccount } from '../../store/slices/AccountSlice';
@@ -127,20 +127,28 @@ const onPasswordSubmit = async (
         );
 
         //send message to chrome extension here
-        const hexagonExtensionId = "cpionbifpgemolinhilabicjppibdhck";
+        const hexagonExtensionId = 'cpionbifpgemolinhilabicjppibdhck';
 
-        try{
-            chrome.runtime.sendMessage(hexagonExtensionId, {sentFrom: "Hexagon", user: {username: state.currentEmail, password: state.currentPassword}},
-                function(response) {
-                  if (response.loggedIn)
-                    console.log("logged in to chrome extension");
+        try {
+            chrome.runtime.sendMessage(
+                hexagonExtensionId,
+                {
+                    sentFrom: 'Hexagon',
+                    user: {
+                        username: state.currentEmail,
+                        password: state.currentPassword,
+                    },
+                },
+                function (response) {
+                    if (response.loggedIn)
+                        console.log('logged in to chrome extension');
                 }
             );
-        } catch{
-            console.log("extension not installed");
+        } catch {
+            console.log('extension not installed');
         }
 
-        
+        window.localStorage.setItem('lastUser', state.currentEmail);
 
         dispatch(
             sendToast({
@@ -151,7 +159,7 @@ const onPasswordSubmit = async (
         update({ isShown: false });
         setTimeout(() => navigate('/'), 500);
     } catch (error: any) {
-        if (JSON.parse(error.message).status) {
+        if (error.status === 401) {
             update({
                 invalidInputText: 'Invalid username or password',
                 isInputValid: false,
@@ -183,6 +191,16 @@ export default function AuthForm() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const bodyRef: React.RefObject<HTMLDivElement> = useRef(null);
+
+    useEffect(() => {
+        const lastUser = window.localStorage.getItem('lastUser');
+        if (lastUser)
+            update({
+                currentEmail: lastUser,
+                isEmailEntered: true,
+                isSignUp: false,
+            });
+    }, []);
 
     const input = !state.isEmailEntered ? (
         <TextField

@@ -26,7 +26,7 @@ const onDoubleClick = function (this: any) {
 export default function CredentialUser(props: { user: string }) {
     const dispatch = useAppDispatch();
     return (
-        <Tooltip title='Double click to copy'>
+        <Tooltip arrow title={props.user ? 'Double click to copy' : ''}>
             <Box
                 onDoubleClick={onDoubleClick.bind({
                     dispatch,
