@@ -67,6 +67,12 @@ const SecureRecordType = new GraphQLObjectType({
                 return Note.findById(parent.recordID);
             }
         },
+        share: {
+            type:  new GraphQLList(ShareType),
+            resolve(parent, args){
+                return Share.find({recordID: parent.recordID});
+            }
+        }
 
     })
 })
@@ -121,15 +127,9 @@ const ShareType = new GraphQLObjectType({
     fields: () => ({
         _id: {type: GraphQLString},
         secureRecordID: {type: GraphQLString},
+        recordID: {type: GraphQLString},
         reciever: {type: GraphQLString},
         key: {type: GraphQLString},
-        secureRecord: {
-            type: SecureRecordType,
-            resolve(parent, args){
-                //return _.find(WebsiteCredentials,{id:parent.recordID})
-                return SecureRecord.findOne({_id: parent.secureRecordID});
-            }
-        }
     })
 })
 
@@ -376,6 +376,7 @@ const Mutation = new GraphQLObjectType({
             type: ShareType,
             args: {
                 secureRecordID: {type: new GraphQLNonNull(GraphQLString)},
+                recordID: {type: new GraphQLNonNull(GraphQLString)},
                 reciever: {type: new GraphQLNonNull(GraphQLString)},
                 key: {type: new GraphQLNonNull(GraphQLString)}
             },
@@ -383,6 +384,7 @@ const Mutation = new GraphQLObjectType({
                 encryptionKey = uuid.v4();
                 let share = new Share({
                     secureRecordID: args.secureRecordID,
+                    recordID: args.recordID,
                     reciever: args.reciever,
                     key: args.key
                 });
@@ -406,6 +408,9 @@ const Mutation = new GraphQLObjectType({
                             console.log("2");
                             //res.status(404).sned();
                         } else {
+                            if(foundSecureRecord.UID != context.token.UID){
+                                return; //error
+                            }
                             Note.findOne({_id: foundSecureRecord.recordID}, function(err, foundNote){
                                 if(err){
                                     console.log("1");
@@ -444,6 +449,9 @@ const Mutation = new GraphQLObjectType({
                             console.log("2");
                             //res.status(404).sned();
                         } else {
+                            if(foundSecureRecord.UID != context.token.UID){
+                                return; //error
+                            }
                             WebsiteCredentials.findOne({_id: foundSecureRecord.recordID}, function(err, foundWebsiteCredentials){
                                 if(err){
                                     console.log("1");
@@ -479,6 +487,9 @@ const Mutation = new GraphQLObjectType({
                             console.log("2");
                             //res.status(404).sned();
                         } else {
+                            if(foundSecureRecord.UID != context.token.UID){
+                                return; //error
+                            }
                             if (foundSecureRecord.type == "account"){
                                 WebsiteCredentials.findOne({_id: foundSecureRecord.recordID}, function(err, foundCredentials){
                                     if(err){
@@ -575,18 +586,163 @@ const Mutation = new GraphQLObjectType({
         deleteShare: {
             type: ShareType,
             args: {
-                ShareID: {type: new GraphQLNonNull(GraphQLString)}
+                secureRecordID: {type: new GraphQLNonNull(GraphQLString)},
+                shareID: {type: new GraphQLNonNull(GraphQLString)}
             },
             resolve(parent, args){
-                Share.findOneAndDelete({_id: args.ShareID}, function(err){
+                SecureRecord.findOne({_id: args.secureRecordID}, function(err, foundSecureRecord){
                     if(err){
-                        console.log(err);
-                        //return res.status(500).send;
+                        console.log("1");
+                        //res.status(500).sned();
+                    } else {
+                        if (!foundSecureRecord){
+                            console.log("2");
+                            //res.status(404).sned();
+                        } else {
+                            if(foundSecureRecord.UID != context.token.UID){
+                                return; //error
+                            }
+                            Share.findOneAndDelete({_id: args.shareID}, function(err){
+                                if(err){
+                                    console.log(err);
+                                    //return res.status(500).send;
+                                }
+                                //return res.status(200).send;
+                            })
+                        }
                     }
-                    //return res.status(200).send;
-                })
+                });
             }
         },
+        updatePassword: {
+            type: HexagonUser,
+            args: {
+                oldPassword: {type: new GraphQLNonNull(GraphQLString)},
+                newPassword: {type: new GraphQLNonNull(GraphQLString)}
+            },
+            resolve(parent, args, context){
+
+                console.log("success");
+                HexagonUser.findOne({UID: context.token.UID}, function(err, foundUser){
+                    if(err){
+                        console.log("1");
+                        //res.status(500).sned();
+                    } else {
+                        if (!foundUser){
+                            console.log("2");
+                            //res.status(404).sned();
+                        } else {
+                            const auth = await bcrypt.compare(oldPassword, foundUser.password);
+                            if(auth) {
+                                //decode masterkey and UID, update with new info using the new encryption?
+                                foundUser.password = "";
+                                foundUser.masterKey = "";
+                                foundUser.UID = "";
+                                return foundUser.save();
+                            }
+                            //throw Error("Incorrect password");
+                        }
+                    }
+                });
+            }
+        },
+        revokeShare: {
+            type: ShareType,
+            args:  {
+                secureRecordID: {type: new GraphQLNonNull(GraphQLString)},
+                owner: {type: new GraphQLNonNull(GraphQLString)}
+            },
+            resolve(parent, args, context){
+                SecureRecord.findOne({_id: args.secureRecordID}, function(err, foundSecureRecord){
+                    if(err){
+                        console.log("1");
+                        //res.status(500).sned();
+                    } else {
+                        if (!foundSecureRecord){
+                            console.log("2");
+                            //res.status(404).sned();
+                        } else {
+                            if(foundSecureRecord.type == "account"){
+                                WebsiteCredentials.findOneAndUpdate({_id: foundSecureRecord.recordID}, 
+                                    { $pull: { UIDs: {UID: context.token.UID}} });
+                            } else if(foundSecureRecord.type == "seed"){
+                                Seed.findOneAndUpdate({_id: foundSecureRecord.recordID}, 
+                                    { $pull: { UIDs: {UID: context.token.UID}} });
+                            }else if(foundSecureRecord.type == "note"){
+                                Note.findOneAndUpdate({_id: foundSecureRecord.recordID}, 
+                                    { $pull: { UIDs: {UID: context.token.UID}} });
+                            }
+                            SecureRecord.findOneAndDelete({_id: args.secureRecordID});
+                        }
+                    }
+                });
+            }
+        },
+        AcceptOrDeclineShare:{
+            type: ShareType,
+            args: {
+                shareKey:{type: new GraphQLNonNull(GraphQLString)},
+                shareID:{type: new GraphQLNonNull(GraphQLString)},
+                isAccepted:{type: new GraphQLNonNull(GraphQLBoolean)},
+                masterKey:{type: new GraphQLNonNull(GraphQLString)}
+            },
+            resolve(parent,args,context){
+                Share.findOne({_id: args.ShareID}, function(err, foundShare){
+                    if(err){
+                        console.log("1");
+                        //res.status(500).sned();
+                    } else {
+                        if (!foundShare){
+                            console.log("2");
+                            //res.status(404).sned();
+                        } else {
+                            if(foundShare.token.username != foundShare.reciever){
+                                return; //wrong person
+                            }
+                            if(args.isAccepted){
+                                SecureRecord.findOne({_id: foundShare.secureRecordID}, function(err, foundSecureRecord){
+                                    if(err){
+                                        console.log("1");
+                                        //res.status(500).sned();
+                                    } else {
+                                        if (!foundSecureRecord){
+                                            console.log("2");
+                                            //res.status(404).sned();
+                                        } else {
+                                            let secureRecord = new SecureRecord({
+                                                name: foundSecureRecord.name,
+                                                key: foundSecureRecord.key,
+                                                recordID: foundShare.recordID,
+                                                UID: context.token.UID,
+                                                type: foundSecureRecord.type
+                                            });
+                                            secureRecord.save(function(err, updatedSecureRecord){
+                                                if (err){
+                                                    console.log(err);
+                                                    //res.status(500).send();
+                                                } else {
+                                                    if(foundSecureRecord.type == "account"){
+                                                        WebsiteCredentials.findOneAndUpdate({_id: foundShare.recordID}, 
+                                                            { $push: { UIDs: {UID: context.token.UID, secureRecordID: updatedSecureRecord._id}} });
+                                                    } else if(foundSecureRecord.type == "seed"){
+                                                        Seed.findOneAndUpdate({_id: foundShare.recordID}, 
+                                                            { $push: { UIDs: {UID: context.token.UID, secureRecordID: updatedSecureRecord._id}} });
+                                                    }else if(foundSecureRecord.type == "note"){
+                                                        Note.findOneAndUpdate({_id: foundShare.recordID}, 
+                                                            { $push: { UIDs: {UID: context.token.UID, secureRecordID: updatedSecureRecord._id}} });
+                                                    }
+                                                    Share.findOneAndDelete({_id: args.ShareID});
+                                                }
+                                            });
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    }
+                });
+            }
+        }
 
     }
 })

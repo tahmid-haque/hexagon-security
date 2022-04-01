@@ -41,6 +41,10 @@ query($offset: Int!, $limit: Int!, $sortType: String!, getShares: Boolean!){
         UID
       }
     }
+    share{
+      reciever
+      shareId
+    }
   }
 }
 `;

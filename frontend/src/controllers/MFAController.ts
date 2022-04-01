@@ -39,6 +39,10 @@ query($name: String!, $contains: Boolean!, $getShares: Boolean!){
         UID
       }
     }
+    share{
+      reciever
+      shareId
+    }
   }
 }
 `;
@@ -73,6 +77,10 @@ query($offset: Int!, $limit: Int!, $sortType: String!, getShares: Boolean!){
       UIDs {
         UID
       }
+    }
+    share{
+      reciever
+      shareId
     }
   }
 }

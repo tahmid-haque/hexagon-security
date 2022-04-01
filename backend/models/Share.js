@@ -6,6 +6,10 @@ const ShareSchema = new Schema({
         type: String,
         required: true
     },
+    recordID: {
+        type: String,
+        required: true
+    },
     reciever: {
         type: String,
         required: true
