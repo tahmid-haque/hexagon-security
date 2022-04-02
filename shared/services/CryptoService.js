@@ -104,7 +104,7 @@ export default class CryptoService {
     async encryptData(plainData, key) {
         const aesKey = await this.crypto.subtle.importKey(
             'raw',
-            key,
+            this.base64_to_buf(key).buffer,
             { name: 'AES-GCM' },
             false,
             ['encrypt']
@@ -115,7 +115,7 @@ export default class CryptoService {
     async decryptData(encryptedData, key) {
         const aesKey = await this.crypto.subtle.importKey(
             'raw',
-            key,
+            this.base64_to_buf(key).buffer,
             { name: 'AES-GCM' },
             false,
             ['decrypt']
@@ -178,7 +178,10 @@ export default class CryptoService {
         const decryptedData = this.decryptMultiple(encryptedData, recordAES);
         const recordKey = this.crypto.subtle.exportKey('raw', recordAES);
 
-        return { key: await recordKey, plainTexts: await decryptedData };
+        return [
+            this.buff_to_base64(new Uint8Array(await recordKey)),
+            ...(await decryptedData),
+        ];
     }
 
     // credits: https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest

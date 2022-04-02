@@ -16,6 +16,10 @@ import {
     DashboardEventType,
 } from '../../../store/slices/DashboardSlice';
 import { useAppDispatch } from '../../../store/store';
+import { MFA } from '../../mfa/MFAView';
+import { Note } from '../../notes/NotesView';
+import { Credential } from '../../credentials/CredentialsView';
+import { getShareInfo } from '../../shares/ShareManager';
 
 export type hideOptions = {
     edit?: boolean;
@@ -24,7 +28,7 @@ export type hideOptions = {
 };
 
 export default function ActionMenu(props: {
-    id: string;
+    data: Credential | MFA | Note;
     hideOptions?: hideOptions;
 }) {
     // inspired from https://mui.com/material-ui/react-menu/
@@ -44,7 +48,17 @@ export default function ActionMenu(props: {
         dispatch(
             createEvent({
                 type: DashboardEventType.DELETE_CLICK,
-                param: props.id,
+                param: props.data.id,
+            })
+        );
+        onClose();
+    }, []);
+
+    const onShareClick = useCallback(() => {
+        dispatch(
+            createEvent({
+                type: DashboardEventType.SHARE_CLICK,
+                param: getShareInfo(props.data),
             })
         );
         onClose();
@@ -54,7 +68,7 @@ export default function ActionMenu(props: {
         dispatch(
             createEvent({
                 type: DashboardEventType.EDIT_CLICK,
-                param: props.id,
+                param: props.data.id,
             })
         );
         onClose();
@@ -87,7 +101,7 @@ export default function ActionMenu(props: {
                     </MenuItem>
                 )}
                 {!props.hideOptions?.share && (
-                    <MenuItem onClick={onClose}>
+                    <MenuItem onClick={onShareClick}>
                         <ListItemIcon>
                             <ShareIcon />
                         </ListItemIcon>

@@ -1,6 +1,11 @@
 import { Box, LinearProgress } from '@mui/material';
 import { DataGrid, GridColDef, GridSortDirection } from '@mui/x-data-grid';
 import { RefObject, useEffect, useRef, useState } from 'react';
+import {
+    DashboardEvent,
+    DashboardEventType,
+} from '../../store/slices/DashboardSlice';
+import { useAppSelector } from '../../store/store';
 import { useComponentState } from '../../utils/hooks';
 
 export type AppTableProps = {
@@ -16,8 +21,6 @@ export type AppTableProps = {
     ) => void;
     sortField?: string;
     initialSort?: GridSortDirection;
-    rerender?: boolean;
-    clearRerender?: () => void;
 };
 
 type AppTableState = {
@@ -30,20 +33,25 @@ type AppTableContext = {
     state: AppTableState;
     update: (update: Partial<AppTableState>) => void;
     ref: RefObject<HTMLDivElement>;
+    event: DashboardEvent;
     props: AppTableProps;
 };
 
 const updateContent = function (this: AppTableContext) {
     const { props, state } = this;
 
-    if ((props.contentCount && state.numRows) || props.rerender) {
+    if (props.contentCount && state.numRows) {
         props.updateContent(
             state.currentPage * state.numRows,
             state.numRows,
             state.sortType
         );
-        if (props.clearRerender) props.clearRerender();
     }
+};
+
+const handleEvent = function (this: AppTableContext) {
+    if (this.event.type === DashboardEventType.RERENDER_DATA)
+        updateContent.call(this);
 };
 
 const init = function (this: AppTableContext) {
@@ -62,6 +70,7 @@ const init = function (this: AppTableContext) {
 
 export default function AppTable(props: AppTableProps) {
     const ref = useRef(null) as RefObject<HTMLDivElement>;
+    const event = useAppSelector((state) => state.dashboard);
 
     const { state, update } = useComponentState({
         numRows: 0,
@@ -74,6 +83,7 @@ export default function AppTable(props: AppTableProps) {
         update,
         ref,
         props,
+        event,
     };
 
     useEffect(init.bind(context), []);
@@ -82,8 +92,8 @@ export default function AppTable(props: AppTableProps) {
         state.sortType,
         state.currentPage,
         props.contentCount,
-        props.rerender,
     ]);
+    useEffect(handleEvent.bind(context), [event]);
 
     return (
         <Box ref={ref} sx={{ height: '100%', width: 'calc(100vw - 66px)' }}>

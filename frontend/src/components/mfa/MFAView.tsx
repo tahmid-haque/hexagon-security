@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import LockIcon from '@mui/icons-material/Lock';
 import {
     clearEvent,
+    createEvent,
     DashboardEvent,
     DashboardEventType,
 } from '../../store/slices/DashboardSlice';
@@ -22,6 +23,8 @@ import MFACreator from './mfa-creator/MFACreator';
 import MFACode from './mfa-code/MFACode';
 import { sendToast } from '../../store/slices/ToastSlice';
 import { Display, setDisplay } from '../../store/slices/DisplaySlice';
+import { Owner, PendingShare } from '../shares/ShareManager';
+import OwnershipStatus from '../shared/OwnershipStatus';
 
 type MFAViewContext = {
     state: MFAViewState;
@@ -37,7 +40,6 @@ type MFAViewState = {
     isCreatorOpen: boolean;
     isDeleteOpen: boolean;
     isDeleteLoading: boolean;
-    rerenderTable: boolean;
     tableErrorText: string;
     mfaService: MFAService;
     currentId?: string;
@@ -48,8 +50,9 @@ export type MFA = {
     name: string;
     user: string;
     seed: string;
-    key: ArrayBuffer;
-    shares: string[];
+    key: string;
+    shares: Owner[];
+    pendingShares: PendingShare[];
 };
 
 const loadErrorText = 'Unable to load MFA credentials. Please try again later.';
@@ -104,22 +107,7 @@ const columnDef: GridColDef[] = [
         width: 88,
         sortable: false,
         filterable: false,
-        renderCell: (params) => {
-            return (
-                <Box
-                    sx={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    <Tooltip arrow title='Exclusive'>
-                        <LockIcon />
-                    </Tooltip>
-                </Box>
-            );
-        },
+        renderCell: (params) => <OwnershipStatus data={params.row} />,
     },
     {
         field: 'actions',
@@ -130,7 +118,7 @@ const columnDef: GridColDef[] = [
         renderCell: (params) => {
             return (
                 <ActionMenu
-                    id={params.row.id}
+                    data={params.row}
                     hideOptions={{ edit: true, share: !isMFAValid(params.row) }}
                 />
             );
@@ -138,7 +126,7 @@ const columnDef: GridColDef[] = [
     },
 ];
 
-const isMFAValid = (mfa: MFA) => mfa.user && mfa.seed && mfa.key.byteLength;
+const isMFAValid = (mfa: MFA) => mfa.user && mfa.seed && mfa.key;
 
 const handleEvent = function (this: MFAViewContext) {
     const { event, update, dispatch } = this;
@@ -190,6 +178,14 @@ const updateMFA = async function (
     update({ isLoading: false });
 };
 
+const rerenderView = function (this: MFAViewContext) {
+    this.dispatch(
+        createEvent({
+            type: DashboardEventType.RERENDER_DATA,
+        })
+    );
+};
+
 const onDeleteAccept = async function (this: MFAViewContext) {
     const { update, state, dispatch } = this;
     update({ isDeleteLoading: true });
@@ -201,6 +197,8 @@ const onDeleteAccept = async function (this: MFAViewContext) {
                 severity: 'success',
             })
         );
+        update({ isDeleteOpen: false });
+        rerenderView.call(this);
     } catch (error) {
         dispatch(
             sendToast({
@@ -210,7 +208,7 @@ const onDeleteAccept = async function (this: MFAViewContext) {
             })
         );
     }
-    update({ isDeleteLoading: false, isDeleteOpen: false });
+    update({ isDeleteLoading: false });
 };
 
 const init = function (this: MFAViewContext) {
@@ -244,7 +242,6 @@ export default function MFAView() {
         isCreatorOpen: false,
         isDeleteOpen: false,
         isDeleteLoading: false,
-        rerenderTable: false,
         tableErrorText: '',
         mfaService: new MFAService(cryptoWorker, account),
     } as MFAViewState);
@@ -269,16 +266,14 @@ export default function MFAView() {
                 isLoading={state.isLoading}
                 sortField='name'
                 updateContent={updateMFA.bind(context)}
-                rerender={state.rerenderTable}
-                clearRerender={() => update({ rerenderTable: false })}
             />
             <MFACreator
                 isOpen={state.isCreatorOpen}
                 onClose={(modified) => {
                     update({
                         isCreatorOpen: false,
-                        ...(modified && { rerenderTable: true }),
                     });
+                    if (modified) rerenderView.call(context);
                 }}
                 mfaService={state.mfaService}
             />

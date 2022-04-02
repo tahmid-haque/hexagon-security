@@ -1,5 +1,4 @@
-import { ApolloClient, gql, NormalizedCacheObject } from "@apollo/client";
-
+import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
 
 export type AuthenticationResponse = {
     masterKey: string;
@@ -7,11 +6,11 @@ export type AuthenticationResponse = {
 };
 
 const updatePasswordMutation = gql`
-mutation($oldPassword: String!, $newPassword: String!){
-    updatePassword(oldPassword: $oldPassword, newPassword: $newPassword){
-    _id
-  }
-}
+    mutation ($oldPassword: String!, $newPassword: String!) {
+        updatePassword(oldPassword: $oldPassword, newPassword: $newPassword) {
+            _id
+        }
+    }
 `;
 
 const doPOST = (url: string, body: any) => {
@@ -29,30 +28,25 @@ const doPOST = (url: string, body: any) => {
 };
 
 class AccountController {
-    private client!: ApolloClient<NormalizedCacheObject>;
-    private token!: string;
-    constructor(client: ApolloClient<NormalizedCacheObject>, token: string){
-        this.client = client;
-        this.token = token;
-    }
-    private buildQuery(query: any, variables: any){
-        return {query,
-                context: { 
-                    headers: { 
-                        "jwt": this.token  // this header will reach the server
-                    } 
+    public updatePassword(
+        oldPassword: string,
+        newPassword: string,
+        client: ApolloClient<NormalizedCacheObject>,
+        token: string
+    ) {
+        return client.query({
+            query: updatePasswordMutation,
+            context: {
+                headers: {
+                    jwt: token, // this header will reach the server
                 },
-                variables
-              }
+            },
+            variables: {
+                oldPassword: oldPassword,
+                newPassword: newPassword,
+            },
+        });
     }
-
-    public updatePassword(oldPassword: string, newPassword: string){
-        return this.client.query(this.buildQuery(updatePasswordMutation,{
-            oldPassword: oldPassword,
-            newPassword: newPassword
-        }));
-    }
-      
 
     async checkExists(email: string) {
         return doPOST('/api/auth/exists', { username: email });

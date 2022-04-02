@@ -3,11 +3,10 @@ import {
     NormalizedCacheObject,
     useApolloClient,
 } from '@apollo/client';
-import LockIcon from '@mui/icons-material/Lock';
 import GppBadIcon from '@mui/icons-material/GppBad';
+import GppGoodIcon from '@mui/icons-material/GppGood';
 import GppGoodOutlinedIcon from '@mui/icons-material/GppGoodOutlined';
 import GppMaybeIcon from '@mui/icons-material/GppMaybe';
-import GppGoodIcon from '@mui/icons-material/GppGood';
 import { Box, Tooltip } from '@mui/material';
 import { GridColDef, GridSortDirection } from '@mui/x-data-grid';
 import { ReactElement, useEffect } from 'react';
@@ -15,6 +14,8 @@ import { useOutletContext } from 'react-router-dom';
 import CredentialService from '../../services/CredentialService';
 import {
     clearEvent,
+    createEvent,
+    DashboardEvent,
     DashboardEventType,
 } from '../../store/slices/DashboardSlice';
 import { Display, setDisplay } from '../../store/slices/DisplaySlice';
@@ -23,6 +24,8 @@ import { useAppDispatch, useAppSelector } from '../../store/store';
 import { useComponentState } from '../../utils/hooks';
 import AppTable from '../shared/AppTable';
 import ConfirmationDialog from '../shared/ConfirmationDialog';
+import OwnershipStatus from '../shared/OwnershipStatus';
+import { Owner, PendingShare } from '../shares/ShareManager';
 import ActionMenu from './action-menu/ActionMenu';
 import CredentialEditor from './credential-editor/CredentialEditor';
 import CredentialName from './name-field/CredentialName';
@@ -34,9 +37,10 @@ export type Credential = {
     name: string;
     user: string;
     password: string;
-    key: ArrayBuffer;
+    key: string;
     strength: CredentialStrength;
-    shares: string[];
+    shares: Owner[];
+    pendingShares: PendingShare[];
 };
 
 export enum CredentialStrength {
@@ -140,22 +144,7 @@ const columnDef: GridColDef[] = [
         width: 88,
         sortable: false,
         filterable: false,
-        renderCell: (params) => {
-            return (
-                <Box
-                    sx={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    <Tooltip arrow title='Exclusive'>
-                        <LockIcon />
-                    </Tooltip>
-                </Box>
-            );
-        },
+        renderCell: (params) => <OwnershipStatus data={params.row} />,
     },
     {
         field: 'actions',
@@ -166,7 +155,7 @@ const columnDef: GridColDef[] = [
         renderCell: (params) => {
             return (
                 <ActionMenu
-                    id={params.row.id}
+                    data={params.row}
                     hideOptions={{
                         ...(!isCredentialValid(params.row) && {
                             edit: true,
@@ -180,7 +169,7 @@ const columnDef: GridColDef[] = [
 ];
 
 const isCredentialValid = (credential: Credential) =>
-    credential.user && credential.password && credential.key.byteLength;
+    credential.user && credential.password && credential.key;
 
 const updateCredentials = async function (
     this: CredentialsViewContext,
@@ -214,6 +203,14 @@ const updateCredentials = async function (
     update({ isLoading: false });
 };
 
+const rerenderView = function (this: CredentialsViewContext) {
+    this.dispatch(
+        createEvent({
+            type: DashboardEventType.RERENDER_DATA,
+        })
+    );
+};
+
 const onDeleteAccept = async function (this: CredentialsViewContext) {
     const { update, state, dispatch } = this;
     update({ isDeleteLoading: true });
@@ -225,6 +222,8 @@ const onDeleteAccept = async function (this: CredentialsViewContext) {
                 severity: 'success',
             })
         );
+        update({ isDeleteOpen: false });
+        rerenderView.call(this);
     } catch (error) {
         dispatch(
             sendToast({
@@ -234,7 +233,7 @@ const onDeleteAccept = async function (this: CredentialsViewContext) {
             })
         );
     }
-    update({ isDeleteLoading: false, isDeleteOpen: false });
+    update({ isDeleteLoading: false });
 };
 
 const handleEvent = function (this: CredentialsViewContext) {
@@ -288,7 +287,6 @@ type CredentialsViewState = {
     isEditorOpen: boolean;
     isDeleteOpen: boolean;
     isDeleteLoading: boolean;
-    rerenderTable: boolean;
     credentialService: CredentialService;
     tableErrorText: string;
     currentId?: string;
@@ -298,10 +296,7 @@ type CredentialsViewState = {
 
 type CredentialsViewContext = {
     state: CredentialsViewState;
-    event: {
-        type: DashboardEventType;
-        param: string;
-    };
+    event: DashboardEvent;
     update: (update: Partial<CredentialsViewState>) => void;
     dispatch: any;
 };
@@ -325,7 +320,6 @@ export default function CredentialsView() {
         isDeleteLoading: false,
         sortType: 'asc',
         tableErrorText: '',
-        rerenderTable: false,
         credentialService: new CredentialService(
             cryptoWorker,
             account,
@@ -347,8 +341,6 @@ export default function CredentialsView() {
                 isLoading={state.isLoading}
                 sortField='name'
                 updateContent={updateCredentials.bind(context)}
-                rerender={state.rerenderTable}
-                clearRerender={() => update({ rerenderTable: false })}
             />
             <CredentialEditor
                 isOpen={state.isEditorOpen}
@@ -358,6 +350,7 @@ export default function CredentialsView() {
                         isEditorOpen: false,
                         ...(modified && { rerenderTable: true }),
                     });
+                    if (modified) rerenderView.call(context);
                 }}
                 credentialService={state.credentialService}
                 credential={state.currentCredential}

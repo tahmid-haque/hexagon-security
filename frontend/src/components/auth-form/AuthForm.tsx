@@ -66,10 +66,10 @@ const onEmailChange = (
     // taken from https://stackoverflow.com/questions/46155/whats-the-best-way-to-validate-an-email-address-in-javascript
     const emailMatcher =
         /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    const value = event.target.value;
-    const isInputValid = emailMatcher.test(value.toLowerCase());
+    const value = event.target.value.toLowerCase();
+    const isInputValid = emailMatcher.test(value);
     update({
-        currentEmail: value,
+        currentEmail: value.trim(),
         invalidInputText: '',
         isInputValid,
     });
@@ -209,7 +209,7 @@ export default function AuthForm() {
             error={!state.isInputValid}
             label='Email'
             value={state.currentEmail}
-            type='email'
+            type='text'
             helperText={state.invalidInputText ?? ''}
             variant='standard'
             onChange={(e: any) => onEmailChange(e, update)}

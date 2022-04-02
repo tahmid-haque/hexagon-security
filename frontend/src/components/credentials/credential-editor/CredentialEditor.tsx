@@ -29,7 +29,7 @@ type CredentialEditorState = {
     user: string;
     password: string;
     id: string;
-    key: ArrayBuffer;
+    key: string;
     isLoading: boolean;
     isExists: boolean;
     isOverwriteLoading: boolean;
@@ -46,7 +46,7 @@ const initState: CredentialEditorState = {
     user: '',
     password: '',
     id: '',
-    key: new ArrayBuffer(0),
+    key: '',
     isLoading: false,
     isExists: false,
     isOverwriteLoading: false,

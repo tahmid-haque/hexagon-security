@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type DashboardEvent = {
     type: DashboardEventType;
-    param?: string;
+    param?: any;
 };
 
 export enum DashboardEventType {
@@ -10,12 +10,13 @@ export enum DashboardEventType {
     DELETE_CLICK,
     EDIT_CLICK,
     SHARE_CLICK,
+    RERENDER_DATA,
     NO_EVENT,
 }
 
 const initState = {
     type: DashboardEventType.NO_EVENT,
-    param: '',
+    param: null,
 };
 
 const dashboardSlice = createSlice({

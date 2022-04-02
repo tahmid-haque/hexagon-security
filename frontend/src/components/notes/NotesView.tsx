@@ -15,6 +15,8 @@ import { useOutletContext } from 'react-router-dom';
 import CredentialService from '../../services/CredentialService';
 import {
     clearEvent,
+    createEvent,
+    DashboardEvent,
     DashboardEventType,
 } from '../../store/slices/DashboardSlice';
 import { Display, setDisplay } from '../../store/slices/DisplaySlice';
@@ -27,14 +29,17 @@ import ActionMenu from '../credentials/action-menu/ActionMenu';
 import NoteService from '../../services/NoteService';
 import NoteEditor from './note-editor/NoteEditor';
 import NoteTitle from './note-title/NoteTitle';
+import { Owner, PendingShare } from '../shares/ShareManager';
+import OwnershipStatus from '../shared/OwnershipStatus';
 
 export type Note = {
     id: string;
     lastModified: Date | undefined;
     title: string;
     body: string;
-    key: ArrayBuffer;
-    shares: string[];
+    key: string;
+    shares: Owner[];
+    pendingShares: PendingShare[];
 };
 
 const loadErrorText = 'Unable to load notes. Please try again later.';
@@ -74,22 +79,7 @@ const columnDef: GridColDef[] = [
         width: 88,
         sortable: false,
         filterable: false,
-        renderCell: (params) => {
-            return (
-                <Box
-                    sx={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    <Tooltip arrow title='Exclusive'>
-                        <LockIcon />
-                    </Tooltip>
-                </Box>
-            );
-        },
+        renderCell: (params) => <OwnershipStatus data={params.row} />,
     },
     {
         field: 'actions',
@@ -100,7 +90,7 @@ const columnDef: GridColDef[] = [
         renderCell: (params) => {
             return (
                 <ActionMenu
-                    id={params.row.id}
+                    data={params.row}
                     hideOptions={{
                         ...(!isNoteValid(params.row) && {
                             edit: true,
@@ -113,8 +103,7 @@ const columnDef: GridColDef[] = [
     },
 ];
 
-const isNoteValid = (note: Note) =>
-    note.title && note.lastModified && note.key.byteLength;
+const isNoteValid = (note: Note) => note.title && note.lastModified && note.key;
 
 const updateNotes = async function (
     this: NotesViewContext,
@@ -145,6 +134,14 @@ const updateNotes = async function (
     update({ isLoading: false });
 };
 
+const rerenderView = function (this: NotesViewContext) {
+    this.dispatch(
+        createEvent({
+            type: DashboardEventType.RERENDER_DATA,
+        })
+    );
+};
+
 const onDeleteAccept = async function (this: NotesViewContext) {
     const { update, state, dispatch } = this;
     update({ isDeleteLoading: true });
@@ -156,6 +153,8 @@ const onDeleteAccept = async function (this: NotesViewContext) {
                 severity: 'success',
             })
         );
+        update({ isDeleteOpen: false });
+        rerenderView.call(this);
     } catch (error) {
         dispatch(
             sendToast({
@@ -165,7 +164,7 @@ const onDeleteAccept = async function (this: NotesViewContext) {
             })
         );
     }
-    update({ isDeleteLoading: false, isDeleteOpen: false });
+    update({ isDeleteLoading: false });
 };
 
 const handleEvent = function (this: NotesViewContext) {
@@ -219,7 +218,6 @@ type NotesViewState = {
     isEditorOpen: boolean;
     isDeleteOpen: boolean;
     isDeleteLoading: boolean;
-    rerenderTable: boolean;
     noteService: NoteService;
     tableErrorText: string;
     currentId?: string;
@@ -229,10 +227,7 @@ type NotesViewState = {
 
 type NotesViewContext = {
     state: NotesViewState;
-    event: {
-        type: DashboardEventType;
-        param: string;
-    };
+    event: DashboardEvent;
     update: (update: Partial<NotesViewState>) => void;
     dispatch: any;
 };
@@ -256,7 +251,6 @@ export default function NotesView() {
         isDeleteLoading: false,
         tableErrorText: '',
         sortType: 'asc',
-        rerenderTable: false,
         noteService: new NoteService(cryptoWorker, account, apolloClient),
     } as NotesViewState);
 
@@ -274,8 +268,6 @@ export default function NotesView() {
                 isLoading={state.isLoading}
                 sortField='lastModified'
                 updateContent={updateNotes.bind(context)}
-                rerender={state.rerenderTable}
-                clearRerender={() => update({ rerenderTable: false })}
                 initialSort='desc'
             />
             <NoteEditor
@@ -284,8 +276,8 @@ export default function NotesView() {
                 onClose={(modified) => {
                     update({
                         isEditorOpen: false,
-                        ...(modified && { rerenderTable: true }),
                     });
+                    if (modified) rerenderView.call(context);
                 }}
                 noteService={state.noteService}
                 note={state.currentNote}

@@ -9,6 +9,12 @@ import { useAppDispatch, useAppSelector } from '../../store/store';
 import { useComponentState } from '../../utils/hooks';
 import DashboardHeader from './dashboard-header/DashboardHeader';
 import DashboardNavigation from './dashboard-navigation/DashboardNavigation';
+import ShareManager, { getShareInfo, ShareInfo } from '../shares/ShareManager';
+import {
+    clearEvent,
+    DashboardEvent,
+    DashboardEventType,
+} from '../../store/slices/DashboardSlice';
 
 // Note: much of the dashboard header and navigation components are designed based on the MUI example here - https://mui.com/material-ui/react-drawer/
 
@@ -18,6 +24,7 @@ const createCryptoWorker = createWorkerFactory(
 
 type DashboardState = {
     isNavOpen: boolean;
+    isShareOpen: boolean;
     isDashShown: boolean;
     currentPane: Display;
 };
@@ -30,6 +37,7 @@ type DashboardContext = {
     navigate: any;
     dispatch: any;
     cryptoWorker: any;
+    event: DashboardEvent;
 };
 
 const handleDisplayChange = function (this: DashboardContext) {
@@ -69,12 +77,24 @@ const handleAccountChange = function (this: DashboardContext) {
     }
 };
 
+const handleDashboardEvent = function (this: DashboardContext) {
+    if (this.event.type === DashboardEventType.SHARE_CLICK) {
+        this.update({
+            isShareOpen: true,
+        });
+        this.dispatch(clearEvent());
+    }
+};
+
 export default function Dashboard() {
     const account = useAppSelector((state) => state.account);
     const display = useAppSelector((state) => state.display);
+    const event = useAppSelector((state) => state.dashboard);
     const { state, update } = useComponentState({
         isNavOpen: false,
         isDashShown: false,
+        isShareOpen: false,
+        currentPane: Display.CREDENTIALS,
     } as DashboardState);
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
@@ -83,6 +103,7 @@ export default function Dashboard() {
     const context = {
         account,
         display,
+        event,
         state,
         update,
         navigate,
@@ -106,6 +127,7 @@ export default function Dashboard() {
     }, []);
     useEffect(handleAccountChange.bind(context), [account]);
     useEffect(handleDisplayChange.bind(context), [display]);
+    useEffect(handleDashboardEvent.bind(context), [event]);
 
     return (
         <Box sx={{ display: 'flex' }}>
@@ -123,19 +145,25 @@ export default function Dashboard() {
                 currentPane={display}
             ></DashboardNavigation>
             {state.isDashShown && (
-                <Box
-                    sx={{
-                        width: '100%',
-                        height: 'calc(100vh - 56px)',
-                        overflowY: 'auto',
-                        marginTop: '56px',
-                        '@media (min-width: 600px)': {
-                            height: 'calc(100vh - 64px)',
-                            marginTop: '64px',
-                        },
-                    }}
-                >
-                    <Outlet context={cryptoWorker} />
+                <Box>
+                    <Box
+                        sx={{
+                            width: '100%',
+                            height: 'calc(100vh - 56px)',
+                            overflowY: 'auto',
+                            marginTop: '56px',
+                            '@media (min-width: 600px)': {
+                                height: 'calc(100vh - 64px)',
+                                marginTop: '64px',
+                            },
+                        }}
+                    >
+                        <Outlet context={cryptoWorker} />
+                    </Box>
+                    <ShareManager
+                        isOpen={state.isShareOpen}
+                        onClose={() => update({ isShareOpen: false })}
+                    />
                 </Box>
             )}
         </Box>

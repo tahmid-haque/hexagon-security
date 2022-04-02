@@ -33,16 +33,13 @@ export default class CryptoService {
         salt: Uint8Array,
         isWrap: boolean
     ) => Promise<CryptoKey>;
-    encryptData(plainData: string[], key: ArrayBuffer): Promise<string[]>;
-    decryptData(encryptedData: string[], key: ArrayBuffer): Promise<string[]>;
+    encryptData(plainData: string[], key: string): Promise<string[]>;
+    decryptData(encryptedData: string[], key: string): Promise<string[]>;
     encryptWrappedData(plainData: string[], secret: string): Promise<string[]>;
     decryptWrappedData(
         encryptedData: string[],
         encryptedKey: string,
         secret: string
-    ): Promise<{
-        key: ArrayBuffer;
-        plainTexts: string[];
-    }>;
+    ): Promise<string[]>;
     digestMessage(message: string): Promise<string>;
 }
