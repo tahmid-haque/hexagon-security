@@ -12,6 +12,7 @@ export enum DashboardEventType {
     SHARE_CLICK,
     RERENDER_DATA,
     NO_EVENT,
+    SETTINGS_CLICK,
 }
 
 const initState = {

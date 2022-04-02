@@ -15,6 +15,7 @@ import {
     DashboardEvent,
     DashboardEventType,
 } from '../../store/slices/DashboardSlice';
+import Settings from '../settings/Settings';
 
 // Note: much of the dashboard header and navigation components are designed based on the MUI example here - https://mui.com/material-ui/react-drawer/
 
@@ -26,6 +27,7 @@ type DashboardState = {
     isNavOpen: boolean;
     isShareOpen: boolean;
     isDashShown: boolean;
+    isSettingsOpen: boolean;
     currentPane: Display;
 };
 
@@ -77,12 +79,25 @@ const handleAccountChange = function (this: DashboardContext) {
     }
 };
 
-const handleDashboardEvent = function (this: DashboardContext) {
-    if (this.event.type === DashboardEventType.SHARE_CLICK) {
-        this.update({
-            isShareOpen: true,
-        });
-        this.dispatch(clearEvent());
+const handleEvent = function (this: DashboardContext) {
+    const { event, update, dispatch } = this;
+    switch (event.type) {
+        case DashboardEventType.SHARE_CLICK:
+            dispatch(clearEvent());
+            this.update({
+                isShareOpen: true,
+            });
+            break;
+            
+        case DashboardEventType.SETTINGS_CLICK:
+            dispatch(clearEvent());
+            update({
+                isSettingsOpen: true,
+            });
+            break;
+
+        default:
+            break;
     }
 };
 
@@ -95,6 +110,7 @@ export default function Dashboard() {
         isDashShown: false,
         isShareOpen: false,
         currentPane: Display.CREDENTIALS,
+        isSettingsOpen: false,
     } as DashboardState);
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
@@ -127,7 +143,7 @@ export default function Dashboard() {
     }, []);
     useEffect(handleAccountChange.bind(context), [account]);
     useEffect(handleDisplayChange.bind(context), [display]);
-    useEffect(handleDashboardEvent.bind(context), [event]);
+    useEffect(handleEvent.bind(context), [event]);
 
     return (
         <Box sx={{ display: 'flex' }}>
@@ -166,6 +182,10 @@ export default function Dashboard() {
                     />
                 </Box>
             )}
+            <Settings 
+                isOpen={state.isSettingsOpen}
+                onClose={() => update({ isSettingsOpen: false })}
+            />
         </Box>
     );
 }

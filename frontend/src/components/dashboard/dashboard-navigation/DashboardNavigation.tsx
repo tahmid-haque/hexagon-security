@@ -23,6 +23,10 @@ import { clearAccount } from '../../../store/slices/AccountSlice';
 import { Display, setDisplay } from '../../../store/slices/DisplaySlice';
 import { useAppDispatch } from '../../../store/store';
 import styles from './DashboardNavigation.module.scss';
+import {
+    createEvent,
+    DashboardEventType,
+} from '../../../store/slices/DashboardSlice';
 
 const optionHeight = 48;
 
@@ -118,6 +122,8 @@ const getFeatureButtons = function (this: {
         {
             name: 'Settings',
             icon: <SettingsIcon />,
+            // isActive: props.currentPane === 'Settings',
+            onClick: () => dispatch(createEvent({ type: DashboardEventType.SETTINGS_CLICK })),
         },
     ] as Feature[];
 
