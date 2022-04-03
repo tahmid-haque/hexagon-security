@@ -16,6 +16,7 @@ import {
     DashboardEventType,
 } from '../../store/slices/DashboardSlice';
 import Settings from '../settings/Settings';
+import AccountService from '../../services/AccountService';
 
 // Note: much of the dashboard header and navigation components are designed based on the MUI example here - https://mui.com/material-ui/react-drawer/
 
@@ -29,6 +30,7 @@ type DashboardState = {
     isDashShown: boolean;
     isSettingsOpen: boolean;
     currentPane: Display;
+    accountService: AccountService
 };
 
 type DashboardContext = {
@@ -111,6 +113,7 @@ export default function Dashboard() {
         isShareOpen: false,
         currentPane: Display.CREDENTIALS,
         isSettingsOpen: false,
+        accountService: new AccountService(),
     } as DashboardState);
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
@@ -180,12 +183,13 @@ export default function Dashboard() {
                         isOpen={state.isShareOpen}
                         onClose={() => update({ isShareOpen: false })}
                     />
+                    <Settings 
+                        isOpen={state.isSettingsOpen}
+                        onClose={() => update({ isSettingsOpen: false })}
+                        accountService={state.accountService}
+                    />
                 </Box>
             )}
-            <Settings 
-                isOpen={state.isSettingsOpen}
-                onClose={() => update({ isSettingsOpen: false })}
-            />
         </Box>
     );
 }

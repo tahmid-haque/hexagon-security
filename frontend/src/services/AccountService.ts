@@ -22,6 +22,16 @@ class AccountService {
             ? this.accountController.signUp(email, password)
             : this.accountController.signIn(email, password);
     }
+
+    async updatePassword(currentPass: string, newPass: string) {
+        // const existError = await this.checkCredentialExists(url, username);
+        // if (existError) throw { status: 409, ...existError };
+
+        // TODO: connect to real api later
+        return new Promise((resolve) => {
+            setTimeout(resolve, 500);
+        });
+    }
 }
 
 export default AccountService;

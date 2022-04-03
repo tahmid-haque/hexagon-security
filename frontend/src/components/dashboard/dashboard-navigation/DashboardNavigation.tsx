@@ -122,7 +122,6 @@ const getFeatureButtons = function (this: {
         {
             name: 'Settings',
             icon: <SettingsIcon />,
-            // isActive: props.currentPane === 'Settings',
             onClick: () => dispatch(createEvent({ type: DashboardEventType.SETTINGS_CLICK })),
         },
     ] as Feature[];
