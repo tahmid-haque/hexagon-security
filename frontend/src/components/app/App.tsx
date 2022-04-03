@@ -3,7 +3,13 @@ import Slide from '@mui/material/Slide';
 import Snackbar, { SnackbarCloseReason } from '@mui/material/Snackbar';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { consumeToast, sendToast, Toast } from '../../store/slices/ToastSlice';
+import { DashboardEventType } from '../../store/slices/DashboardSlice';
+import {
+    clearToasts,
+    consumeToast,
+    sendToast,
+    Toast,
+} from '../../store/slices/ToastSlice';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { useComponentState } from '../../utils/hooks';
 import './App.scss';
@@ -13,21 +19,14 @@ const UpTransition = (props: any) => {
 };
 
 export default function App() {
-    const { toast: toastQueue, account } = useAppSelector((state) => state);
+    const { toast: toastQueue, dashboard: event } = useAppSelector(
+        (state) => state
+    );
     const [isToastOpen, setIsToastOpen] = useState(false);
+    const [currentToast, setCurrentToast] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useAppDispatch();
-
-    useEffect(() => {
-        if (location.pathname === '/')
-            navigate(account.email ? '/app/credentials' : '/authenticate');
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [location]);
-
-    useEffect(() => {
-        if (toastQueue.length) setIsToastOpen(true);
-    }, [toastQueue.length]);
 
     const onToastClose = useCallback(
         (
@@ -44,6 +43,29 @@ export default function App() {
         },
         []
     );
+
+    useEffect(() => {
+        if (location.pathname === '/') navigate('/app/credentials');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location]);
+
+    useEffect(() => {
+        if (toastQueue.length) setIsToastOpen(true);
+    }, [toastQueue.length]);
+
+    useEffect(() => {
+        if (event.type !== DashboardEventType.SIGNOUT) return;
+        setIsToastOpen(false);
+        setTimeout(() => {
+            dispatch(clearToasts());
+            dispatch(
+                sendToast({
+                    message: 'Successfully signed out.',
+                    severity: 'success',
+                })
+            );
+        }, 300);
+    }, [event]);
 
     return (
         <div id='app' className='background'>

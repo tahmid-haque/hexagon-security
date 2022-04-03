@@ -16,8 +16,11 @@ const toastSlice = createSlice({
         consumeToast(state: Toast[]) {
             return state.slice(1);
         },
+        clearToasts() {
+            return [];
+        },
     },
 });
 
-export const { sendToast, consumeToast } = toastSlice.actions;
+export const { sendToast, consumeToast, clearToasts } = toastSlice.actions;
 export default toastSlice.reducer;

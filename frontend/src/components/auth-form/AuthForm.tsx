@@ -10,8 +10,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AccountService from '../../services/AccountService';
 import { updateAccount } from '../../store/slices/AccountSlice';
+import { clearNextLocation } from '../../store/slices/LocationSlice';
 import { sendToast } from '../../store/slices/ToastSlice';
-import { useAppDispatch } from '../../store/store';
+import { useAppDispatch, useAppSelector } from '../../store/store';
 import { useComponentState } from '../../utils/hooks';
 import PasswordField from '../shared/PasswordField';
 import styles from './AuthForm.module.scss';
@@ -103,7 +104,8 @@ const onPasswordSubmit = async (
     state: AuthFormState,
     update: (update: Partial<AuthFormState>) => void,
     dispatch: any,
-    navigate: any
+    navigate: any,
+    location: string
 ) => {
     if (!state.currentPassword) {
         return update({
@@ -157,7 +159,10 @@ const onPasswordSubmit = async (
             })
         );
         update({ isShown: false });
-        setTimeout(() => navigate('/'), 500);
+        setTimeout(() => {
+            navigate(location ? location : '/');
+            dispatch(clearNextLocation());
+        }, 500);
     } catch (error: any) {
         if (error.status === 401) {
             update({
@@ -190,8 +195,8 @@ export default function AuthForm() {
     } as AuthFormState);
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+    const location = useAppSelector((state) => state.location);
     const bodyRef: React.RefObject<HTMLDivElement> = useRef(null);
-
     useEffect(() => {
         const lastUser = window.localStorage.getItem('lastUser');
         if (lastUser)
@@ -263,7 +268,8 @@ export default function AuthForm() {
                                               state,
                                               update,
                                               dispatch,
-                                              navigate
+                                              navigate,
+                                              location
                                           )
                                     : () =>
                                           onEmailSubmit(state, update, dispatch)

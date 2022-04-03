@@ -169,7 +169,6 @@ const onEmailSubmit = async function (this: ShareManagerContext) {
                 isModified: true,
             });
         } catch (error: any) {
-            console.log(error);
             dispatch(
                 sendToast({
                     message:
