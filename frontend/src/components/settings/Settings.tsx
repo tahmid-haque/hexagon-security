@@ -1,42 +1,28 @@
 import AppModal from '../shared/AppModal';
 import { useComponentState } from '../../utils/hooks';
-import { Display, setDisplay } from '../../store/slices/DisplaySlice';
 import { sendToast } from '../../store/slices/ToastSlice';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import {
     Box,
     Button,
     CircularProgress,
-    Divider,
-    IconButton,
-    Input,
-    InputAdornment,
     Link,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
     Tab,
     Tabs,
-    TextField,
-    Tooltip,
     Typography,
 } from '@mui/material';
-import {
-    clearEvent,
-    createEvent,
-    DashboardEvent,
-    DashboardEventType,
-} from '../../store/slices/DashboardSlice';
 import PasswordField from '../shared/PasswordField';
+import LoadingDialog from '../shared/LoadingDialog';
 import AccountService from '../../services/AccountService';
+import CredentialService from '../../services/CredentialService';
 import './settings.css';
-import { NULL } from 'sass';
+import parser from 'hexagon-shared/utils/parser';
 
 export type SettingsProps = {
     isOpen: boolean;
     onClose: (modified?: boolean) => void;
     accountService: AccountService;
+    credentialService: CredentialService;
 };
 
 export enum SettingsView {
@@ -55,6 +41,8 @@ type SettingsState = {
     isNewPassValid: boolean;
     newPassword: string;
     newPasswordError: string;
+    isImportLoadOpen: boolean;
+    isImportLoading: boolean;
     currentTab: SettingsView;
     urlError: string;
     userError: string;
@@ -76,6 +64,8 @@ const initState: SettingsState = {
     isNewPassValid: true,
     newPassword: '',
     newPasswordError: '',
+    isImportLoadOpen: false,
+    isImportLoading: false,
     urlError: '',
     userError: '',
     secretError: '',
@@ -216,8 +206,57 @@ const onUpdateSubmit = async (
     onClose(update, props.onClose, true);
 };
 
-const readCSVFile = (filename: string) => {
+const verifyHeaders = (headers: string[]): boolean => {
+    if(headers.length != 4) return false;
+    if(headers[0].trim().toLowerCase() !== "name" || headers[1].trim().toLowerCase() !== "url"  
+        || headers[2].trim().toLowerCase() !== "username" || headers[3].trim().toLowerCase() !== "password") return false;
 
+    return true;
+}
+
+const readCSVFile = async (
+    lines: string[],
+    state: SettingsState,
+    update: (update: Partial<SettingsState>) => void,
+    props: SettingsProps,
+    dispatch: any
+) => {
+    for (let i = 1; i < lines.length; i++){
+        try {
+            let current = lines[i].split(',');
+            let currentDomain = parser.extractDomain(current[1].trim());
+            let currentUsername = current[2].trim();
+            let currentPassword = current[3].trim();
+
+            if(!currentDomain || !currentUsername || !currentPassword) throw "Missing fields in credentials";
+
+            await props.credentialService.createCredential(
+                currentDomain,
+                currentUsername,
+                currentPassword
+            );
+
+        } catch {
+            dispatch(
+                sendToast({
+                    message:
+                        'Unable to add credentials for website on line ' + i + '.',
+                    severity: 'error',
+                })
+            );
+        }
+    }
+
+    dispatch(
+        sendToast({
+            message: 'Successfully imported your passwords.',
+            severity: 'success',
+        })
+    );
+
+    let importForm = document.querySelector("#import-passwords-form") as HTMLFormElement;
+    importForm.reset();
+    update({ isLoading: false, isImportLoading: false, importFile: {} as File });
 }
 
 const onImportSubmit = async (
@@ -226,19 +265,40 @@ const onImportSubmit = async (
     props: SettingsProps,
     dispatch: any
 ) => {
-    update({ isLoading: true });
+    update({ isLoading: true, isImportLoadOpen: true, isImportLoading: true });
     try {
         let reader = new FileReader();
-        reader.readAsText(state.importFile, "UTF-8");
+        reader.readAsText(state.importFile);
 
-        dispatch(
-            sendToast({
-                message: 'Successfully imported your passwords.',
-                severity: 'success',
-            })
-        );
+        reader.onload = function() {
+            try{
+                const fileContents = reader.result as string;
+                if(!fileContents) return;
+                let lines = fileContents.split(/\r\n|\n/);
+                if(lines.length < 1) return;
+
+                const headers = lines[0].split(',');
+
+                if(!verifyHeaders(headers)) throw 'Error with file formatting';
+
+                readCSVFile(lines, state, update, props, dispatch);
+                
+            } catch (error: any) {
+                update({ isLoading: false, isImportLoadOpen: false, isImportLoading: false });
+
+                return dispatch(
+                    sendToast({
+                        message:
+                            'Something went wrong. Please check your file contents or try again later.',
+                        severity: 'error',
+                    })
+                );
+            }
+            
+        };
+
     } catch (error: any) {
-        update({ isLoading: false });
+        update({ isLoading: false, isImportLoadOpen: false, isImportLoading: false });
 
         return dispatch(
             sendToast({
@@ -248,7 +308,6 @@ const onImportSubmit = async (
             })
         );
     }
-    onClose(update, props.onClose, true);
 };
 
 export default function Settings(props: SettingsProps) {
@@ -319,7 +378,7 @@ export default function Settings(props: SettingsProps) {
                                 <li>Upload your file below.</li>
                             </ol>
 
-                            <Box mx={2} mt={2}>
+                            <Box mx={2} mt={2} component={"form"} id="import-passwords-form">
                                 <input 
                                     type="file"
                                     id="import-passwords" 
@@ -380,6 +439,14 @@ export default function Settings(props: SettingsProps) {
                             }}
                         />
                     )}
+                    <LoadingDialog
+                        isOpen={state.isImportLoadOpen}
+                        onClose={() => update({ isImportLoadOpen: false })}
+                        onAccept={() => update({ isImportLoadOpen: false })}
+                        title='Importing Passwords'
+                        body='Do not close this tab while passwords are importing.'
+                        isLoading={state.isImportLoading}
+                    />
                 </Box>
             </Box>
         </AppModal>
