@@ -4,12 +4,14 @@ import toastReducer from './slices/ToastSlice';
 import accountReducer from './slices/AccountSlice';
 import dashboardReducer from './slices/DashboardSlice';
 import displayReducer from './slices/DisplaySlice';
+import locationReducer from './slices/LocationSlice';
 export const store = configureStore({
     reducer: {
         toast: toastReducer,
         account: accountReducer,
         dashboard: dashboardReducer,
         display: displayReducer,
+        location: locationReducer,
     },
 });
 

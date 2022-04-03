@@ -1,22 +1,24 @@
-import { Box, styled } from '@mui/material';
+import { Box } from '@mui/material';
 import { createWorkerFactory, useWorker } from '@shopify/react-web-worker';
 import React, { useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Account } from '../../store/slices/AccountSlice';
-import { Display } from '../../store/slices/DisplaySlice';
-import { sendToast } from '../../store/slices/ToastSlice';
-import { useAppDispatch, useAppSelector } from '../../store/store';
-import { useComponentState } from '../../utils/hooks';
-import DashboardHeader from './dashboard-header/DashboardHeader';
-import DashboardNavigation from './dashboard-navigation/DashboardNavigation';
-import ShareManager, { getShareInfo, ShareInfo } from '../shares/ShareManager';
 import {
     clearEvent,
+    createEvent,
     DashboardEvent,
     DashboardEventType,
 } from '../../store/slices/DashboardSlice';
+import { Display } from '../../store/slices/DisplaySlice';
+import { saveNextLocation } from '../../store/slices/LocationSlice';
+import { clearToasts, sendToast } from '../../store/slices/ToastSlice';
+import { useAppDispatch, useAppSelector } from '../../store/store';
+import { useComponentState } from '../../utils/hooks';
 import Settings from '../settings/Settings';
 import AccountService from '../../services/AccountService';
+import ShareManager from '../shares/ShareManager';
+import DashboardHeader from './dashboard-header/DashboardHeader';
+import DashboardNavigation from './dashboard-navigation/DashboardNavigation';
 
 // Note: much of the dashboard header and navigation components are designed based on the MUI example here - https://mui.com/material-ui/react-drawer/
 
@@ -44,38 +46,13 @@ type DashboardContext = {
     event: DashboardEvent;
 };
 
-const handleDisplayChange = function (this: DashboardContext) {
-    const { display, navigate } = this;
-    switch (display) {
-        case Display.CREDENTIALS:
-            navigate('/app/credentials');
-            break;
-
-        case Display.MFA:
-            navigate('/app/mfa');
-            break;
-
-        case Display.NOTES:
-            navigate('/app/notes');
-            break;
-
-        default:
-            break;
-    }
-};
-
 const handleAccountChange = function (this: DashboardContext) {
     const { state, account, update, navigate, dispatch } = this;
     if (state.isDashShown && !account.email) {
         update({ isDashShown: false });
+        dispatch(createEvent({ type: DashboardEventType.SIGNOUT }));
         setTimeout(() => {
             window.localStorage.setItem('lastUser', '');
-            dispatch(
-                sendToast({
-                    message: 'Successfully signed out.',
-                    severity: 'success',
-                })
-            );
             navigate('/authenticate');
         }, 300);
     }
@@ -90,7 +67,7 @@ const handleEvent = function (this: DashboardContext) {
                 isShareOpen: true,
             });
             break;
-            
+
         case DashboardEventType.SETTINGS_CLICK:
             dispatch(clearEvent());
             update({
@@ -103,15 +80,29 @@ const handleEvent = function (this: DashboardContext) {
     }
 };
 
+const onInit = function (this: DashboardContext) {
+    const { account, navigate, update, dispatch } = this;
+    setTimeout(() => {
+        if (account.email) update({ isDashShown: true });
+        else {
+            dispatch(
+                saveNextLocation(
+                    window.location.pathname + window.location.search
+                )
+            );
+            navigate('/authenticate');
+        }
+    }, 1);
+};
+
 export default function Dashboard() {
     const account = useAppSelector((state) => state.account);
-    const display = useAppSelector((state) => state.display);
+    const display: Display = useAppSelector((state) => state.display);
     const event = useAppSelector((state) => state.dashboard);
     const { state, update } = useComponentState({
         isNavOpen: false,
         isDashShown: false,
         isShareOpen: false,
-        currentPane: Display.CREDENTIALS,
         isSettingsOpen: false,
         accountService: new AccountService(),
     } as DashboardState);
@@ -138,14 +129,8 @@ export default function Dashboard() {
         update({ isNavOpen: false });
     };
 
-    useEffect(() => {
-        setTimeout(() => {
-            if (account.email) update({ isDashShown: true });
-            else navigate('/authenticate');
-        }, 1);
-    }, []);
+    useEffect(onInit.bind(context), []);
     useEffect(handleAccountChange.bind(context), [account]);
-    useEffect(handleDisplayChange.bind(context), [display]);
     useEffect(handleEvent.bind(context), [event]);
 
     return (

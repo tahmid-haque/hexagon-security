@@ -18,7 +18,6 @@ import {
     DashboardEvent,
     DashboardEventType,
 } from '../../store/slices/DashboardSlice';
-import { Display, setDisplay } from '../../store/slices/DisplaySlice';
 import { sendToast } from '../../store/slices/ToastSlice';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { useComponentState } from '../../utils/hooks';
@@ -31,6 +30,7 @@ import CredentialEditor from './credential-editor/CredentialEditor';
 import CredentialName from './name-field/CredentialName';
 import CredentialPassword from './password-field/CredentialPassword';
 import CredentialUser from './user-field/CredentialUser';
+import { Display, setDisplay } from '../../store/slices/DisplaySlice';
 
 export type Credential = {
     id: string;

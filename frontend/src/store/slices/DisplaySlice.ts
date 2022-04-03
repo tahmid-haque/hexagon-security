@@ -4,12 +4,13 @@ export enum Display {
     CREDENTIALS = 'Credentials',
     MFA = 'Multi-Factor Authentication',
     NOTES = 'Notes',
+    NONE = 'Hexagon',
 }
 
 const displaySlice = createSlice({
     name: 'display',
 
-    initialState: Display.CREDENTIALS,
+    initialState: Display.NONE,
     reducers: {
         setDisplay(_state, action: PayloadAction<Display>) {
             return action.payload;

@@ -11,7 +11,7 @@ export type AppModalProps = {
 export default function AppModal(props: AppModalProps) {
     return (
         <Modal open={props.isOpen} onClose={props.onClose}>
-            <Fade in={props.isOpen}>
+            <Fade in={props.isOpen} unmountOnExit>
                 <Box
                     sx={{
                         position: 'absolute',

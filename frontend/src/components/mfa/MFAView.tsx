@@ -1,30 +1,28 @@
-import { Box, Grid, LinearProgress, Tooltip } from '@mui/material';
+import { Box } from '@mui/material';
 import { GridColDef, GridSortDirection } from '@mui/x-data-grid';
-import { useEffect, useState } from 'react';
-import LockIcon from '@mui/icons-material/Lock';
+import { useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import MFAService from '../../services/MFAService';
 import {
     clearEvent,
     createEvent,
     DashboardEvent,
     DashboardEventType,
 } from '../../store/slices/DashboardSlice';
+import { Display, setDisplay } from '../../store/slices/DisplaySlice';
+import { sendToast } from '../../store/slices/ToastSlice';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { useComponentState } from '../../utils/hooks';
 import ActionMenu from '../credentials/action-menu/ActionMenu';
 import CredentialName from '../credentials/name-field/CredentialName';
-import CredentialPassword from '../credentials/password-field/CredentialPassword';
 import CredentialUser from '../credentials/user-field/CredentialUser';
-import ConfirmationDialog from '../shared/ConfirmationDialog';
-import MFATimer from './mfa-timer/MFATimer';
 import AppTable from '../shared/AppTable';
-import MFAService from '../../services/MFAService';
-import { useOutletContext } from 'react-router-dom';
-import MFACreator from './mfa-creator/MFACreator';
-import MFACode from './mfa-code/MFACode';
-import { sendToast } from '../../store/slices/ToastSlice';
-import { Display, setDisplay } from '../../store/slices/DisplaySlice';
-import { Owner, PendingShare } from '../shares/ShareManager';
+import ConfirmationDialog from '../shared/ConfirmationDialog';
 import OwnershipStatus from '../shared/OwnershipStatus';
+import { Owner, PendingShare } from '../shares/ShareManager';
+import MFACode from './mfa-code/MFACode';
+import MFACreator from './mfa-creator/MFACreator';
+import MFATimer from './mfa-timer/MFATimer';
 
 type MFAViewContext = {
     state: MFAViewState;

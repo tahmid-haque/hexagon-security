@@ -13,6 +13,7 @@ import Dashboard from './components/dashboard/Dashboard';
 import CredentialsView from './components/credentials/CredentialsView';
 import MFAView from './components/mfa/MFAView';
 import NotesView from './components/notes/NotesView';
+import ShareFinalizer from './components/shares/ShareFinalizer';
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 
 const muiTheme = createTheme({
@@ -58,6 +59,10 @@ ReactDOM.render(
                                     <Route
                                         path='notes'
                                         element={<NotesView />}
+                                    />
+                                    <Route
+                                        path='share'
+                                        element={<ShareFinalizer />}
                                     />
                                 </Route>
                                 <Route

@@ -27,6 +27,7 @@ import {
     createEvent,
     DashboardEventType,
 } from '../../../store/slices/DashboardSlice';
+import { useNavigate } from 'react-router-dom';
 
 const optionHeight = 48;
 
@@ -98,31 +99,35 @@ type DashboardNavigationProps = {
 const getFeatureButtons = function (this: {
     props: DashboardNavigationProps;
     dispatch: any;
+    navigate: any;
 }) {
-    const { props, dispatch } = this;
+    const { props, dispatch, navigate } = this;
     const features = [
         {
             name: 'Credentials',
             icon: <KeyIcon />,
             isActive: props.currentPane === Display.CREDENTIALS,
-            onClick: () => dispatch(setDisplay(Display.CREDENTIALS)),
+            onClick: () => navigate('/app/credentials'),
         },
         {
             name: 'Multi-Factor Authentication',
             icon: <LockClockIcon />,
             isActive: props.currentPane === Display.MFA,
-            onClick: () => dispatch(setDisplay(Display.MFA)),
+            onClick: () => navigate('/app/mfa'),
         },
         {
             name: 'Notes',
             icon: <NotesIcon />,
             isActive: props.currentPane === Display.NOTES,
-            onClick: () => dispatch(setDisplay(Display.NOTES)),
+            onClick: () => navigate('/app/notes'),
         },
         {
             name: 'Settings',
             icon: <SettingsIcon />,
-            onClick: () => dispatch(createEvent({ type: DashboardEventType.SETTINGS_CLICK })),
+            onClick: () =>
+                dispatch(
+                    createEvent({ type: DashboardEventType.SETTINGS_CLICK })
+                ),
         },
     ] as Feature[];
 
@@ -155,10 +160,14 @@ const getFeatureButtons = function (this: {
 
 export default function DashboardNavigation(props: DashboardNavigationProps) {
     const dispatch = useAppDispatch();
+    const navigate = useNavigate();
     const [featureButtons, setFeatureButtons] = useState([] as JSX.Element[]);
 
     useEffect(
-        () => setFeatureButtons(getFeatureButtons.call({ props, dispatch })),
+        () =>
+            setFeatureButtons(
+                getFeatureButtons.call({ props, dispatch, navigate })
+            ),
         [props.isNavOpen, props.currentPane]
     );
 

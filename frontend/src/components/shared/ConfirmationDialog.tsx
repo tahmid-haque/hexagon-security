@@ -4,10 +4,13 @@ import AppModal from './AppModal';
 export type ConfirmationDialogProps = {
     isOpen: boolean;
     isLoading: boolean;
-    onClose: () => void;
+    onClose: (event?: {}, reason?: 'backdropClick' | 'escapeKeyDown') => void;
     onAccept: () => void;
     title: string;
     body: string;
+    primaryActionText?: string;
+    secondaryActionText?: string;
+    onReject?: () => void;
 };
 
 export default function ConfirmationDialog(props: ConfirmationDialogProps) {
@@ -26,8 +29,12 @@ export default function ConfirmationDialog(props: ConfirmationDialogProps) {
                     mt: 2,
                 }}
             >
-                <Button variant='text' onClick={props.onClose}>
-                    Cancel
+                <Button
+                    variant='text'
+                    disabled={props.isLoading}
+                    onClick={props.onReject ?? props.onClose}
+                >
+                    {props.secondaryActionText ?? 'Cancel'}
                 </Button>
                 <Box
                     style={{
@@ -39,7 +46,7 @@ export default function ConfirmationDialog(props: ConfirmationDialogProps) {
                         onClick={props.onAccept}
                         disabled={props.isLoading}
                     >
-                        Continue
+                        {props.primaryActionText ?? 'Continue'}
                     </Button>
                     {props.isLoading && (
                         <CircularProgress
