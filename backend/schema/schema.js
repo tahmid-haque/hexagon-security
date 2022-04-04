@@ -11,6 +11,7 @@ const parser = require('hexagon-shared/utils/parser');
 const cryptoService = new CryptoService(crypto);
 const sanitize = require('mongo-sanitize');
 const { trusted } = require('mongoose');
+const bcrypt = require('bcrypt');
 
 const {
     GraphQLObjectType,
@@ -589,26 +590,27 @@ const Mutation = new GraphQLObjectType({
             },
             resolve: async (parent, args, context) => {
                 const user = await HexagonUser.findOne({
-                    uid: context.token.uid,
+                    username: context.token.username,
                 });
                 if (!user) throwDBError({ user: 'Could not find user' }, 404);
-                if (await bcrypt.compare(args.oldPassword, user.password)) {
-                    const [masterKey] = await cryptoService.decryptSecrets(
-                        [hexagonUser.masterKey],
-                        args.oldPassword
-                    );
-                    const [encryptedMasterKey, encryptedUid] =
-                        await cryptoService.encryptSecrets(
-                            [masterKey, context.token.uid],
-                            password
-                        );
+                if (!(await bcrypt.compare(args.oldPassword, user.password)))
+                    throwDBError({ oldPassword: 'Invalid password' }, 403);
 
-                    user.password = args.newPassword;
-                    user.masterKey = encryptedMasterKey;
-                    user.uid = encryptedUid;
-                    await user.save();
-                    return true;
-                }
+                const [masterKey] = await cryptoService.decryptSecrets(
+                    [user.masterKey],
+                    args.oldPassword
+                );
+                const [encryptedMasterKey, encryptedUid] =
+                    await cryptoService.encryptSecrets(
+                        [masterKey, context.token.uid],
+                        args.newPassword
+                    );
+
+                user.password = args.newPassword;
+                user.masterKey = encryptedMasterKey;
+                user.uid = encryptedUid;
+                await user.save();
+                return true;
             },
         },
         revokeShare: {

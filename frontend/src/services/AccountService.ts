@@ -1,5 +1,12 @@
+import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
 import AccountController from '../controllers/AccountController';
+import { executeQuery } from '../utils/controller';
 
+const updatePasswordMutation = gql`
+    mutation ($oldPassword: String!, $newPassword: String!) {
+        updatePassword(oldPassword: $oldPassword, newPassword: $newPassword)
+    }
+`;
 class AccountService {
     private accountController = new AccountController();
     private accountService: AccountService | null = null;
@@ -23,14 +30,19 @@ class AccountService {
             : this.accountController.signIn(email, password);
     }
 
-    async updatePassword(currentPass: string, newPass: string) {
-        // const existError = await this.checkCredentialExists(url, username);
-        // if (existError) throw { status: 409, ...existError };
-
-        // TODO: connect to real api later
-        return new Promise((resolve) => {
-            setTimeout(resolve, 500);
-        });
+    async updatePassword(
+        oldPassword: string,
+        newPassword: string,
+        client: ApolloClient<NormalizedCacheObject>,
+        token: string
+    ) {
+        return executeQuery(
+            client,
+            token,
+            updatePasswordMutation,
+            { oldPassword, newPassword },
+            true
+        ).then((data) => data.updatePassword);
     }
 }
 

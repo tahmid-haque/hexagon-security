@@ -21,6 +21,11 @@ import {
     createEvent,
     DashboardEventType,
 } from '../../store/slices/DashboardSlice';
+import {
+    ApolloClient,
+    NormalizedCacheObject,
+    useApolloClient,
+} from '@apollo/client';
 
 export type SettingsProps = {
     isOpen: boolean;
@@ -154,14 +159,18 @@ const onUpdateSubmit = async (
     state: SettingsState,
     update: (update: Partial<SettingsState>) => void,
     props: SettingsProps,
-    dispatch: any
+    dispatch: any,
+    client: ApolloClient<NormalizedCacheObject>,
+    token: string
 ) => {
     if (validateForm(state, update)) return;
     update({ isLoading: true });
     try {
         await props.accountService.updatePassword(
             state.oldPassword,
-            state.newPassword
+            state.newPassword,
+            client,
+            token
         );
         dispatch(
             sendToast({
@@ -322,6 +331,8 @@ const onImportSubmit = async (
 
 export default function Settings(props: SettingsProps) {
     const dispatch = useAppDispatch();
+    const account = useAppSelector((state) => state.account);
+    const client = useApolloClient() as ApolloClient<NormalizedCacheObject>;
     const { state, update } = useComponentState(initState);
     const context = { state, update, dispatch, props };
 
@@ -450,7 +461,14 @@ export default function Settings(props: SettingsProps) {
                         disabled={state.isLoading}
                         onClick={() => {
                             if (state.currentTab === SettingsView.UPDATE)
-                                onUpdateSubmit(state, update, props, dispatch);
+                                onUpdateSubmit(
+                                    state,
+                                    update,
+                                    props,
+                                    dispatch,
+                                    client,
+                                    account.jwt
+                                );
                             else if (state.currentTab === SettingsView.IMPORT)
                                 onImportSubmit(state, update, props, dispatch);
                             else onClose(state, update, props.onClose, true);
