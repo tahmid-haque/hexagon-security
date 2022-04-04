@@ -44,7 +44,7 @@ export default function ActionMenu(props: {
         setAnchorEl(null);
     }, []);
 
-    const onDeleteClick = useCallback(() => {
+    const onDeleteClick = () => {
         dispatch(
             createEvent({
                 type: DashboardEventType.DELETE_CLICK,
@@ -52,9 +52,9 @@ export default function ActionMenu(props: {
             })
         );
         onClose();
-    }, []);
+    };
 
-    const onShareClick = useCallback(() => {
+    const onShareClick = () => {
         dispatch(
             createEvent({
                 type: DashboardEventType.SHARE_CLICK,
@@ -62,9 +62,9 @@ export default function ActionMenu(props: {
             })
         );
         onClose();
-    }, []);
+    };
 
-    const onEditClick = useCallback(() => {
+    const onEditClick = () => {
         dispatch(
             createEvent({
                 type: DashboardEventType.EDIT_CLICK,
@@ -72,7 +72,7 @@ export default function ActionMenu(props: {
             })
         );
         onClose();
-    }, []);
+    };
 
     return (
         <Box>

@@ -13,7 +13,7 @@ const ShareSchema = new Schema({
         type: String,
         required: true,
     },
-    reciever: {
+    receiver: {
         type: String,
         required: true,
     },

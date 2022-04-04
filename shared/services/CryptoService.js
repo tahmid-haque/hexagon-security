@@ -177,12 +177,20 @@ class CryptoService {
         );
     }
 
-    async encryptWrappedData(plainData, secret) {
-        const recordAES = await this.crypto.subtle.generateKey(
-            { name: 'AES-GCM', length: 256 },
-            true,
-            ['encrypt']
-        );
+    async encryptWrappedData(plainData, secret, recordKey) {
+        const recordAES = recordKey
+            ? await this.crypto.subtle.importKey(
+                  'raw',
+                  this.base64_to_buf(recordKey).buffer,
+                  { name: 'AES-GCM' },
+                  true,
+                  ['encrypt']
+              )
+            : await this.crypto.subtle.generateKey(
+                  { name: 'AES-GCM', length: 256 },
+                  true,
+                  ['encrypt']
+              );
         const wrapperSalt = this.crypto.getRandomValues(new Uint8Array(16));
         const passwordAES = this.getWrapperKey(secret, wrapperSalt, true);
 

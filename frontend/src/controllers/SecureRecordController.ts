@@ -1,4 +1,5 @@
 import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
+import { executeQuery } from '../utils/controller';
 
 const deleteSecureRecordMutation = gql`
     mutation ($secureRecordId: String!) {
@@ -9,30 +10,21 @@ const deleteSecureRecordMutation = gql`
 `;
 
 class SecureRecordController {
-    private client!: ApolloClient<NormalizedCacheObject>;
-    private token!: string;
+    private executeQuery: (
+        query: any,
+        variables: any,
+        isMutation: boolean
+    ) => Promise<any>;
     constructor(client: ApolloClient<NormalizedCacheObject>, token: string) {
-        this.client = client;
-        this.token = token;
+        this.executeQuery = executeQuery.bind(this, client, token);
     }
 
     public deleteSecureRecord(secureRecordId: string) {
-        return this.client
-            .mutate({
-                mutation: deleteSecureRecordMutation,
-                context: {
-                    headers: {
-                        jwt: this.token,
-                    },
-                },
-                variables: { secureRecordId },
-            })
-            .then((res) => res.data.deleteSecureRecord as string)
-            .catch((err) => {
-                const error = JSON.parse(err.message);
-                error.status = Number(error.status);
-                throw error;
-            });
+        return this.executeQuery(
+            deleteSecureRecordMutation,
+            { secureRecordId },
+            true
+        ).then((data) => data.deleteSecureRecord._id as string);
     }
 }
 

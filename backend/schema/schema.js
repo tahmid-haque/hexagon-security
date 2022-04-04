@@ -46,21 +46,46 @@ const SecureRecordType = new GraphQLObjectType({
         credential: {
             type: WebsiteCredentialsType,
             resolve: async (parent, args) => {
-                return extractRecord(
-                    await WebsiteCredentials.findById(parent.recordId)
+                const record = await WebsiteCredentials.findById(
+                    parent.recordId
                 );
+                if (!record)
+                    return {
+                        _id: '',
+                        username: '',
+                        password: '',
+                        owners: [],
+                    };
+                return extractRecord(record);
             },
         },
         mfa: {
             type: MFAType,
             resolve: async (parent, args) => {
-                return extractRecord(await Seed.findById(parent.recordId));
+                const record = await Seed.findById(parent.recordId);
+                if (!record)
+                    return {
+                        _id: '',
+                        username: '',
+                        seed: '',
+                        owners: [],
+                    };
+                return extractRecord(record);
             },
         },
         note: {
             type: NoteType,
             resolve: async (parent, args) => {
-                return extractRecord(await Note.findById(parent.recordId));
+                const record = await Note.findById(parent.recordId);
+                if (!record)
+                    return {
+                        _id: '',
+                        lastModified: new Date(),
+                        title: '',
+                        body: '',
+                        owners: [],
+                    };
+                return extractRecord(record);
             },
         },
         pendingShares: {
@@ -210,6 +235,30 @@ const RootQuery = new GraphQLObjectType({
                     .sort({ name: args.sortType })
                     .skip(args.offset)
                     .limit(args.limit);
+            },
+        },
+        getShare: {
+            type: ShareType,
+            args: {
+                shareKey: { type: new GraphQLNonNull(GraphQLString) },
+                shareId: { type: new GraphQLNonNull(GraphQLString) },
+            },
+            resolve: async (parent, args, context) => {
+                const share = await Share.findOne({ _id: args.shareId });
+
+                if (!share) throwDBError({ shareId: 'Could not find' }, 404);
+                const [key] = await cryptoService.decryptSecrets(
+                    [share.key],
+                    args.shareKey
+                );
+                const [receiver] = await cryptoService.decryptData(
+                    [share.receiver],
+                    key
+                );
+                if (receiver != context.token.username)
+                    throwDBError({ receiver: 'Unauthorized' }, 403);
+
+                return { ...share.toObject(), key };
             },
         },
         countMFAs: {
@@ -389,6 +438,20 @@ const Mutation = new GraphQLObjectType({
                     key: encryptedKey,
                 }).save();
 
+                const shareId = encodeURIComponent(share._id);
+                const shareKey = encodeURIComponent(shareSecret);
+                const nextLocation = encodeURIComponent(
+                    '/app/' +
+                        (share.type === 'account'
+                            ? 'credentials'
+                            : share.type === 'seed'
+                            ? 'mfa'
+                            : 'notes')
+                );
+                console.log(
+                    `http://localhost:3000/app/share?shareId=${shareId}&shareKey=${shareKey}&next=${nextLocation}`
+                );
+
                 // TODO: send email with record type, shareId, shareKey
 
                 return share;
@@ -478,19 +541,18 @@ const Mutation = new GraphQLObjectType({
                     trusted({
                         $pull: {
                             owners: {
-                                username: sanitize(args.owner),
+                                secureRecordId: sanitize(args.secureRecordId),
                             },
                         },
                     }),
                     { new: false }
                 );
-                if (!data) throwDBError({ secureRecordId: 'Corrupted' }, 410);
-                if (data.owners.length == 1) {
-                    await database.findOneAndDelete({
+                if (data && data.owners.length == 1) {
+                    await database.deleteOne({
                         _id: secureRecord.recordId,
                     });
                 }
-                await SecureRecord.findOneAndDelete({
+                await SecureRecord.deleteOne({
                     _id: args.secureRecordId,
                 });
 
@@ -498,12 +560,12 @@ const Mutation = new GraphQLObjectType({
             },
         },
         deleteShare: {
-            type: SecureRecordType,
+            type: ShareType,
             args: {
                 secureRecordId: { type: new GraphQLNonNull(GraphQLString) },
                 shareId: { type: new GraphQLNonNull(GraphQLString) },
             },
-            resolve: async (parent, args) => {
+            resolve: async (parent, args, context) => {
                 const secureRecord = await SecureRecord.findOne({
                     _id: args.secureRecordId,
                 });
@@ -590,28 +652,29 @@ const Mutation = new GraphQLObjectType({
                 );
                 if (idx === -1) throwDBError({ owner: 'Does not exist' }, 404);
 
-                const deletedRecord = await SecureRecord.findOneAndDelete({
+                const { deletedCount } = await SecureRecord.deleteOne({
                     _id: record.owners[idx].secureRecordId,
                 });
 
                 if (record.owners.length === 1) {
-                    await database.findOneAndDelete({
+                    await database.deleteOne({
                         _id: secureRecord.recordId,
                     });
                 }
-                return deletedRecord == true;
+                return deletedCount === 1;
             },
         },
-        AcceptOrDeclineShare: {
-            type: ShareType,
+        finalizeShare: {
+            type: GraphQLString,
             args: {
                 shareKey: { type: new GraphQLNonNull(GraphQLString) },
-                shareid: { type: new GraphQLNonNull(GraphQLString) },
+                shareId: { type: new GraphQLNonNull(GraphQLString) },
                 isAccepted: { type: new GraphQLNonNull(GraphQLBoolean) },
-                masterKey: { type: new GraphQLNonNull(GraphQLString) },
+                masterUsername: { type: new GraphQLNonNull(GraphQLString) },
+                recordKey: { type: new GraphQLNonNull(GraphQLString) },
             },
             resolve: async (parent, args, context) => {
-                const share = await Share.findOne({ _id: args.Shareid });
+                const share = await Share.findOne({ _id: args.shareId });
 
                 if (!share) throwDBError({ shareId: 'Could not find' }, 404);
                 const [key] = await cryptoService.decryptSecrets(
@@ -625,22 +688,19 @@ const Mutation = new GraphQLObjectType({
                 if (receiver != context.token.username)
                     throwDBError({ receiver: 'Unauthorized' }, 403);
 
-                await Share.findOneAndDelete({
+                await Share.deleteOne({
                     _id: args.shareId,
                 });
 
+                if (!args.isAccepted) return share._id;
+
                 const secureRecord = await new SecureRecord({
                     name: share.name,
-                    key,
+                    key: args.recordKey,
                     recordId: share.recordId,
                     uid: context.token.uid,
                     type: share.type,
                 }).save();
-
-                const [encryptedMasterEmail] = await cryptoService.encryptData(
-                    [context.token.username],
-                    key
-                );
 
                 const database =
                     secureRecord.type == 'account'
@@ -649,17 +709,18 @@ const Mutation = new GraphQLObjectType({
                         ? Seed
                         : Note;
 
-                database.findOneAndUpdate(
+                await database.updateOne(
                     { _id: share.recordId },
                     {
                         $push: {
                             owners: {
-                                username: encryptedMasterEmail,
+                                username: args.masterUsername,
                                 secureRecordId: secureRecord._id,
                             },
                         },
                     }
                 );
+                return secureRecord._id;
             },
         },
     },

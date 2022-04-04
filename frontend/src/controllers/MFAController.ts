@@ -1,4 +1,5 @@
 import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
+import { executeQuery } from '../utils/controller';
 
 const countMFAsQuery = gql`
     query {
@@ -65,36 +66,14 @@ export type MFADto = {
     pendingShares?: { receiver: string; _id: string }[];
 };
 class MFAController {
-    private client!: ApolloClient<NormalizedCacheObject>;
-    private token!: string;
-    constructor(client: ApolloClient<NormalizedCacheObject>, token: string) {
-        this.client = client;
-        this.token = token;
-    }
-
-    private async executeQuery(
+    private executeQuery: (
         query: any,
         variables: any,
         isMutation: boolean
-    ): Promise<any> {
-        const execute: (options: any) => Promise<any> = isMutation
-            ? this.client.mutate
-            : this.client.query;
-        return execute({
-            [isMutation ? 'mutation' : 'query']: query,
-            context: {
-                headers: {
-                    jwt: this.token,
-                },
-            },
-            variables,
-        })
-            .then((res) => res.data)
-            .catch((err) => {
-                const error = JSON.parse(err.message);
-                error.status = Number(error.status);
-                throw error;
-            });
+    ) => Promise<any>;
+
+    constructor(client: ApolloClient<NormalizedCacheObject>, token: string) {
+        this.executeQuery = executeQuery.bind(this, client, token);
     }
 
     public getMFAs(offset: number, limit: number, sortType: string) {

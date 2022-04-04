@@ -44,7 +44,11 @@ export default class CryptoService {
     ) => Promise<CryptoKey>;
     encryptData(plainData: string[], key: string): Promise<string[]>;
     decryptData(encryptedData: string[], key: string): Promise<string[]>;
-    encryptWrappedData(plainData: string[], secret: string): Promise<string[]>;
+    encryptWrappedData(
+        plainData: string[],
+        secret: string,
+        recordKey?: string
+    ): Promise<string[]>;
     decryptWrappedData(
         encryptedData: string[],
         encryptedKey: string,

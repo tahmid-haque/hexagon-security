@@ -71,6 +71,21 @@ const init = function (this: AppTableContext) {
     updateNumRows();
 };
 
+const MessageOverlay = (props: { text: string }) => (
+    <Box
+        sx={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '16px',
+        }}
+    >
+        {props.text}
+    </Box>
+);
+
 export default function AppTable(props: AppTableProps) {
     const ref = useRef(null) as RefObject<HTMLDivElement>;
     const event = useAppSelector((state) => state.dashboard);
@@ -97,7 +112,7 @@ export default function AppTable(props: AppTableProps) {
     useEffect(handleEvent.bind(context), [event]);
 
     return (
-        <Box ref={ref} sx={{ height: '100%', width: 'calc(100vw - 66px)' }}>
+        <Box ref={ref} sx={{ height: '100%', width: 'calc(100vw - 65px)' }}>
             <DataGrid
                 disableColumnMenu
                 disableSelectionOnClick
@@ -107,32 +122,13 @@ export default function AppTable(props: AppTableProps) {
                 components={{
                     LoadingOverlay: LinearProgress,
                     NoRowsOverlay: () => (
-                        <Box
-                            sx={{
-                                width: '100%',
-                                height: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '16px',
-                            }}
-                        >
-                            No data found.
-                        </Box>
+                        <MessageOverlay text='No data found.' />
+                    ),
+                    NoResultsOverlay: () => (
+                        <MessageOverlay text='No data found.' />
                     ),
                     ErrorOverlay: () => (
-                        <Box
-                            sx={{
-                                width: '100%',
-                                height: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '16px',
-                            }}
-                        >
-                            {props.errorText}
-                        </Box>
+                        <MessageOverlay text={props.errorText} />
                     ),
                 }}
                 rowCount={props.contentCount}

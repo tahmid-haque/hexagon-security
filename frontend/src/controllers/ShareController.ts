@@ -1,87 +1,121 @@
-import { ApolloClient, gql, NormalizedCacheObject } from "@apollo/client";
+import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
+import { executeQuery } from '../utils/controller';
+
+const getShareQuery = gql`
+    query ($shareKey: String!, $shareId: String!) {
+        getShare(shareKey: $shareKey, shareId: $shareId) {
+            type
+            name
+            key
+        }
+    }
+`;
 
 const addShareMutation = gql`
-mutation($reciever: String!, $secureRecordID: String!, $recordID: String! $key: String!){
-  addShare(reciever: $reciever, secureRecordID: $secureRecordID, recordID: $recordID, key: $key ){
-    _id
-  }
-}
+    mutation ($receiver: String!, $secureRecordId: String!, $key: String!) {
+        addShare(
+            receiver: $receiver
+            secureRecordId: $secureRecordId
+            key: $key
+        ) {
+            _id
+        }
+    }
 `;
 
 const deleteShareMutation = gql`
-mutation($secureRecordID: String!, $shareID: String!){
-  deleteShare(shareID: $shareID, secureRecordID: $secureRecordID){
-    _id
-  }
-}
+    mutation ($secureRecordId: String!, $shareId: String!) {
+        deleteShare(shareId: $shareId, secureRecordId: $secureRecordId) {
+            _id
+        }
+    }
 `;
 
 const revokeShareMutation = gql`
-mutation($secureRecordID: String!, $owner: String!){
-  revokeShare(owner: $owner, secureRecordID: $secureRecordID){
-    _id
-  }
-}
+    mutation ($secureRecordId: String!, $owner: String!) {
+        revokeShare(owner: $owner, secureRecordId: $secureRecordId)
+    }
 `;
 
-const AcceptOrDeclineShareMutation = gql`
-mutation($shareKey: String!, $shareID: String!, $isAccepted: Boolean!, $masterKey: String!){
-  AcceptOrDeclineShare(shareKey: $shareKey, shareID: $shareID, isAccepted: $isAccepted, masterKey: $masterKey){
-    _id
-  }
-}
+const finalizeShareMutation = gql`
+    mutation (
+        $shareKey: String!
+        $shareId: String!
+        $isAccepted: Boolean!
+        $masterUsername: String!
+        $recordKey: String!
+    ) {
+        finalizeShare(
+            shareKey: $shareKey
+            shareId: $shareId
+            isAccepted: $isAccepted
+            masterUsername: $masterUsername
+            recordKey: $recordKey
+        )
+    }
 `;
 
+export type ShareDetailsDto = {
+    name: string;
+    type: string;
+    key: string;
+};
 class ShareController {
-  private client!: ApolloClient<NormalizedCacheObject>;
-  private token!: string;
-  constructor(client: ApolloClient<NormalizedCacheObject>, token: string){
-      this.client = client;
-      this.token = token;
-  }
+    private executeQuery: (
+        query: any,
+        variables: any,
+        isMutation: boolean
+    ) => Promise<any>;
 
-  private buildQuery(query: any, variables: any){
-    return {query,
-            context: { 
-                headers: { 
-                    "jwt": this.token  // this header will reach the server
-                } 
-            },
-            variables
-          }
-  }
+    constructor(client: ApolloClient<NormalizedCacheObject>, token: string) {
+        this.executeQuery = executeQuery.bind(this, client, token);
+    }
 
-  public addShare(reciever: string, secureRecordID: string, recordID: string, key: string){
-    return this.client.query(this.buildQuery(addShareMutation,{
-      reciever: reciever,
-      secureRecordID: secureRecordID,
-      recordID: recordID,
-      key: key
-    }));
-  }
+    public getShare(shareId: string, shareKey: string) {
+        return this.executeQuery(
+            getShareQuery,
+            { shareId, shareKey },
+            false
+        ).then((data) => data.getShare as ShareDetailsDto);
+    }
 
-  public deleteShare(shareID: string, secureRecordID: string){
-    return this.client.query(this.buildQuery(deleteShareMutation,{
-      secureRecordID: secureRecordID,
-      shareID: shareID
-    }));
-  }
+    public createShare(receiver: string, secureRecordId: string, key: string) {
+        return this.executeQuery(
+            addShareMutation,
+            { receiver, secureRecordId, key },
+            true
+        ).then((data) => data.addShare._id as string);
+    }
 
-  public revokeShare(owner: string, secureRecordID: string){
-    return this.client.query(this.buildQuery(revokeShareMutation,{
-      secureRecordID: secureRecordID,
-      owner: owner
-    }));
-  }
+    public deleteShare(shareId: string, secureRecordId: string) {
+        return this.executeQuery(
+            deleteShareMutation,
+            { shareId, secureRecordId },
+            true
+        ).then((data) => data.deleteShare._id as string);
+    }
 
-  public AcceptOrDeclineShare(shareKey: string, shareID: string, isAccepted: boolean, masterKey: string){
-    return this.client.query(this.buildQuery(AcceptOrDeclineShareMutation,{
-      shareKey: shareKey,
-      shareID: shareID,
-      isAccepted: isAccepted,
-      masterKey: masterKey
-    }));
-  }
+    public revokeShare(owner: string, secureRecordId: string) {
+        return this.executeQuery(
+            revokeShareMutation,
+            { owner, secureRecordId },
+            true
+        ).then((data) => data.revokeShare as boolean);
+    }
+
+    public finalizeShare(
+        shareKey: string,
+        shareId: string,
+        isAccepted: boolean,
+        masterUsername: string,
+        recordKey: string
+    ) {
+        return this.executeQuery(
+            finalizeShareMutation,
+            { shareKey, shareId, isAccepted, masterUsername, recordKey },
+            true
+        ).then((data) => data.finalizeShare as string);
+    }
 }
 
 export default ShareController;

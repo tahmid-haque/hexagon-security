@@ -1,5 +1,5 @@
 import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
-import { GraphQLErrors } from '@apollo/client/errors';
+import { executeQuery } from '../utils/controller';
 
 const countCredentialsQuery = gql`
     query {
@@ -83,36 +83,14 @@ export type CredentialDto = {
 };
 
 class CredentialController {
-    private client!: ApolloClient<NormalizedCacheObject>;
-    private token!: string;
-    constructor(client: ApolloClient<NormalizedCacheObject>, token: string) {
-        this.client = client;
-        this.token = token;
-    }
-
-    private async executeQuery(
+    private executeQuery: (
         query: any,
         variables: any,
         isMutation: boolean
-    ): Promise<any> {
-        const execute: (options: any) => Promise<any> = isMutation
-            ? this.client.mutate
-            : this.client.query;
-        return execute({
-            [isMutation ? 'mutation' : 'query']: query,
-            context: {
-                headers: {
-                    jwt: this.token,
-                },
-            },
-            variables,
-        })
-            .then((res) => res.data)
-            .catch((err) => {
-                const error = JSON.parse(err.message);
-                error.status = Number(error.status);
-                throw error;
-            });
+    ) => Promise<any>;
+
+    constructor(client: ApolloClient<NormalizedCacheObject>, token: string) {
+        this.executeQuery = executeQuery.bind(this, client, token);
     }
 
     public getCredentials(offset: number, limit: number, sortType: string) {

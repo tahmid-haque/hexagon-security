@@ -10,6 +10,7 @@ import {
     createEvent,
     DashboardEventType,
 } from '../../../store/slices/DashboardSlice';
+import { Display } from '../../../store/slices/DisplaySlice';
 import { useAppDispatch } from '../../../store/store';
 
 interface AppBarProps extends MuiAppBarProps {
@@ -39,9 +40,6 @@ type DashboardHeaderProps = {
     currentPane: string;
 };
 
-type DashboardHeaderState = {
-    currentPane?: string;
-};
 export default function DashboardHeader(props: DashboardHeaderProps) {
     const dispatch = useAppDispatch();
 
@@ -88,7 +86,7 @@ export default function DashboardHeader(props: DashboardHeaderProps) {
                     >
                         {props.currentPane}
                     </Typography>
-                    {
+                    {props.currentPane !== Display.NONE && (
                         <Tooltip arrow title='Create New'>
                             <IconButton
                                 size='large'
@@ -102,7 +100,7 @@ export default function DashboardHeader(props: DashboardHeaderProps) {
                                 <AddIcon />
                             </IconButton>
                         </Tooltip>
-                    }
+                    )}
                 </Box>
             </Toolbar>
         </AppBar>

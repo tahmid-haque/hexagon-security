@@ -258,6 +258,7 @@ const onClose = function (this: ShareManagerContext) {
         });
         this.dispatch(createEvent({ type: DashboardEventType.RERENDER_DATA }));
     }
+    this.update({ currentEmail: '', invalidInputText: '', isInputValid: true });
 };
 
 const handleDashboardEvent = function (this: ShareManagerContext) {
@@ -484,7 +485,7 @@ export default function ShareManager(props: ShareManagerProps) {
                     if (!state.isDeleteLoading) update({ isDeleteOpen: false });
                 }}
                 onAccept={
-                    state.currentTab === ShareView.CREATE
+                    state.currentTab === ShareView.OWNER
                         ? onOwnerShareDelete.bind(context)
                         : onPendingShareDelete.bind(context)
                 }

@@ -115,7 +115,8 @@ class CredentialService {
                     shareId: dto.pendingShares![idx]._id,
                     receiver,
                 }));
-            strength = await this.calculatePasswordSecurity(password);
+            if (password)
+                strength = await this.calculatePasswordSecurity(password);
         } catch (error) {}
 
         return {
@@ -142,18 +143,19 @@ class CredentialService {
         try {
             await Promise.all(
                 domainMatches.map(async (dto) => {
-                    let user;
+                    let key, user;
                     try {
-                        [user] = await this.cryptoWorker.decryptWrappedData(
-                            [dto.credential.username],
-                            dto.key,
-                            this.masterKey
-                        );
+                        [key, user] =
+                            await this.cryptoWorker.decryptWrappedData(
+                                [dto.credential.username],
+                                dto.key,
+                                this.masterKey
+                            );
                     } catch (e) {}
                     if (user === username) {
                         throw {
                             id: dto._id,
-                            key: dto.key,
+                            key,
                         };
                     }
                 })

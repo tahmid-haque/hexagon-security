@@ -80,18 +80,19 @@ class MFAService {
         try {
             await Promise.all(
                 domainMatches.map(async (dto) => {
-                    let user;
+                    let key, user;
                     try {
-                        [user] = await this.cryptoWorker.decryptWrappedData(
-                            [dto.mfa.username],
-                            dto.key,
-                            this.masterKey
-                        );
+                        [key, user] =
+                            await this.cryptoWorker.decryptWrappedData(
+                                [dto.mfa.username],
+                                dto.key,
+                                this.masterKey
+                            );
                     } catch (e) {}
                     if (user === username) {
                         throw {
                             id: dto._id,
-                            key: dto.key,
+                            key,
                         };
                     }
                 })
