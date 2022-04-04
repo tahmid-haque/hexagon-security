@@ -17,6 +17,10 @@ import AccountService from '../../services/AccountService';
 import CredentialService from '../../services/CredentialService';
 import './settings.css';
 import parser from 'hexagon-shared/utils/parser';
+import {
+    createEvent,
+    DashboardEventType,
+} from '../../store/slices/DashboardSlice';
 
 export type SettingsProps = {
     isOpen: boolean;
@@ -32,9 +36,6 @@ export enum SettingsView {
 }
 
 type SettingsState = {
-    isURLValid: boolean;
-    isUserValid: boolean;
-    isSecretValid: boolean;
     isOldPassValid: boolean;
     oldPassword: string;
     oldPasswordError: string;
@@ -44,20 +45,11 @@ type SettingsState = {
     isImportLoadOpen: boolean;
     isImportLoading: boolean;
     currentTab: SettingsView;
-    urlError: string;
-    userError: string;
-    secretError: string;
-    url: string;
-    user: string;
-    secret: string;
     isLoading: boolean;
     importFile: File;
 };
 
 const initState: SettingsState = {
-    isURLValid: true,
-    isUserValid: true,
-    isSecretValid: true,
     isOldPassValid: true,
     oldPassword: '',
     oldPasswordError: '',
@@ -66,12 +58,6 @@ const initState: SettingsState = {
     newPasswordError: '',
     isImportLoadOpen: false,
     isImportLoading: false,
-    urlError: '',
-    userError: '',
-    secretError: '',
-    url: '',
-    user: '',
-    secret: '',
     isLoading: false,
     currentTab: SettingsView.UPDATE,
     importFile: {} as File,
@@ -254,6 +240,12 @@ const readCSVFile = async (
             );
         }
     }
+
+    dispatch(
+        createEvent({
+            type: DashboardEventType.RERENDER_DATA,
+        })
+    );
 
     dispatch(
         sendToast({

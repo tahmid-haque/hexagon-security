@@ -118,14 +118,21 @@ function fillFormFields(usernameField: HTMLInputElement, passField: HTMLInputEle
     }); 
 }
 
+function clearStorage(){
+    chrome.storage.local.get(['url', 'hexagonAccount', 'autofillClosed'], function(result){
+        chrome.storage.local.clear(); 
+        chrome.storage.local.set({'url': result.url, 'hexagonAccount': result.hexagonAccount, 'autofillClosed': result.autofillClosed});
+    })
+}
+
 function displaySavePassSamePage(){
     chrome.storage.local.get(['url', 'username', 'password'], function(result) {
         let current = parser.extractDomain(window.location.href);
         let prev = parser.extractDomain(result.url);
-        if(result.url != window.location.href && result.username && result.password){
+        if(result.url != window.location.href && result.password){
             if(current === prev){
                 ReactDOM.render(<App username={result.username} password={result.password} isSaveOpen={true} />, root);
-                chrome.storage.local.set({'username': null, 'password': null});
+                clearStorage();
             }
         }
         chrome.storage.local.set({'url': window.location.href});
@@ -136,11 +143,11 @@ function displaySavePassDiffPage(){
     chrome.storage.local.get(['url', 'username', 'password'], function(result) {
         let current = parser.extractDomain(window.location.href);
         let prev = parser.extractDomain(result.url);
-        if(current === prev && result.username && result.password){
+        if(current === prev && result.password){
             ReactDOM.render(<App username={result.username} password={result.password} isSaveOpen={true} />, root);
-            chrome.storage.local.set({'username': null, 'password': null});
+            clearStorage();
         }
-        if(current !== prev) chrome.storage.local.set({'username': null, 'password': null});
+        if(current !== prev) clearStorage();
 
         chrome.storage.local.set({'url': window.location.href});
     });
