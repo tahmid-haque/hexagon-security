@@ -15,9 +15,17 @@ import { clearToasts, sendToast } from '../../store/slices/ToastSlice';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { useComponentState } from '../../utils/hooks';
 import Settings from '../settings/Settings';
+import AccountService from '../../services/AccountService';
+import CredentialService from '../../services/CredentialService';
 import ShareManager from '../shares/ShareManager';
 import DashboardHeader from './dashboard-header/DashboardHeader';
 import DashboardNavigation from './dashboard-navigation/DashboardNavigation';
+import { useOutletContext } from 'react-router-dom';
+import {
+    ApolloClient,
+    NormalizedCacheObject,
+    useApolloClient,
+} from '@apollo/client';
 
 // Note: much of the dashboard header and navigation components are designed based on the MUI example here - https://mui.com/material-ui/react-drawer/
 
@@ -30,7 +38,9 @@ type DashboardState = {
     isShareOpen: boolean;
     isDashShown: boolean;
     isSettingsOpen: boolean;
-    nextLocation: string;
+    currentPane: Display;
+    accountService: AccountService;
+    credentialService: CredentialService;
 };
 
 type DashboardContext = {
@@ -97,15 +107,25 @@ export default function Dashboard() {
     const account = useAppSelector((state) => state.account);
     const display: Display = useAppSelector((state) => state.display);
     const event = useAppSelector((state) => state.dashboard);
+    const apolloClient =
+        useApolloClient() as ApolloClient<NormalizedCacheObject>;
+    const cryptoWorker = useWorker(createCryptoWorker);
+
     const { state, update } = useComponentState({
         isNavOpen: false,
         isDashShown: false,
         isShareOpen: false,
         isSettingsOpen: false,
+        accountService: new AccountService(),
+        credentialService: new CredentialService(
+            cryptoWorker,
+            account,
+            apolloClient
+        ),
     } as DashboardState);
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
-    const cryptoWorker = useWorker(createCryptoWorker);
+    
 
     const context = {
         account,
@@ -165,12 +185,14 @@ export default function Dashboard() {
                         isOpen={state.isShareOpen}
                         onClose={() => update({ isShareOpen: false })}
                     />
+                    <Settings 
+                        isOpen={state.isSettingsOpen}
+                        onClose={() => update({ isSettingsOpen: false })}
+                        accountService={state.accountService}
+                        credentialService={state.credentialService}
+                    />
                 </Box>
             )}
-            <Settings
-                isOpen={state.isSettingsOpen}
-                onClose={() => update({ isSettingsOpen: false })}
-            />
         </Box>
     );
 }
