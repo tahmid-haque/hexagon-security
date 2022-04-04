@@ -27,6 +27,7 @@ type AppTableState = {
     numRows: number;
     currentPage: number;
     sortType: GridSortDirection;
+    isUpdateInProgress: boolean;
 };
 
 type AppTableContext = {
@@ -37,15 +38,17 @@ type AppTableContext = {
     props: AppTableProps;
 };
 
-const updateContent = function (this: AppTableContext) {
-    const { props, state } = this;
+const updateContent = async function (this: AppTableContext) {
+    const { props, state, update } = this;
 
-    if (props.contentCount && state.numRows) {
-        props.updateContent(
+    if (props.contentCount && state.numRows && !state.isUpdateInProgress) {
+        update({ isUpdateInProgress: true });
+        await props.updateContent(
             state.currentPage * state.numRows,
             state.numRows,
             state.sortType
         );
+        update({ isUpdateInProgress: false });
     }
 };
 
@@ -68,6 +71,21 @@ const init = function (this: AppTableContext) {
     updateNumRows();
 };
 
+const MessageOverlay = (props: { text: string }) => (
+    <Box
+        sx={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '16px',
+        }}
+    >
+        {props.text}
+    </Box>
+);
+
 export default function AppTable(props: AppTableProps) {
     const ref = useRef(null) as RefObject<HTMLDivElement>;
     const event = useAppSelector((state) => state.dashboard);
@@ -76,6 +94,7 @@ export default function AppTable(props: AppTableProps) {
         numRows: 0,
         currentPage: 0,
         sortType: props.initialSort ?? 'asc',
+        isUpdateInProgress: false,
     } as AppTableState);
 
     const context = {
@@ -87,16 +106,13 @@ export default function AppTable(props: AppTableProps) {
     };
 
     useEffect(init.bind(context), []);
-    useEffect(updateContent.bind(context), [
-        state.numRows,
-        state.sortType,
-        state.currentPage,
-        props.contentCount,
-    ]);
+    useEffect(() => {
+        updateContent.call(context);
+    }, [state.numRows, state.sortType, state.currentPage, props.contentCount]);
     useEffect(handleEvent.bind(context), [event]);
 
     return (
-        <Box ref={ref} sx={{ height: '100%', width: 'calc(100vw - 66px)' }}>
+        <Box ref={ref} sx={{ height: '100%', width: 'calc(100vw - 65px)' }}>
             <DataGrid
                 disableColumnMenu
                 disableSelectionOnClick
@@ -106,32 +122,13 @@ export default function AppTable(props: AppTableProps) {
                 components={{
                     LoadingOverlay: LinearProgress,
                     NoRowsOverlay: () => (
-                        <Box
-                            sx={{
-                                width: '100%',
-                                height: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '16px',
-                            }}
-                        >
-                            No data found.
-                        </Box>
+                        <MessageOverlay text='No data found.' />
+                    ),
+                    NoResultsOverlay: () => (
+                        <MessageOverlay text='No data found.' />
                     ),
                     ErrorOverlay: () => (
-                        <Box
-                            sx={{
-                                width: '100%',
-                                height: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '16px',
-                            }}
-                        >
-                            {props.errorText}
-                        </Box>
+                        <MessageOverlay text={props.errorText} />
                     ),
                 }}
                 rowCount={props.contentCount}

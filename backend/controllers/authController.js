@@ -1,6 +1,9 @@
+const CryptoService = require('hexagon-shared/services/CryptoService');
 const HexagonUser = require('../models/HexagonUser');
 const jwt = require('jsonwebtoken');
 const uuid = require('uuid');
+const crypto = require('crypto').webcrypto;
+const cryptoService = new CryptoService(crypto);
 
 //handle errors
 const handleErrors = (err) => {
@@ -27,8 +30,8 @@ const handleErrors = (err) => {
 };
 
 const maxAge = 3 * 24 * 60 * 60;
-const createToken = (UID, username) => {
-    return jwt.sign({ UID: UID, username: username }, 'secret', {
+const createToken = (uid, username) => {
+    return jwt.sign({ uid, username }, 'secret', {
         expiresIn: maxAge,
     });
 };
@@ -37,14 +40,18 @@ module.exports.signup_post = async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        const hexagonUser = await HexagonUser.create({
+        const masterKey = cryptoService.generatePlainSecret();
+        const uid = uuid.v4();
+        const [encryptedMasterKey, encryptedUid] =
+            await cryptoService.encryptSecrets([masterKey, uid], password);
+        await HexagonUser.create({
             username: username,
             password: password,
-            UID: uuid.v4(),
-            masterKey: uuid.v4(),
+            uid: encryptedUid,
+            masterKey: encryptedMasterKey,
         });
-        const token = createToken(hexagonUser.UID, hexagonUser.username);
-        res.status(201).json({ masterKey: hexagonUser.masterKey, jwt: token });
+        const token = createToken(uid, username);
+        res.status(201).json({ masterKey, jwt: token });
     } catch (err) {
         const { errors, status } = handleErrors(err);
         res.status(status).json({ errors });
@@ -56,8 +63,12 @@ module.exports.login_post = async (req, res) => {
 
     try {
         const hexagonUser = await HexagonUser.login(username, password);
-        const token = createToken(hexagonUser.UID, hexagonUser.username);
-        res.status(200).json({ masterKey: hexagonUser.masterKey, jwt: token });
+        const [masterKey, uid] = await cryptoService.decryptSecrets(
+            [hexagonUser.masterKey, hexagonUser.uid],
+            password
+        );
+        const token = createToken(uid, hexagonUser.username);
+        res.status(200).json({ masterKey, jwt: token });
     } catch (err) {
         const { errors, status } = handleErrors(err);
         res.status(status).json({ errors });

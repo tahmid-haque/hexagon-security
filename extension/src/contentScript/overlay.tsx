@@ -11,11 +11,16 @@ const autofillFormSubmit = (e: SyntheticEvent, autofill: (uname: string, pass: s
     if(form.reportValidity()){
         let account = document.querySelector("#hexagon-autofill-username") as HTMLSelectElement;
         console.log(account.innerHTML);
-        autofill(account.innerHTML, "abc");
+        autofill(account.innerHTML, "abcdefgh");
     }
 }
 
-const AutofillOverlay = ({autofill, closeOverlay} : {autofill: (uname: string, pass: string) => void, closeOverlay: () => void}) => {
+type AutofillProps = {
+    autofill: (uname: string, pass: string) => void; 
+    closeOverlay: () => void;
+}
+
+const AutofillOverlay = (props : AutofillProps) => {
     const [username, setUsername] = React.useState('');
 
     const handleChange = (event) => {
@@ -24,7 +29,7 @@ const AutofillOverlay = ({autofill, closeOverlay} : {autofill: (uname: string, p
 
     return (
         <div className='hexagon-overlay'>
-            <Header url={chrome.runtime.getURL("icon.png")} clickAction={closeOverlay} />
+            <Header url={chrome.runtime.getURL("icon.png")} clickAction={props.closeOverlay} />
             <Card className='hexagon-overlay-body'>
                 <div>Username/Password fields detected. Autofill fields?</div>
 
@@ -49,7 +54,7 @@ const AutofillOverlay = ({autofill, closeOverlay} : {autofill: (uname: string, p
                         </FormControl>
                     </div>
 
-                    <Button size='large' onClick={e => autofillFormSubmit(e, autofill)} sx={{margin: "5px", fontSize: "15px"}}>Autofill</Button>
+                    <Button size='large' onClick={e => autofillFormSubmit(e, props.autofill)} sx={{margin: "5px", fontSize: "15px"}}>Autofill</Button>
                 </Box>
 
             </Card>
@@ -69,28 +74,34 @@ const saveFormSubmit = (e: SyntheticEvent, closeOverlay: () => void) => {
     }
 }
 
-const SavePassOverlay = ({username, password, closeOverlay} : {username:string, password:string, closeOverlay: () => void}) => {
+type SaveProps = {
+    username: string;
+    password: string; 
+    closeOverlay: () => void;
+}
+
+const SavePassOverlay = (props : SaveProps) => {
     const [showPass, setShowPass] = useState(false);
 
     const icon = <IconButton sx={{m:0}} onClick={() => setShowPass(showPass => !showPass)}><VisibilityIcon fontSize='small' /></IconButton>;
 
     return (
         <div className='hexagon-overlay hexagon-save-overlay'>
-            <Header url={chrome.runtime.getURL("icon.png")} clickAction={closeOverlay} />
+            <Header url={chrome.runtime.getURL("icon.png")} clickAction={props.closeOverlay} />
             <Card className='hexagon-overlay-body hexagon-save-overlay-body'>
                 <div>Username/Password detected. Save username and password?</div>
 
                 <Box component={"form"} id="hexagon-save-login-form">
-                    <TextField required id="hexagon-save-username" label="Username" defaultValue={username} sx={{mt:3, mb:2, width:"240px"}}/>
+                    <TextField required id="hexagon-save-username" label="Username" defaultValue={props.username} sx={{mt:3, mb:2, width:"240px"}}/>
 
                     {showPass
-                        ?   <TextField required id="hexagon-save-password" label="Password" defaultValue={password} 
+                        ?   <TextField required id="hexagon-save-password" label="Password" defaultValue={props.password} 
                             InputProps={{
                                 endAdornment: icon
                             }}
                             sx={{m:1, width:"240px"}}
                             />
-                        :   <TextField required id="hexagon-save-password" label="Password" type="password" defaultValue={password} 
+                        :   <TextField required id="hexagon-save-password" label="Password" type="password" defaultValue={props.password} 
                             InputProps={{
                                 endAdornment: icon,
                             }}
@@ -98,7 +109,7 @@ const SavePassOverlay = ({username, password, closeOverlay} : {username:string, 
                             /> 
                     }
 
-                    <Button onClick={e => saveFormSubmit(e, closeOverlay)} size='large' sx={{margin: "5px", fontSize: "15px"}}>Save</Button>
+                    <Button onClick={e => saveFormSubmit(e, props.closeOverlay)} size='large' sx={{margin: "5px", fontSize: "15px"}}>Save</Button>
                 </Box>
                 
                 

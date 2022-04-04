@@ -1,3 +1,8 @@
+import {
+    ApolloClient,
+    NormalizedCacheObject,
+    useApolloClient,
+} from '@apollo/client';
 import { Box } from '@mui/material';
 import { GridColDef, GridSortDirection } from '@mui/x-data-grid';
 import { useEffect } from 'react';
@@ -33,7 +38,7 @@ type MFAViewContext = {
 
 type MFAViewState = {
     content: MFA[];
-    totalMFA: number;
+    totalMFAs: number;
     isLoading: boolean;
     isCreatorOpen: boolean;
     isDeleteOpen: boolean;
@@ -126,6 +131,19 @@ const columnDef: GridColDef[] = [
 
 const isMFAValid = (mfa: MFA) => mfa.user && mfa.seed && mfa.key;
 
+const updateCount = function (this: MFAViewContext) {
+    const { state, update } = this;
+    state.mfaService
+        .getMFACount()
+        .then((totalMFAs) => {
+            update({
+                totalMFAs,
+                ...(!totalMFAs && { isLoading: false }),
+            });
+        })
+        .catch(() => update({ tableErrorText: loadErrorText }));
+};
+
 const handleEvent = function (this: MFAViewContext) {
     const { event, update, dispatch } = this;
     switch (event.type) {
@@ -142,6 +160,10 @@ const handleEvent = function (this: MFAViewContext) {
                 isDeleteOpen: true,
                 currentId: event.param,
             });
+            break;
+
+        case DashboardEventType.RERENDER_DATA:
+            updateCount.call(this);
             break;
 
         default:
@@ -210,22 +232,8 @@ const onDeleteAccept = async function (this: MFAViewContext) {
 };
 
 const init = function (this: MFAViewContext) {
-    const { state, update, dispatch } = this;
-    dispatch(setDisplay(Display.MFA));
-    state.mfaService
-        .getMFACount()
-        .then((totalMFA) => {
-            update({ totalMFA });
-        })
-        .catch(() =>
-            dispatch(
-                sendToast({
-                    message:
-                        'Unable to load MFA credentials. Please try again later.',
-                    severity: 'error',
-                })
-            )
-        );
+    this.dispatch(setDisplay(Display.MFA));
+    updateCount.call(this);
 };
 
 export default function MFAView() {
@@ -233,15 +241,17 @@ export default function MFAView() {
     const dispatch = useAppDispatch();
     const account = useAppSelector((state) => state.account);
     const cryptoWorker = useOutletContext();
+    const apolloClient =
+        useApolloClient() as ApolloClient<NormalizedCacheObject>;
     const { state, update } = useComponentState({
         content: [],
-        totalMFA: 0,
+        totalMFAs: 0,
         isLoading: true,
         isCreatorOpen: false,
         isDeleteOpen: false,
         isDeleteLoading: false,
         tableErrorText: '',
-        mfaService: new MFAService(cryptoWorker, account),
+        mfaService: new MFAService(cryptoWorker, account, apolloClient),
     } as MFAViewState);
 
     const context = {
@@ -260,7 +270,7 @@ export default function MFAView() {
                 errorText={state.tableErrorText}
                 columnDef={columnDef}
                 content={state.content}
-                contentCount={state.totalMFA}
+                contentCount={state.totalMFAs}
                 isLoading={state.isLoading}
                 sortField='name'
                 updateContent={updateMFA.bind(context)}

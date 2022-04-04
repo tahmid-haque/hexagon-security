@@ -236,6 +236,19 @@ const onDeleteAccept = async function (this: CredentialsViewContext) {
     update({ isDeleteLoading: false });
 };
 
+const updateCount = function (this: CredentialsViewContext) {
+    const { state, update } = this;
+    state.credentialService
+        .getCredentialCount()
+        .then((totalCredentials) => {
+            update({
+                totalCredentials,
+                ...(!totalCredentials && { isLoading: false }),
+            });
+        })
+        .catch(() => update({ tableErrorText: loadErrorText }));
+};
+
 const handleEvent = function (this: CredentialsViewContext) {
     const { event, update, dispatch, state } = this;
     switch (event.type) {
@@ -264,20 +277,18 @@ const handleEvent = function (this: CredentialsViewContext) {
             });
             break;
 
+        case DashboardEventType.RERENDER_DATA:
+            updateCount.call(this);
+            break;
+
         default:
             break;
     }
 };
 
 const init = function (this: CredentialsViewContext) {
-    const { state, update, dispatch } = this;
-    dispatch(setDisplay(Display.CREDENTIALS));
-    state.credentialService
-        .getCredentialCount()
-        .then((totalCredentials) => {
-            update({ totalCredentials });
-        })
-        .catch(() => update({ tableErrorText: loadErrorText }));
+    this.dispatch(setDisplay(Display.CREDENTIALS));
+    updateCount.call(this);
 };
 
 type CredentialsViewState = {

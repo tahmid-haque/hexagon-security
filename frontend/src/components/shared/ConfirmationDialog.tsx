@@ -14,11 +14,13 @@ export type ConfirmationDialogProps = {
 };
 
 export default function ConfirmationDialog(props: ConfirmationDialogProps) {
+    const onClose = props.isLoading ? () => {} : props.onClose;
+
     return (
         <AppModal
             isOpen={props.isOpen}
             modalTitle={props.title}
-            onClose={props.onClose}
+            onClose={onClose}
         >
             <Typography sx={{ maxWidth: 300 }}>{props.body}</Typography>
             <Box
@@ -32,7 +34,7 @@ export default function ConfirmationDialog(props: ConfirmationDialogProps) {
                 <Button
                     variant='text'
                     disabled={props.isLoading}
-                    onClick={props.onReject ?? props.onClose}
+                    onClick={props.onReject ?? onClose}
                 >
                     {props.secondaryActionText ?? 'Cancel'}
                 </Button>

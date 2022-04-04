@@ -1,36 +1,31 @@
-import { ApolloClient, gql, NormalizedCacheObject } from "@apollo/client";
+import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
+import { executeQuery } from '../utils/controller';
 
 const deleteSecureRecordMutation = gql`
-mutation($secureRecordID: String!){
-  deleteSecureRecord(secureRecordID: $secureRecordID ){
-    _id
-  }
-}
+    mutation ($secureRecordId: String!) {
+        deleteSecureRecord(secureRecordId: $secureRecordId) {
+            _id
+        }
+    }
 `;
 
 class SecureRecordController {
-  private client!: ApolloClient<NormalizedCacheObject>;
-  private token!: string;
-  constructor(client: ApolloClient<NormalizedCacheObject>, token: string){
-      this.client = client;
-      this.token = token;
-  }
-  private buildQuery(query: any, variables: any){
-    return {query,
-            context: { 
-                headers: { 
-                    "jwt": this.token  // this header will reach the server
-                } 
-            },
-            variables
-          }
-  }
+    private executeQuery: (
+        query: any,
+        variables: any,
+        isMutation: boolean
+    ) => Promise<any>;
+    constructor(client: ApolloClient<NormalizedCacheObject>, token: string) {
+        this.executeQuery = executeQuery.bind(this, client, token);
+    }
 
-  public deleteSecureRecord(secureRecordID: string){
-    return this.client.query(this.buildQuery(deleteSecureRecordMutation,{
-      secureRecordID: secureRecordID
-    }));
-  }
+    public deleteSecureRecord(secureRecordId: string) {
+        return this.executeQuery(
+            deleteSecureRecordMutation,
+            { secureRecordId },
+            true
+        ).then((data) => data.deleteSecureRecord._id as string);
+    }
 }
 
 export default SecureRecordController;

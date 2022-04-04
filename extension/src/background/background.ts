@@ -8,8 +8,9 @@ function extractName(email: string){
 }
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.clear() 
-  chrome.storage.local.set({'url': 'window.location.href', 'username': null, 'password': null, 'autofillClosed': false});
+  chrome.storage.local.clear(); 
+  chrome.storage.local.set({'url': 'google.com', 'username': null, 'password': null, 'autofillClosed': false});
+
 })
 
 chrome.runtime.onMessage.addListener(
@@ -27,12 +28,6 @@ chrome.runtime.onMessage.addListener(
       }
       
     }
-      
-    if (request.message === "sameDomain"){
-      // console.log("previous " + request.previous);
-      // console.log("current " + request.current);
-      sendResponse({sameSite: (parser.extractDomain(request.previous) === parser.extractDomain(request.current))});
-    }
   }
 );
 
@@ -43,7 +38,7 @@ chrome.runtime.onMessageExternal.addListener(
       console.log(extractName(request.user.username));
       console.log(request.user.password);
       
-      chrome.storage.local.set({'hexagonAccount':{username:extractName(request.user.username), email: request.user.username, password: request.user.password}});
+      chrome.storage.local.set({'hexagonAccount':{username: extractName(request.user.username), email: request.user.username, password: request.user.password}});
       sendResponse({loggedIn: true});
     }
   });

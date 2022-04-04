@@ -111,10 +111,12 @@ const onPasswordChange = (
 };
 
 const onClose = (
+    state: CredentialEditorState,
     update: (update: Partial<CredentialEditorState>) => void,
     close: (modified: boolean) => void,
     modified: boolean
 ) => {
+    if (state.isLoading || state.isOverwriteLoading) return;
     update(initState);
     close(modified);
 };
@@ -184,7 +186,8 @@ const onCreateSubmit = async (
             })
         );
     }
-    onClose(update, props.onClose, true);
+    update({ isLoading: false });
+    onClose(state, update, props.onClose, true);
 };
 
 const onEditSubmit = async (
@@ -224,7 +227,8 @@ const onEditSubmit = async (
             })
         );
     }
-    onClose(update, props.onClose, true);
+    update({ isLoading: false, isOverwriteLoading: false });
+    onClose(state, update, props.onClose, true);
 };
 
 export default function CredentialEditor(props: CredentialEditorProps) {
@@ -240,7 +244,7 @@ export default function CredentialEditor(props: CredentialEditorProps) {
         <AppModal
             isOpen={props.isOpen}
             modalTitle={`${props.isEdit ? 'Edit' : 'Create'} Credential`}
-            onClose={onClose.bind(null, update, props.onClose, false)}
+            onClose={onClose.bind(null, state, update, props.onClose, false)}
         >
             <TextField
                 fullWidth

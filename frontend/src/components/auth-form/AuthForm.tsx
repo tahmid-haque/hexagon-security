@@ -6,6 +6,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Grow from '@mui/material/Grow';
 import Slide from '@mui/material/Slide';
 import TextField from '@mui/material/TextField';
+import parser from 'hexagon-shared/utils/parser';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AccountService from '../../services/AccountService';
@@ -64,11 +65,8 @@ const onEmailChange = (
     event: React.ChangeEvent<HTMLInputElement>,
     update: (update: Partial<AuthFormState>) => void
 ) => {
-    // taken from https://stackoverflow.com/questions/46155/whats-the-best-way-to-validate-an-email-address-in-javascript
-    const emailMatcher =
-        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     const value = event.target.value.toLowerCase();
-    const isInputValid = emailMatcher.test(value);
+    const isInputValid = parser.isEmail(value);
     update({
         currentEmail: value.trim(),
         invalidInputText: '',

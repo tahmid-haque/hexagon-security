@@ -12,6 +12,15 @@ export default class CryptoService {
         keyType: string,
         keyUsage: KeyUsage[]
     ) => Promise<CryptoKey>;
+    generatePlainSecret: () => string;
+    encryptSecrets: (
+        encryptedSecrets: string[],
+        password: string
+    ) => Promise<string>;
+    decryptSecrets: (
+        plainSecrets: string[],
+        password: string
+    ) => Promise<string>;
     encryptSingle: (
         plainText: string,
         aesKey: CryptoKey
@@ -35,7 +44,11 @@ export default class CryptoService {
     ) => Promise<CryptoKey>;
     encryptData(plainData: string[], key: string): Promise<string[]>;
     decryptData(encryptedData: string[], key: string): Promise<string[]>;
-    encryptWrappedData(plainData: string[], secret: string): Promise<string[]>;
+    encryptWrappedData(
+        plainData: string[],
+        secret: string,
+        recordKey?: string
+    ): Promise<string[]>;
     decryptWrappedData(
         encryptedData: string[],
         encryptedKey: string,

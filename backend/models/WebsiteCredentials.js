@@ -4,16 +4,21 @@ const Schema = mongoose.Schema;
 const WesbsiteScredentialsSchema = new Schema({
     username: {
         type: String,
-        required: true
+        required: true,
     },
     password: {
         type: String,
-        required: true
+        required: true,
     },
-    UIDs: [{
-            UID : String,
-            secureRecordID : String
-        }]
+    owners: [
+        {
+            username: String,
+            secureRecordId: String,
+        },
+    ],
 });
 
-module.exports = mongoose.model('WebsiteCredentials', WesbsiteScredentialsSchema);
+module.exports = mongoose.model(
+    'WebsiteCredentials',
+    WesbsiteScredentialsSchema
+);

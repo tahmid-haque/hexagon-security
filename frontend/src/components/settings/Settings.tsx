@@ -17,6 +17,15 @@ import AccountService from '../../services/AccountService';
 import CredentialService from '../../services/CredentialService';
 import './settings.css';
 import parser from 'hexagon-shared/utils/parser';
+import {
+    createEvent,
+    DashboardEventType,
+} from '../../store/slices/DashboardSlice';
+import {
+    ApolloClient,
+    NormalizedCacheObject,
+    useApolloClient,
+} from '@apollo/client';
 
 export type SettingsProps = {
     isOpen: boolean;
@@ -32,9 +41,6 @@ export enum SettingsView {
 }
 
 type SettingsState = {
-    isURLValid: boolean;
-    isUserValid: boolean;
-    isSecretValid: boolean;
     isOldPassValid: boolean;
     oldPassword: string;
     oldPasswordError: string;
@@ -44,20 +50,11 @@ type SettingsState = {
     isImportLoadOpen: boolean;
     isImportLoading: boolean;
     currentTab: SettingsView;
-    urlError: string;
-    userError: string;
-    secretError: string;
-    url: string;
-    user: string;
-    secret: string;
     isLoading: boolean;
     importFile: File;
 };
 
 const initState: SettingsState = {
-    isURLValid: true,
-    isUserValid: true,
-    isSecretValid: true,
     isOldPassValid: true,
     oldPassword: '',
     oldPasswordError: '',
@@ -66,12 +63,6 @@ const initState: SettingsState = {
     newPasswordError: '',
     isImportLoadOpen: false,
     isImportLoading: false,
-    urlError: '',
-    userError: '',
-    secretError: '',
-    url: '',
-    user: '',
-    secret: '',
     isLoading: false,
     currentTab: SettingsView.UPDATE,
     importFile: {} as File,
@@ -123,20 +114,21 @@ const onFileUpload = (
     update: (update: Partial<SettingsState>) => void,
     event: React.ChangeEvent<HTMLInputElement>
 ) => {
-    if(event.target.files){
+    if (event.target.files) {
         const file = event.target.files[0];
         update({
             importFile: file,
-        })
+        });
     }
-   
-}
+};
 
 const onClose = (
+    state: SettingsState,
     update: (update: Partial<SettingsState>) => void,
     close: (modified: boolean) => void,
     modified: boolean
 ) => {
+    if (state.isLoading) return;
     update(initState);
     close(modified);
 };
@@ -146,9 +138,9 @@ const validateForm = (
     update: (update: Partial<SettingsState>) => void
 ) => {
     let error = false;
-    if (!state.isOldPassValid|| !state.oldPassword) {
-        update({ 
-            oldPasswordError: 'Please enter your current password', 
+    if (!state.isOldPassValid || !state.oldPassword) {
+        update({
+            oldPasswordError: 'Please enter your current password',
             isOldPassValid: false,
         });
         error = true;
@@ -167,14 +159,18 @@ const onUpdateSubmit = async (
     state: SettingsState,
     update: (update: Partial<SettingsState>) => void,
     props: SettingsProps,
-    dispatch: any
+    dispatch: any,
+    client: ApolloClient<NormalizedCacheObject>,
+    token: string
 ) => {
     if (validateForm(state, update)) return;
     update({ isLoading: true });
     try {
         await props.accountService.updatePassword(
             state.oldPassword,
-            state.newPassword
+            state.newPassword,
+            client,
+            token
         );
         dispatch(
             sendToast({
@@ -203,16 +199,21 @@ const onUpdateSubmit = async (
             })
         );
     }
-    onClose(update, props.onClose, true);
+    onClose(state, update, props.onClose, true);
 };
 
 const verifyHeaders = (headers: string[]): boolean => {
-    if(headers.length != 4) return false;
-    if(headers[0].trim().toLowerCase() !== "name" || headers[1].trim().toLowerCase() !== "url"  
-        || headers[2].trim().toLowerCase() !== "username" || headers[3].trim().toLowerCase() !== "password") return false;
+    if (headers.length != 4) return false;
+    if (
+        headers[0].trim().toLowerCase() !== 'name' ||
+        headers[1].trim().toLowerCase() !== 'url' ||
+        headers[2].trim().toLowerCase() !== 'username' ||
+        headers[3].trim().toLowerCase() !== 'password'
+    )
+        return false;
 
     return true;
-}
+};
 
 const readCSVFile = async (
     lines: string[],
@@ -221,31 +222,39 @@ const readCSVFile = async (
     props: SettingsProps,
     dispatch: any
 ) => {
-    for (let i = 1; i < lines.length; i++){
+    for (let i = 1; i < lines.length; i++) {
         try {
             let current = lines[i].split(',');
             let currentDomain = parser.extractDomain(current[1].trim());
             let currentUsername = current[2].trim();
             let currentPassword = current[3].trim();
 
-            if(!currentDomain || !currentUsername || !currentPassword) throw "Missing fields in credentials";
+            if (!currentDomain || !currentUsername || !currentPassword)
+                throw 'Missing fields in credentials';
 
             await props.credentialService.createCredential(
                 currentDomain,
                 currentUsername,
                 currentPassword
             );
-
         } catch {
             dispatch(
                 sendToast({
                     message:
-                        'Unable to add credentials for website on line ' + i + '.',
+                        'Unable to add credentials for website on line ' +
+                        i +
+                        '.',
                     severity: 'error',
                 })
             );
         }
     }
+
+    dispatch(
+        createEvent({
+            type: DashboardEventType.RERENDER_DATA,
+        })
+    );
 
     dispatch(
         sendToast({
@@ -254,10 +263,16 @@ const readCSVFile = async (
         })
     );
 
-    let importForm = document.querySelector("#import-passwords-form") as HTMLFormElement;
+    let importForm = document.querySelector(
+        '#import-passwords-form'
+    ) as HTMLFormElement;
     importForm.reset();
-    update({ isLoading: false, isImportLoading: false, importFile: {} as File });
-}
+    update({
+        isLoading: false,
+        isImportLoading: false,
+        importFile: {} as File,
+    });
+};
 
 const onImportSubmit = async (
     state: SettingsState,
@@ -270,21 +285,24 @@ const onImportSubmit = async (
         let reader = new FileReader();
         reader.readAsText(state.importFile);
 
-        reader.onload = function() {
-            try{
+        reader.onload = function () {
+            try {
                 const fileContents = reader.result as string;
-                if(!fileContents) return;
+                if (!fileContents) return;
                 let lines = fileContents.split(/\r\n|\n/);
-                if(lines.length < 1) return;
+                if (lines.length < 1) return;
 
                 const headers = lines[0].split(',');
 
-                if(!verifyHeaders(headers)) throw 'Error with file formatting';
+                if (!verifyHeaders(headers)) throw 'Error with file formatting';
 
                 readCSVFile(lines, state, update, props, dispatch);
-                
             } catch (error: any) {
-                update({ isLoading: false, isImportLoadOpen: false, isImportLoading: false });
+                update({
+                    isLoading: false,
+                    isImportLoadOpen: false,
+                    isImportLoading: false,
+                });
 
                 return dispatch(
                     sendToast({
@@ -294,16 +312,17 @@ const onImportSubmit = async (
                     })
                 );
             }
-            
         };
-
     } catch (error: any) {
-        update({ isLoading: false, isImportLoadOpen: false, isImportLoading: false });
+        update({
+            isLoading: false,
+            isImportLoadOpen: false,
+            isImportLoading: false,
+        });
 
         return dispatch(
             sendToast({
-                message:
-                    'No file uploaded. Please try again.',
+                message: 'No file uploaded. Please try again.',
                 severity: 'error',
             })
         );
@@ -312,13 +331,15 @@ const onImportSubmit = async (
 
 export default function Settings(props: SettingsProps) {
     const dispatch = useAppDispatch();
+    const account = useAppSelector((state) => state.account);
+    const client = useApolloClient() as ApolloClient<NormalizedCacheObject>;
     const { state, update } = useComponentState(initState);
     const context = { state, update, dispatch, props };
 
     return (
         <AppModal
             isOpen={props.isOpen}
-            onClose={onClose.bind(null, update, props.onClose, false)}
+            onClose={onClose.bind(null, state, update, props.onClose, false)}
             modalTitle={'User Settings'}
         >
             <Box sx={{ width: 400 }}>
@@ -328,17 +349,11 @@ export default function Settings(props: SettingsProps) {
                         onChange={onViewChange.bind(context)}
                     >
                         <Tab
-                            label='Update'
+                            label='Update Password'
                             value={SettingsView.UPDATE}
                         />
-                        <Tab
-                            label='Import'
-                            value={SettingsView.IMPORT}
-                        />
-                        <Tab
-                            label='About'
-                            value={SettingsView.ABOUT}
-                        />
+                        <Tab label='Import' value={SettingsView.IMPORT} />
+                        <Tab label='About' value={SettingsView.ABOUT} />
                     </Tabs>
                 </Box>
                 {state.currentTab === SettingsView.UPDATE && (
@@ -347,9 +362,12 @@ export default function Settings(props: SettingsProps) {
                             <PasswordField
                                 isError={!state.isOldPassValid}
                                 password={state.oldPassword}
-                                onPasswordChange={onOldPasswordChange.bind(null, update)}
+                                onPasswordChange={onOldPasswordChange.bind(
+                                    null,
+                                    update
+                                )}
                                 errorMessage={state.oldPasswordError}
-                                label="Current Password"
+                                label='Current Password'
                             />
                         </Box>
 
@@ -357,75 +375,108 @@ export default function Settings(props: SettingsProps) {
                             <PasswordField
                                 isError={!state.isNewPassValid}
                                 password={state.newPassword}
-                                onPasswordChange={onNewPasswordChange.bind(null, update)}
+                                onPasswordChange={onNewPasswordChange.bind(
+                                    null,
+                                    update
+                                )}
                                 errorMessage={state.newPasswordError}
-                                label="New Password"
+                                label='New Password'
                             />
                         </Box>
-                        
                     </div>
-                    
                 )}
                 {state.currentTab === SettingsView.IMPORT && (
                     <Box mt={2}>
-                        <div id="import-view">
-                            <Typography variant='body1' sx={{fontWeight: 'bold'}}>Steps to Import</Typography>
+                        <div id='import-view'>
+                            <Typography
+                                variant='body1'
+                                sx={{ fontWeight: 'bold' }}
+                            >
+                                Steps to Import
+                            </Typography>
                             <ol>
-                                <li>Export your passwords from another password manager to a CSV file.</li>
-                                <li>Format your CSV file to follow the 
-                                    <Link href='../../../Import_Passwords.csv' underline="hover" color="secondary" ml={"4px"} download>template</Link>.
+                                <li>
+                                    Export your passwords from another password
+                                    manager to a CSV file.
+                                </li>
+                                <li>
+                                    Format your CSV file to follow the
+                                    <Link
+                                        href='../../../Import_Passwords.csv'
+                                        underline='hover'
+                                        color='secondary'
+                                        ml={'4px'}
+                                        download
+                                    >
+                                        template
+                                    </Link>
+                                    .
                                 </li>
                                 <li>Upload your file below.</li>
                             </ol>
 
-                            <Box mx={2} mt={2} component={"form"} id="import-passwords-form">
-                                <input 
-                                    type="file"
-                                    id="import-passwords" 
-                                    name="import-passwords"
-                                    accept=".csv"
+                            <Box
+                                mx={2}
+                                mt={2}
+                                component={'form'}
+                                id='import-passwords-form'
+                            >
+                                <input
+                                    type='file'
+                                    id='import-passwords'
+                                    name='import-passwords'
+                                    accept='.csv'
                                     onChange={onFileUpload.bind(null, update)}
-                                >
-                                </input>
+                                ></input>
                             </Box>
                         </div>
-                            
                     </Box>
                 )}
                 {state.currentTab === SettingsView.ABOUT && (
                     <Box>
                         <Box my={2}>
-                            <Typography variant='body1' sx={{fontWeight: 'bold'}}>About Hexagon</Typography>
-                            <div>
-                                abjdksfgkj;fdklgkfdkgkfdgjksfsd
-                            </div>
+                            <Typography
+                                variant='body1'
+                                sx={{ fontWeight: 'bold' }}
+                            >
+                                About Hexagon
+                            </Typography>
+                            <div>abjdksfgkj;fdklgkfdkgkfdgjksfsd</div>
                         </Box>
-                        
+
                         <Box>
-                            <Typography variant='body1' sx={{fontWeight: 'bold'}}>Credits</Typography>
-                            <div>
-                                iorkesfkdskfkdfjkdsjfjkljk
-                            </div>
+                            <Typography
+                                variant='body1'
+                                sx={{ fontWeight: 'bold' }}
+                            >
+                                Credits
+                            </Typography>
+                            <div>iorkesfkdskfkdfjkdsjfjkljk</div>
                         </Box>
                     </Box>
                 )}
-                <Box sx={{ position: 'relative',  mt: 2, float: 'right' }}>
+                <Box sx={{ position: 'relative', mt: 2, float: 'right' }}>
                     <Button
                         variant='contained'
                         disabled={state.isLoading}
-                        onClick={() => 
-                            {
-                                if(state.currentTab === SettingsView.UPDATE)
-                                    onUpdateSubmit(state, update, props, dispatch);
-                                else if(state.currentTab === SettingsView.IMPORT)
-                                    onImportSubmit(state, update, props, dispatch);
-                                else
-                                    onClose(update, props.onClose, true);
-                            }
-                            
-                        }
+                        onClick={() => {
+                            if (state.currentTab === SettingsView.UPDATE)
+                                onUpdateSubmit(
+                                    state,
+                                    update,
+                                    props,
+                                    dispatch,
+                                    client,
+                                    account.jwt
+                                );
+                            else if (state.currentTab === SettingsView.IMPORT)
+                                onImportSubmit(state, update, props, dispatch);
+                            else onClose(state, update, props.onClose, true);
+                        }}
                     >
-                        Done
+                        {state.currentTab !== SettingsView.ABOUT
+                            ? 'Submit'
+                            : 'Done'}
                     </Button>
                     {state.isLoading && (
                         <CircularProgress

@@ -1,164 +1,129 @@
-import { ApolloClient, gql, NormalizedCacheObject } from "@apollo/client";
+import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
+import { executeQuery } from '../utils/controller';
 
 const countMFAsQuery = gql`
-query{
-  countMFAs{
-    _id
-  }
-}
+    query {
+        countMFAs
+    }
 `;
 
-const findMFAContainsQuery = gql`
-query($name: String!, $contains: Boolean!, $getShares: Boolean!){
-  findMFAContains(getShares:$getShares, contains: $contains, name: $name){
-    _id
-    name
-    key
-    recordID
-    MFA{
-      _id
-      username
-      seed
+const searchMFAsQuery = gql`
+    query ($name: String!, $exactMatch: Boolean!) {
+        searchMFAs(exactMatch: $exactMatch, name: $name) {
+            _id
+            key
+            mfa {
+                username
+            }
+        }
     }
-  }
-}
 `;
 
-const findMFAContainsWithSharesQuery = gql`
-query($name: String!, $contains: Boolean!, $getShares: Boolean!){
-  findMFAContains(getShares:$getShares, contains: $contains, name: $name){
-    _id
-    name
-    key
-    recordID
-    MFA{
-      _id
-      username
-      seed
-      UIDs {
-        UID
-      }
+const getMFAsQuery = gql`
+    query ($offset: Int!, $limit: Int!, $sortType: String!) {
+        getMFAs(offset: $offset, limit: $limit, sortType: $sortType) {
+            _id
+            name
+            key
+            mfa {
+                username
+                seed
+                owners
+            }
+            pendingShares {
+                receiver
+                _id
+            }
+        }
     }
-    share{
-      reciever
-      shareId
-    }
-  }
-}
 `;
 
-const findMFAQuery = gql`
-query($offset: Int!, $limit: Int!, $sortType: String!, getShares: Boolean!){
-  findMFA(getShares:$getShares, offset:$offset, limit: $limit, sortType: $sortType){
-    _id
-    name
-    key
-    recordID
-    MFA{
-      _id
-      username
-      seed
+const addMFAMutation = gql`
+    mutation (
+        $name: String!
+        $username: String!
+        $seed: String!
+        $key: String!
+        $masterUsername: String!
+    ) {
+        addSeed(
+            name: $name
+            username: $username
+            seed: $seed
+            key: $key
+            masterUsername: $masterUsername
+        ) {
+            _id
+        }
     }
-  }
-}
 `;
 
-const findMFAWithSharesQuery = gql`
-query($offset: Int!, $limit: Int!, $sortType: String!, getShares: Boolean!){
-  findMFA(getShares:$getShares, offset:$offset, limit: $limit, sortType: $sortType){
-    _id
-    name
-    key
-    recordID
-    MFA{
-      _id
-      username
-      seed
-      UIDs {
-        UID
-      }
-    }
-    share{
-      reciever
-      shareId
-    }
-  }
-}
-`;
-
-const addSeedMutation = gql`
-mutation($name: String!, $username: String!, $seed: String!, $key: String!){
-  addSeed(name: $name, username: $username, seed: $seed, key: $key ){
-    _id
-  }
-}
-`;
-
+export type MFADto = {
+    _id: string;
+    name: string;
+    key: string;
+    mfa: { username: string; seed?: string; owners?: string[] };
+    pendingShares?: { receiver: string; _id: string }[];
+};
 class MFAController {
-  private client!: ApolloClient<NormalizedCacheObject>;
-  private token!: string;
-  constructor(client: ApolloClient<NormalizedCacheObject>, token: string){
-      this.client = client;
-      this.token = token;
-  }
+    private executeQuery: (
+        query: any,
+        variables: any,
+        isMutation: boolean
+    ) => Promise<any>;
 
-  private buildQuery(query: any, variables: any){
-    return {query,
-            context: { 
-                headers: { 
-                    "jwt": this.token  // this header will reach the server
-                } 
+    constructor(client: ApolloClient<NormalizedCacheObject>, token: string) {
+        this.executeQuery = executeQuery.bind(this, client, token);
+    }
+
+    public getMFAs(offset: number, limit: number, sortType: string) {
+        return this.executeQuery(
+            getMFAsQuery,
+            {
+                offset: offset,
+                limit: limit,
+                sortType: sortType,
             },
-            variables
-          }
-}
-
-  public findMFA(offset: number, limit: number, sortType: string, getShares: boolean){
-    if (getShares){
-      return this.client.query(this.buildQuery(findMFAWithSharesQuery,{
-        offset: offset,
-        limit: limit,
-        sortType: sortType,
-        getShares: getShares
-      }));
-    } else {
-      return this.client.query(this.buildQuery(findMFAQuery,{
-        offset: offset,
-        limit: limit,
-        sortType: sortType,
-        getShares: getShares
-      }));
+            false
+        ).then((data) => data.getMFAs as MFADto[]);
     }
-  }
 
-  public findMFAContains(name: string, contains: boolean, getShares: boolean){
-    if (getShares){
-      return this.client.query(this.buildQuery(findMFAContainsWithSharesQuery,{
-        name: name,
-        contains: contains,
-        getShares: getShares
-      }));
-    } else {
-      return this.client.query(this.buildQuery(findMFAContainsQuery,{
-        name: name,
-        contains: contains,
-        getShares: getShares
-      }));
+    public searchMFAs(name: string, exactMatch: boolean) {
+        return this.executeQuery(
+            searchMFAsQuery,
+            {
+                name: name,
+                exactMatch: exactMatch,
+            },
+            false
+        ).then((data) => data.searchMFAs as MFADto[]);
     }
-  }
-  
-  public countMFAs(){
-    return this.client.query(this.buildQuery(countMFAsQuery,{}));
-  }
 
-  public addSeed(name: string, username: string, seed: string, key: string,){
-    return this.client.query(this.buildQuery(addSeedMutation,{
-      name: name,
-      username: username,
-      seed: seed,
-      key: key
-    }));
-  }
+    public countMFAs() {
+        return this.executeQuery(countMFAsQuery, {}, false).then(
+            (data) => data.countMFAs as number
+        );
+    }
+
+    public createMFA(
+        name: string,
+        username: string,
+        seed: string,
+        key: string,
+        masterUsername: string
+    ) {
+        return this.executeQuery(
+            addMFAMutation,
+            {
+                name,
+                username,
+                seed,
+                key,
+                masterUsername,
+            },
+            true
+        ).then((data) => data.addSeed._id as string);
+    }
 }
 
 export default MFAController;

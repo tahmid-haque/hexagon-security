@@ -4,21 +4,23 @@ const Schema = mongoose.Schema;
 const NoteScehma = new Schema({
     title: {
         type: String,
-        required: true
+        required: true,
     },
     note: {
         type: String,
-        required: true
+        required: true,
     },
     lastModified: {
-        type: Date, 
+        type: Date,
         default: new Date(),
-        required: true
+        required: true,
     },
-    UIDs: [{
-            UID : String,
-            secureRecordID : String
-        }]
+    owners: [
+        {
+            username: String,
+            secureRecordId: String,
+        },
+    ],
 });
 
 module.exports = mongoose.model('Note', NoteScehma);

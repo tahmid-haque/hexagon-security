@@ -18,16 +18,16 @@ import {
 import MuiDrawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { navWidth } from '../../../shared/constants';
 import { clearAccount } from '../../../store/slices/AccountSlice';
-import { Display, setDisplay } from '../../../store/slices/DisplaySlice';
-import { useAppDispatch } from '../../../store/store';
-import styles from './DashboardNavigation.module.scss';
 import {
     createEvent,
     DashboardEventType,
 } from '../../../store/slices/DashboardSlice';
-import { useNavigate } from 'react-router-dom';
+import { Display } from '../../../store/slices/DisplaySlice';
+import { useAppDispatch } from '../../../store/store';
+import styles from './DashboardNavigation.module.scss';
 
 const optionHeight = 48;
 
@@ -140,6 +140,7 @@ const getFeatureButtons = function (this: {
             }}
             selected={isActive}
             onClick={onClick}
+            disabled={props.currentPane === Display.NONE}
         >
             <ListItemIcon
                 sx={{
@@ -221,7 +222,11 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
                             sx={{ opacity: props.isNavOpen ? 1 : 0 }}
                         />
                         {props.isNavOpen && (
-                            <IconButton color='error' onClick={onSignOutClick}>
+                            <IconButton
+                                color='error'
+                                onClick={onSignOutClick}
+                                disabled={props.currentPane === Display.NONE}
+                            >
                                 <LogoutIcon />
                             </IconButton>
                         )}
