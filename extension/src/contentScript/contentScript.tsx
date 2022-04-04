@@ -2,17 +2,87 @@ import React, { useState, useEffect, HTMLAttributes, HtmlHTMLAttributes } from '
 import ReactDOM from 'react-dom'
 import { AutofillOverlay, SavePassOverlay } from './overlay'
 import parser from '../utils/parser'
+import { useComponentState } from '../utils/hooks'
+
+
+type OverlayProps = {
+    usernameField?: HTMLInputElement;
+    passwordField?: HTMLInputElement;
+    username?: string;
+    password?: string;
+    isAutofillOpen?: boolean;
+    isSaveOpen?: boolean;
+}
+
+type OverlayState = {
+    isAutofillOpen: boolean;
+    isSaveOpen: boolean;
+}
+
+const initState: OverlayState = {
+    isAutofillOpen: true,
+    isSaveOpen: true,
+}
+
+type OverlayContext = {
+    state: OverlayState;
+    update: (update: Partial<OverlayState>) => void;
+    props: OverlayProps
+}
+
+// set value of a field, taken from https://github.com/facebook/react/issues/10135
+function setNativeValue(element, value) {
+    const { set: valueSetter } = Object.getOwnPropertyDescriptor(element, 'value') || {}
+    const prototype = Object.getPrototypeOf(element)
+    const { set: prototypeValueSetter } = Object.getOwnPropertyDescriptor(prototype, 'value') || {}
+
+    if (prototypeValueSetter && valueSetter !== prototypeValueSetter) {
+      prototypeValueSetter.call(element, value)
+    } else if (valueSetter) {
+      valueSetter.call(element, value)
+    } else {
+      throw new Error('The given element does not have a value setter')
+    }
+}
+
+const autofill = (
+    update: (update: Partial<OverlayState>) => void,
+    props: OverlayProps
+) => (username: string, password: string) => {
+        if(props.usernameField){
+            setNativeValue(props.usernameField, username);
+            props.usernameField.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        if(props.passwordField){
+            setNativeValue(props.passwordField, password);
+            props.passwordField.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        update({ isAutofillOpen: false });
+        closeOverlay();
+}
 
 const closeOverlay = () => {
-    chrome.storage.local.set({'autofillClosed': true});
-    ReactDOM.render(<div></div>, root);
+    ReactDOM.render(<App />, root);
 }
 
 const root = document.createElement('div');
 root.id = "hexagon-extension-root";
 document.body.appendChild(root);
-// ReactDOM.render(<AutofillOverlay />, root);
-// ReactDOM.render(<SavePassOverlay />, root);
+
+const App = (props: OverlayProps) => {
+    const { state, update } = useComponentState(initState);
+    const context = { state, update, props };
+
+    return (
+        <div>
+            {(props.isSaveOpen ?? false) && <SavePassOverlay username={props.username ?? ''} password={props.password ?? ''} closeOverlay={() => closeOverlay()}/>}
+            {(props.isAutofillOpen ?? false) && <AutofillOverlay autofill={autofill(update, props)} closeOverlay={() => {
+                chrome.storage.local.set({'autofillClosed': true});
+                closeOverlay();
+            }} />}
+        </div>
+    )
+}
 
 
 const findUsernameField = () => {
@@ -38,39 +108,11 @@ const findPasswordField = () => {
     return null;
 }
 
-// set value of a field, taken from https://github.com/facebook/react/issues/10135
-function setNativeValue(element, value) {
-    const { set: valueSetter } = Object.getOwnPropertyDescriptor(element, 'value') || {}
-    const prototype = Object.getPrototypeOf(element)
-    const { set: prototypeValueSetter } = Object.getOwnPropertyDescriptor(prototype, 'value') || {}
-
-    if (prototypeValueSetter && valueSetter !== prototypeValueSetter) {
-      prototypeValueSetter.call(element, value)
-    } else if (valueSetter) {
-      valueSetter.call(element, value)
-    } else {
-      throw new Error('The given element does not have a value setter')
-    }
-}
-
 function fillFormFields(usernameField: HTMLInputElement, passField: HTMLInputElement){
     chrome.runtime.sendMessage({message: "isValidSite"}, function(response) {
-        console.log(response.valid);
-
         chrome.storage.local.get(['autofillClosed'], function(result) {
             if(!result.autofillClosed && response.valid){
-                ReactDOM.render(<AutofillOverlay autofill={ (username:string, password:string) => {
-                    if(usernameField){
-                        setNativeValue(usernameField, username);
-                        usernameField.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                    if(passField){
-                        setNativeValue(passField, password);
-                        passField.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                    ReactDOM.render(<div></div>, root);
-                }} 
-                closeOverlay={closeOverlay}/>, root);
+                ReactDOM.render(<App usernameField={usernameField} passwordField={passField} isAutofillOpen={true} />, root);
             }
         });
     }); 
@@ -82,10 +124,7 @@ function displaySavePassSamePage(){
         let prev = parser.extractDomain(result.url);
         if(result.url != window.location.href && result.username && result.password){
             if(current === prev){
-                console.log('prev url ' + result.url);
-                console.log('username ' + result.username);
-                console.log('password ' + result.password);
-                ReactDOM.render(<SavePassOverlay username={result.username} password={result.password} closeOverlay={closeOverlay}/>, root);
+                ReactDOM.render(<App username={result.username} password={result.password} isSaveOpen={true} />, root);
                 chrome.storage.local.set({'username': null, 'password': null});
             }
         }
@@ -98,10 +137,7 @@ function displaySavePassDiffPage(){
         let current = parser.extractDomain(window.location.href);
         let prev = parser.extractDomain(result.url);
         if(current === prev && result.username && result.password){
-            console.log('prev url ' + result.url);
-            console.log('username ' + result.username);
-            console.log('password ' + result.password);
-            ReactDOM.render(<SavePassOverlay username={result.username} password={result.password} closeOverlay={closeOverlay}/>, root);
+            ReactDOM.render(<App username={result.username} password={result.password} isSaveOpen={true} />, root);
             chrome.storage.local.set({'username': null, 'password': null});
         }
         if(current !== prev) chrome.storage.local.set({'username': null, 'password': null});
@@ -126,9 +162,6 @@ function setEventHandlers(field1: HTMLInputElement, field2: HTMLInputElement, ke
 window.addEventListener('load', function(){
     console.log("hello from content script");
 
-    // ReactDOM.render(<SavePassOverlay username={"dsf"} password={"sdf"} closeOverlay={closeOverlay}/>, root);
-    // ReactDOM.render(<AutofillOverlay autofill={() => console.log("abc")} closeOverlay={closeOverlay} />, root);
-
     displaySavePassDiffPage();
     chrome.storage.local.set({'autofillClosed': false});
 
@@ -150,7 +183,7 @@ window.addEventListener('load', function(){
             let loginForm = document.querySelector("form") as HTMLFormElement;
             if (loginForm){
                 loginForm.onsubmit = function(e){
-                    ReactDOM.render(<div></div>, root);
+                    ReactDOM.render(<App />, root);
                 }
             }
             
