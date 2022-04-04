@@ -14,7 +14,7 @@ import { sendToast } from '../../store/slices/ToastSlice';
 type ShareFinalizerState = {
     isOpen: boolean;
     isLoading: boolean;
-    shareID: string;
+    shareId: string;
     shareKey: string;
     nextLocation: string;
     shareService: ShareService;
@@ -36,7 +36,7 @@ const finalizeShare = async function (
     try {
         await state.shareService.finalizeShare(
             state.shareKey,
-            state.shareID,
+            state.shareId,
             isAccept
         );
         dispatch(
@@ -68,7 +68,7 @@ const close = function (this: ShareFinalizerContext) {
 const onInit = function (this: ShareFinalizerContext) {
     const queryParams = new URL(window.location.href).searchParams;
     this.update({
-        shareID: queryParams.get('shareID') ?? this.state.shareID,
+        shareId: queryParams.get('shareId') ?? this.state.shareId,
         shareKey: queryParams.get('shareKey') ?? this.state.shareKey,
         nextLocation: queryParams.get('next') ?? this.state.nextLocation,
     });
@@ -83,7 +83,7 @@ export default function ShareFinalizer() {
     const { state, update } = useComponentState({
         isOpen: true,
         isLoading: false,
-        shareID: '',
+        shareId: '',
         shareKey: '',
         nextLocation: '/app/credentials',
         shareService: new ShareService(account, apolloClient),

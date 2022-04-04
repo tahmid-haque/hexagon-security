@@ -86,10 +86,12 @@ const onSecretChange = (
 };
 
 const onClose = (
+    state: MFACreatorState,
     update: (update: Partial<MFACreatorState>) => void,
     close: (modified: boolean) => void,
     modified: boolean
 ) => {
+    if (state.isLoading) return;
     update(initState);
     close(modified);
 };
@@ -153,7 +155,8 @@ const onCreateSubmit = async (
             })
         );
     }
-    onClose(update, props.onClose, true);
+    update({ isLoading: false });
+    onClose(state, update, props.onClose, true);
 };
 
 export default function MFAEditor(props: MFACreatorProps) {
@@ -164,7 +167,7 @@ export default function MFAEditor(props: MFACreatorProps) {
         <AppModal
             isOpen={props.isOpen}
             modalTitle={'Create MFA Credential'}
-            onClose={onClose.bind(null, update, props.onClose, false)}
+            onClose={onClose.bind(null, state, update, props.onClose, false)}
         >
             <TextField
                 fullWidth

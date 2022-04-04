@@ -2,22 +2,25 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const ShareSchema = new Schema({
-    secureRecordID: {
+    type: {
         type: String,
-        required: true
+        required: true,
     },
-    recordID: {
+    name: {
         type: String,
-        required: true
+    },
+    recordId: {
+        type: String,
+        required: true,
     },
     reciever: {
         type: String,
-        required: true
+        required: true,
     },
     key: {
         type: String,
-        required: true
-    }
+        required: true,
+    },
 });
 
 module.exports = mongoose.model('Share', ShareSchema);

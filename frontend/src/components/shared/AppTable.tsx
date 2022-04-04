@@ -27,6 +27,7 @@ type AppTableState = {
     numRows: number;
     currentPage: number;
     sortType: GridSortDirection;
+    isUpdateInProgress: boolean;
 };
 
 type AppTableContext = {
@@ -37,15 +38,17 @@ type AppTableContext = {
     props: AppTableProps;
 };
 
-const updateContent = function (this: AppTableContext) {
-    const { props, state } = this;
+const updateContent = async function (this: AppTableContext) {
+    const { props, state, update } = this;
 
-    if (props.contentCount && state.numRows) {
-        props.updateContent(
+    if (props.contentCount && state.numRows && !state.isUpdateInProgress) {
+        update({ isUpdateInProgress: true });
+        await props.updateContent(
             state.currentPage * state.numRows,
             state.numRows,
             state.sortType
         );
+        update({ isUpdateInProgress: false });
     }
 };
 
@@ -76,6 +79,7 @@ export default function AppTable(props: AppTableProps) {
         numRows: 0,
         currentPage: 0,
         sortType: props.initialSort ?? 'asc',
+        isUpdateInProgress: false,
     } as AppTableState);
 
     const context = {
@@ -87,12 +91,9 @@ export default function AppTable(props: AppTableProps) {
     };
 
     useEffect(init.bind(context), []);
-    useEffect(updateContent.bind(context), [
-        state.numRows,
-        state.sortType,
-        state.currentPage,
-        props.contentCount,
-    ]);
+    useEffect(() => {
+        updateContent.call(context);
+    }, [state.numRows, state.sortType, state.currentPage, props.contentCount]);
     useEffect(handleEvent.bind(context), [event]);
 
     return (

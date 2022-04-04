@@ -1,12 +1,16 @@
 const graphql = require('graphql');
-const _ = require('lodash');
 const HexagonUser = require('../models/HexagonUser');
 const SecureRecord = require('../models/SecureRecord');
 const WebsiteCredentials = require('../models/WebsiteCredentials');
 const Share = require('../models/Share');
 const Seed = require('../models/Seed');
 const Note = require('../models/Note');
-const uuid = require('uuid');
+const CryptoService = require('hexagon-shared/services/CryptoService');
+const crypto = require('crypto').webcrypto;
+const parser = require('hexagon-shared/utils/parser');
+const cryptoService = new CryptoService(crypto);
+const sanitize = require('mongo-sanitize');
+const { trusted } = require('mongoose');
 
 const {
     GraphQLObjectType,
@@ -14,39 +18,21 @@ const {
     GraphQLSchema,
     GraphQLList,
     GraphQLNonNull,
-    GraphQLInputObjectType,
     GraphQLBoolean,
     GraphQLInt,
+    GraphQLError,
 } = graphql;
 
-const HexagonUserType = new GraphQLObjectType({
-    name: 'HexagonUser',
-    fields: () => ({
-        _id: { type: GraphQLString },
-        username: { type: GraphQLString },
-        password: { type: GraphQLString },
-        masterKey: { type: GraphQLString },
-        UID: { type: GraphQLString },
-        // credentials: {
-        //     type: new GraphQLList(WebsiteCredentialsType),
-        //     resolve(parent, args){
-        //         return SecureRecord.find({type: "account", UID: parent.UID});
-        //     }
-        // },
-        // MFAs: {
-        //     type: new GraphQLList(MFAType),
-        //     resolve(parent, args){
-        //         //return _.find(WebsiteCredentials,{UIDs:parent.recordID})
-        //     }
-        // },
-        // notes: {
-        //     type: new GraphQLList(NoteType),
-        //     resolve(parent, args){
-        //         //return _.find(Notes,{UIDs:parent.recordID})
-        //     }
-        // },
-    }),
-});
+const throwDBError = (err, status) => {
+    throw new GraphQLError('Custom error', {
+        extensions: { ...err, status: status ?? 500 },
+    });
+};
+
+const extractRecord = (recordModel) => {
+    const record = recordModel.toObject();
+    return { ...record, owners: record.owners.map((owner) => owner.username) };
+};
 
 //depending on type, we wil only query for that item (credentials, MFA, notes), need to do this in front end?
 const SecureRecordType = new GraphQLObjectType({
@@ -55,45 +41,32 @@ const SecureRecordType = new GraphQLObjectType({
         _id: { type: GraphQLString },
         name: { type: GraphQLString },
         key: { type: GraphQLString },
-        recordID: { type: GraphQLString },
-        UID: { type: GraphQLString },
+        recordId: { type: GraphQLString },
         type: { type: GraphQLString },
-        credentials: {
+        credential: {
             type: WebsiteCredentialsType,
-            resolve(parent, args) {
-                return WebsiteCredentials.findById(parent.recordID);
+            resolve: async (parent, args) => {
+                return extractRecord(
+                    await WebsiteCredentials.findById(parent.recordId)
+                );
             },
         },
-        MFA: {
+        mfa: {
             type: MFAType,
-            resolve(parent, args) {
-                return Seed.findById(parent.recordID);
+            resolve: async (parent, args) => {
+                return extractRecord(await Seed.findById(parent.recordId));
             },
         },
-        notes: {
+        note: {
             type: NoteType,
-            resolve(parent, args) {
-                return Note.findById(parent.recordID);
+            resolve: async (parent, args) => {
+                return extractRecord(await Note.findById(parent.recordId));
             },
         },
-        share: {
+        pendingShares: {
             type: new GraphQLList(ShareType),
             resolve(parent, args) {
-                return Share.find({ recordID: parent.recordID });
-            },
-        },
-    }),
-});
-
-const UIDsType = new GraphQLObjectType({
-    name: 'UIDS',
-    fields: () => ({
-        UID: { type: GraphQLString },
-        secureRecordID: { type: GraphQLString },
-        secureRecord: {
-            type: SecureRecordType,
-            resolve(parent, args) {
-                return SecureRecord.findOne({ _id: parent.secureRecordID });
+                return Share.find({ recordId: parent.recordId });
             },
         },
     }),
@@ -105,7 +78,7 @@ const WebsiteCredentialsType = new GraphQLObjectType({
         _id: { type: GraphQLString },
         username: { type: GraphQLString },
         password: { type: GraphQLString },
-        UIDs: { type: new GraphQLList(UIDsType) },
+        owners: { type: new GraphQLList(GraphQLString) },
     }),
 });
 
@@ -115,7 +88,7 @@ const MFAType = new GraphQLObjectType({
         _id: { type: GraphQLString },
         username: { type: GraphQLString },
         seed: { type: GraphQLString },
-        UIDs: { type: new GraphQLList(UIDsType) },
+        owners: { type: new GraphQLList(GraphQLString) },
     }),
 });
 
@@ -126,7 +99,7 @@ const NoteType = new GraphQLObjectType({
         lastModified: { type: GraphQLString },
         title: { type: GraphQLString },
         note: { type: GraphQLString },
-        UIDs: { type: new GraphQLList(UIDsType) },
+        owners: { type: new GraphQLList(GraphQLString) },
     }),
 });
 
@@ -134,9 +107,10 @@ const ShareType = new GraphQLObjectType({
     name: 'Shares',
     fields: () => ({
         _id: { type: GraphQLString },
-        secureRecordID: { type: GraphQLString },
-        recordID: { type: GraphQLString },
-        reciever: { type: GraphQLString },
+        type: { type: GraphQLString },
+        name: { type: GraphQLString },
+        recordId: { type: GraphQLString },
+        receiver: { type: GraphQLString },
         key: { type: GraphQLString },
     }),
 });
@@ -144,105 +118,94 @@ const ShareType = new GraphQLObjectType({
 const RootQuery = new GraphQLObjectType({
     name: 'RootQueryType',
     fields: {
-        HexagonUser: {
-            type: HexagonUserType,
-            args: { username: { type: GraphQLString } },
-            resolve(parent, args) {
-                return HexagonUser.findOne({ username: args.username });
-            },
-        },
-        findCredentialsContains: {
+        searchCredentials: {
             type: new GraphQLList(SecureRecordType),
             args: {
                 name: { type: new GraphQLNonNull(GraphQLString) },
-                contains: { type: GraphQLBoolean },
-                getShares: { type: GraphQLBoolean },
+                exactMatch: { type: GraphQLBoolean },
             },
             resolve(parent, args, context) {
-                if (args.contains) {
-                    return SecureRecord.find({
-                        name: { $regex: args.name, $options: 'i' },
-                        type: 'account',
-                        UID: context.token.UID,
-                    });
-                }
+                const name = !args.exactMatch
+                    ? trusted({ $regex: sanitize(args.name), $options: 'i' })
+                    : parser.extractDomain(args.name);
                 return SecureRecord.find({
-                    name: args.name,
+                    name,
                     type: 'account',
-                    UID: context.token.UID,
+                    uid: context.token.uid,
                 });
             },
         },
-        findMFAContains: {
+        searchMFAs: {
             type: new GraphQLList(SecureRecordType),
             args: {
                 name: { type: new GraphQLNonNull(GraphQLString) },
-                contains: { type: GraphQLBoolean },
-                getShares: { type: GraphQLBoolean },
+                exactMatch: { type: GraphQLBoolean },
             },
             resolve(parent, args, context) {
-                if (args.contains) {
-                    return SecureRecord.find({
-                        name: { $regex: args.name, $options: 'i' },
-                        type: 'seed',
-                        UID: context.token.UID,
-                    });
-                }
+                const name = !args.exactMatch
+                    ? trusted({ $regex: sanitize(args.name), $options: 'i' })
+                    : parser.extractDomain(args.name);
                 return SecureRecord.find({
-                    name: args.name,
+                    name,
                     type: 'seed',
-                    UID: context.token.UID,
+                    uid: context.token.uid,
                 });
             },
         },
-        findCredentials: {
+        getCredentials: {
             type: new GraphQLList(SecureRecordType),
             args: {
                 sortType: { type: GraphQLString },
                 offset: { type: GraphQLInt },
                 limit: { type: GraphQLInt },
-                getShares: { type: GraphQLBoolean },
             },
             resolve(parent, args, context) {
+                if (!parser.isSortValid(args.sortType))
+                    throwDBError({ sortType: 'Invalid sort type' }, 400);
+
                 return SecureRecord.find({
                     type: 'account',
-                    UID: context.token.UID,
+                    uid: context.token.uid,
                 })
                     .sort({ name: args.sortType })
                     .skip(args.offset)
                     .limit(args.limit);
             },
         },
-        findNotes: {
+        getNotes: {
             type: new GraphQLList(SecureRecordType),
             args: {
                 sortType: { type: GraphQLString },
                 offset: { type: GraphQLInt },
                 limit: { type: GraphQLInt },
-                getShares: { type: GraphQLBoolean },
             },
             resolve(parent, args, context) {
+                if (!parser.isSortValid(args.sortType))
+                    throwDBError({ sortType: 'Invalid sort type' }, 400);
+
                 return SecureRecord.find({
                     type: 'note',
-                    UID: context.token.UID,
+                    uid: context.token.uid,
                 })
                     .sort({ name: args.sortType })
                     .skip(args.offset)
                     .limit(args.limit);
             },
         },
-        findMFA: {
+        getMFAs: {
             type: new GraphQLList(SecureRecordType),
             args: {
                 sortType: { type: GraphQLString },
                 offset: { type: GraphQLInt },
                 limit: { type: GraphQLInt },
-                getShares: { type: GraphQLBoolean },
             },
             resolve(parent, args, context) {
+                if (!parser.isSortValid(args.sortType))
+                    throwDBError({ sortType: 'Invalid sort type' }, 400);
+
                 return SecureRecord.find({
                     type: 'seed',
-                    UID: context.token.UID,
+                    uid: context.token.uid,
                 })
                     .sort({ name: args.sortType })
                     .skip(args.offset)
@@ -250,32 +213,32 @@ const RootQuery = new GraphQLObjectType({
             },
         },
         countMFAs: {
-            type: new GraphQLList(SecureRecordType),
+            type: GraphQLInt,
             args: {},
             resolve(parent, args, context) {
                 return SecureRecord.find({
                     type: 'seed',
-                    UID: context.token.UID,
+                    uid: context.token.uid,
                 }).count();
             },
         },
         countNotes: {
-            type: new GraphQLList(SecureRecordType),
+            type: GraphQLInt,
             args: {},
             resolve(parent, args, context) {
                 return SecureRecord.find({
                     type: 'note',
-                    UID: context.token.UID,
+                    uid: context.token.uid,
                 }).count();
             },
         },
         countWebsiteCredentials: {
-            type: new GraphQLList(SecureRecordType),
+            type: GraphQLInt,
             args: {},
             resolve(parent, args, context) {
                 return SecureRecord.find({
-                    type: 'acount',
-                    UID: context.token.UID,
+                    type: 'account',
+                    uid: context.token.uid,
                 }).count();
             },
         },
@@ -285,751 +248,416 @@ const RootQuery = new GraphQLObjectType({
 const Mutation = new GraphQLObjectType({
     name: 'Mutation',
     fields: {
-        addWebsiteCredentials: {
-            type: WebsiteCredentialsType,
+        addWebsiteCredential: {
+            type: SecureRecordType,
             args: {
                 name: { type: new GraphQLNonNull(GraphQLString) },
                 username: { type: new GraphQLNonNull(GraphQLString) },
                 password: { type: new GraphQLNonNull(GraphQLString) },
                 key: { type: new GraphQLNonNull(GraphQLString) },
+                masterUsername: { type: new GraphQLNonNull(GraphQLString) },
             },
-            resolve(parent, args, context) {
-                let secureRecord = new SecureRecord({
+            resolve: async (parent, args, context) => {
+                const secureRecord = await new SecureRecord({
                     name: args.name,
                     key: args.key,
-                    recordID: null,
-                    UID: context.token.UID,
+                    recordId: null,
+                    uid: context.token.uid,
                     type: 'account',
-                });
-                secureRecord.save(function (err, updatedSecureRecord) {
-                    if (err) {
-                        console.log(err);
-                        //res.status(500).send();
-                    } else {
-                        let websiteCredentials = new WebsiteCredentials({
-                            username: args.username,
-                            password: args.password,
-                            UIDs: [
-                                {
-                                    UID: context.token.UID,
-                                    secureRecordID: updatedSecureRecord._id,
-                                },
-                            ],
-                        });
-                        websiteCredentials.save(function (
-                            err,
-                            updatedWebsiteCredentials
-                        ) {
-                            if (err) {
-                                console.log(err);
-                                //res.status(500).send();
-                            } else {
-                                SecureRecord.findOne(
-                                    { _id: updatedSecureRecord._id },
-                                    function (err, foundSecureRecord) {
-                                        if (err) {
-                                            console.log('1');
-                                            //res.status(500).sned();
-                                        } else {
-                                            if (!foundSecureRecord) {
-                                                console.log('2');
-                                                //res.status(404).sned();
-                                            } else {
-                                                foundSecureRecord.recordID =
-                                                    updatedWebsiteCredentials._id;
-                                                foundSecureRecord.save();
-                                            }
-                                        }
-                                    }
-                                );
-                            }
-                        });
-                    }
-                });
+                }).save();
+                const credential = await new WebsiteCredentials({
+                    username: args.username,
+                    password: args.password,
+                    owners: [
+                        {
+                            username: args.masterUsername,
+                            secureRecordId: secureRecord._id,
+                        },
+                    ],
+                }).save();
+                secureRecord.recordId = credential._id;
+                secureRecord.save();
+                return {
+                    ...secureRecord.toObject(),
+                    credential: extractRecord(credential),
+                };
             },
         },
         addNote: {
-            type: NoteType,
+            type: SecureRecordType,
             args: {
                 title: { type: new GraphQLNonNull(GraphQLString) },
                 note: { type: new GraphQLNonNull(GraphQLString) },
                 key: { type: new GraphQLNonNull(GraphQLString) },
+                masterUsername: { type: new GraphQLNonNull(GraphQLString) },
             },
-            resolve(parent, args, context) {
-                let secureRecord = new SecureRecord({
+            resolve: async (parent, args, context) => {
+                const secureRecord = await new SecureRecord({
                     name: null,
                     key: args.key,
-                    recordID: null,
-                    UID: context.token.UID,
+                    recordId: null,
+                    uid: context.token.uid,
                     type: 'note',
-                });
-                secureRecord.save(function (err, updatedSecureRecord) {
-                    if (err) {
-                        console.log(err);
-                        //res.status(500).send();
-                    } else {
-                        let note = new Note({
-                            title: args.title,
-                            note: args.note,
-                            UIDs: [
-                                {
-                                    UID: context.token.UID,
-                                    secureRecordID: updatedSecureRecord._id,
-                                },
-                            ],
-                        });
-                        note.save(function (err, updatedNote) {
-                            if (err) {
-                                console.log(err);
-                                //res.status(500).send();
-                            } else {
-                                SecureRecord.findOne(
-                                    { _id: updatedSecureRecord._id },
-                                    function (err, foundSecureRecord) {
-                                        if (err) {
-                                            console.log('1');
-                                            //res.status(500).sned();
-                                        } else {
-                                            if (!foundSecureRecord) {
-                                                console.log('2');
-                                                //res.status(404).sned();
-                                            } else {
-                                                foundSecureRecord.recordID =
-                                                    updatedNote._id;
-                                                foundSecureRecord.save();
-                                            }
-                                        }
-                                    }
-                                );
-                            }
-                        });
-                    }
-                });
+                }).save();
+                const note = await new Note({
+                    title: args.title,
+                    note: args.note,
+                    owners: [
+                        {
+                            username: args.masterUsername,
+                            secureRecordId: secureRecord._id,
+                        },
+                    ],
+                }).save();
+                secureRecord.recordId = note._id;
+                secureRecord.save();
+                return {
+                    ...secureRecord.toObject(),
+                    note: extractRecord(note),
+                };
             },
         },
         addSeed: {
-            type: MFAType,
+            type: SecureRecordType,
             args: {
                 name: { type: new GraphQLNonNull(GraphQLString) },
                 username: { type: new GraphQLNonNull(GraphQLString) },
                 seed: { type: new GraphQLNonNull(GraphQLString) },
                 key: { type: new GraphQLNonNull(GraphQLString) },
+                masterUsername: { type: new GraphQLNonNull(GraphQLString) },
             },
-            resolve(parent, args, context) {
-                let secureRecord = new SecureRecord({
+            resolve: async (parent, args, context) => {
+                const secureRecord = await new SecureRecord({
                     name: args.name,
                     key: args.key,
-                    recordID: null,
-                    UID: context.token.UID,
+                    recordId: null,
+                    uid: context.token.uid,
                     type: 'seed',
-                });
-                secureRecord.save(function (err, updatedSecureRecord) {
-                    if (err) {
-                        console.log(err);
-                        //res.status(500).send();
-                    } else {
-                        let seed = new Seed({
-                            username: args.username,
-                            seed: args.seed,
-                            UIDs: [
-                                {
-                                    UID: context.token.UID,
-                                    secureRecordID: updatedSecureRecord._id,
-                                },
-                            ],
-                        });
-                        seed.save(function (err, updatedSeed) {
-                            if (err) {
-                                console.log(err);
-                                //res.status(500).send();
-                            } else {
-                                SecureRecord.findOne(
-                                    { _id: updatedSecureRecord._id },
-                                    function (err, foundSecureRecord) {
-                                        if (err) {
-                                            console.log('1');
-                                            //res.status(500).sned();
-                                        } else {
-                                            if (!foundSecureRecord) {
-                                                console.log('2');
-                                                //res.status(404).sned();
-                                            } else {
-                                                foundSecureRecord.recordID =
-                                                    updatedSeed._id;
-                                                foundSecureRecord.save();
-                                            }
-                                        }
-                                    }
-                                );
-                            }
-                        });
-                    }
-                });
+                }).save();
+                const seed = await new Seed({
+                    username: args.username,
+                    seed: args.seed,
+                    owners: [
+                        {
+                            username: args.masterUsername,
+                            secureRecordId: secureRecord._id,
+                        },
+                    ],
+                }).save();
+                secureRecord.recordId = seed._id;
+                secureRecord.save();
+                return {
+                    ...secureRecord.toObject(),
+                    credential: extractRecord(seed),
+                };
             },
         },
         addShare: {
             type: ShareType,
             args: {
-                secureRecordID: { type: new GraphQLNonNull(GraphQLString) },
-                recordID: { type: new GraphQLNonNull(GraphQLString) },
-                reciever: { type: new GraphQLNonNull(GraphQLString) },
+                secureRecordId: { type: new GraphQLNonNull(GraphQLString) },
+                receiver: { type: new GraphQLNonNull(GraphQLString) },
                 key: { type: new GraphQLNonNull(GraphQLString) },
             },
-            resolve(parents, args) {
-                encryptionKey = uuid.v4();
-                let share = new Share({
-                    secureRecordID: args.secureRecordID,
-                    recordID: args.recordID,
-                    reciever: args.reciever,
-                    key: args.key,
+            resolve: async (parent, args, context) => {
+                if (!parser.isEmail(args.receiver))
+                    throwDBError({ receiver: 'Invalid format' }, 400);
+                const secureRecord = await SecureRecord.findOne({
+                    _id: args.secureRecordId,
                 });
-                return share.save();
+
+                if (!secureRecord)
+                    throwDBError({ secureRecordId: 'Could not find' }, 404);
+                if (secureRecord.uid != context.token.uid)
+                    throwDBError({ secureRecordId: 'Unauthorized' }, 403);
+
+                const shareSecret = cryptoService.generatePlainSecret();
+                const [encryptedReceiver] = await cryptoService.encryptData(
+                    [args.receiver],
+                    args.key
+                );
+                const [encryptedKey] = await cryptoService.encryptSecrets(
+                    [args.key],
+                    shareSecret
+                );
+
+                const share = await new Share({
+                    type: secureRecord.type,
+                    name: secureRecord.name,
+                    recordId: secureRecord.recordId,
+                    receiver: encryptedReceiver,
+                    key: encryptedKey,
+                }).save();
+
+                // TODO: send email with record type, shareId, shareKey
+
+                return share;
             },
         },
         updateNote: {
-            type: NoteType,
+            type: SecureRecordType,
             args: {
                 title: { type: new GraphQLNonNull(GraphQLString) },
                 note: { type: new GraphQLNonNull(GraphQLString) },
-                secureRecordID: { type: new GraphQLNonNull(GraphQLString) },
+                secureRecordId: { type: new GraphQLNonNull(GraphQLString) },
             },
-            resolve(parent, args) {
-                SecureRecord.findOne(
-                    { _id: args.secureRecordID },
-                    function (err, foundSecureRecord) {
-                        if (err) {
-                            console.log('1');
-                            //res.status(500).sned();
-                        } else {
-                            if (!foundSecureRecord) {
-                                console.log('2');
-                                //res.status(404).sned();
-                            } else {
-                                if (
-                                    foundSecureRecord.UID != context.token.UID
-                                ) {
-                                    return; //error
-                                }
-                                Note.findOne(
-                                    { _id: foundSecureRecord.recordID },
-                                    function (err, foundNote) {
-                                        if (err) {
-                                            console.log('1');
-                                            //res.status(500).sned();
-                                        } else {
-                                            if (!foundNote) {
-                                                console.log('2');
-                                                //res.status(404).sned();
-                                            } else {
-                                                foundNote.lastModified =
-                                                    new Date();
-                                                foundNote.title = args.title;
-                                                foundNote.note = args.note;
-                                                return foundNote.save();
-                                            }
-                                        }
-                                    }
-                                );
-                            }
-                        }
-                    }
-                );
+            resolve: async (parent, args, context) => {
+                const secureRecord = await SecureRecord.findOne({
+                    _id: args.secureRecordId,
+                });
+                if (!secureRecord)
+                    throwDBError({ secureRecordId: 'Could not find' }, 404);
+                if (secureRecord.uid != context.token.uid)
+                    throwDBError({ secureRecordId: 'Unauthorized' }, 403);
+                const note = await Note.findOne({
+                    _id: secureRecord.recordId,
+                });
+                if (!note) throwDBError({ secureRecordId: 'Corrupted' }, 410);
+
+                note.lastModified = new Date();
+                note.title = args.title;
+                note.note = args.note;
+                const updatedNote = await note.save();
+                return {
+                    ...secureRecord.toObject(),
+                    note: extractRecord(updatedNote),
+                };
             },
         },
-        updateCredentials: {
-            type: NoteType,
+        updateCredential: {
+            type: SecureRecordType,
             args: {
                 username: { type: new GraphQLNonNull(GraphQLString) },
                 password: { type: new GraphQLNonNull(GraphQLString) },
-                secureRecordID: { type: new GraphQLNonNull(GraphQLString) },
+                secureRecordId: { type: new GraphQLNonNull(GraphQLString) },
             },
-            resolve(parent, args) {
-                SecureRecord.findOne(
-                    { _id: args.secureRecordID },
-                    function (err, foundSecureRecord) {
-                        if (err) {
-                            console.log('1');
-                            //res.status(500).sned();
-                        } else {
-                            if (!foundSecureRecord) {
-                                console.log('2');
-                                //res.status(404).sned();
-                            } else {
-                                if (
-                                    foundSecureRecord.UID != context.token.UID
-                                ) {
-                                    return; //error
-                                }
-                                WebsiteCredentials.findOne(
-                                    { _id: foundSecureRecord.recordID },
-                                    function (err, foundWebsiteCredentials) {
-                                        if (err) {
-                                            console.log('1');
-                                            //res.status(500).sned();
-                                        } else {
-                                            if (!foundWebsiteCredentials) {
-                                                console.log('2');
-                                                //res.status(404).sned();
-                                            } else {
-                                                foundWebsiteCredentials.username =
-                                                    args.username;
-                                                foundWebsiteCredentials.password =
-                                                    args.password;
-                                                foundWebsiteCredentials.save();
-                                            }
-                                        }
-                                    }
-                                );
-                            }
-                        }
-                    }
-                );
+            resolve: async (parent, args, context) => {
+                const secureRecord = await SecureRecord.findOne({
+                    _id: args.secureRecordId,
+                });
+                if (!secureRecord)
+                    throwDBError({ secureRecordId: 'Could not find' }, 404);
+                if (secureRecord.uid != context.token.uid)
+                    throwDBError({ secureRecordId: 'Unauthorized' }, 403);
+                const credential = await WebsiteCredentials.findOne({
+                    _id: secureRecord.recordId,
+                });
+                if (!credential)
+                    throwDBError({ secureRecordId: 'Corrupted' }, 410);
+
+                credential.username = args.username;
+                credential.password = args.password;
+                const updatedCredentials = await credential.save();
+                return {
+                    ...secureRecord.toObject(),
+                    credential: extractRecord(updatedCredentials),
+                };
             },
         },
         deleteSecureRecord: {
             type: SecureRecordType,
             args: {
-                secureRecordID: { type: new GraphQLNonNull(GraphQLString) },
+                secureRecordId: { type: new GraphQLNonNull(GraphQLString) },
             },
-            resolve(parent, args) {
-                SecureRecord.findOne(
-                    { _id: args.secureRecordID },
-                    function (err, foundSecureRecord) {
-                        if (err) {
-                            console.log('1');
-                            //res.status(500).sned();
-                        } else {
-                            if (!foundSecureRecord) {
-                                console.log('2');
-                                //res.status(404).sned();
-                            } else {
-                                if (
-                                    foundSecureRecord.UID != context.token.UID
-                                ) {
-                                    return; //error
-                                }
-                                if (foundSecureRecord.type == 'account') {
-                                    WebsiteCredentials.findOne(
-                                        { _id: foundSecureRecord.recordID },
-                                        function (err, foundCredentials) {
-                                            if (err) {
-                                                console.log('1');
-                                                //res.status(500).sned();
-                                            } else {
-                                                if (!foundCredentials) {
-                                                    console.log('2');
-                                                    //res.status(404).sned();
-                                                } else {
-                                                    if (
-                                                        foundCredentials.UIDs
-                                                            .length == 1
-                                                    ) {
-                                                        WebsiteCredentials.findOneAndDelete(
-                                                            {
-                                                                _id: foundSecureRecord.recordID,
-                                                            },
-                                                            function (err) {
-                                                                if (err) {
-                                                                    console.log(
-                                                                        err
-                                                                    );
-                                                                    //return res.status(500).send;
-                                                                }
-                                                                //return res.status(200).send;
-                                                            }
-                                                        );
-                                                    }
-                                                    SecureRecord.findOneAndDelete(
-                                                        {
-                                                            _id: args.secureRecordID,
-                                                        },
-                                                        function (err) {
-                                                            if (err) {
-                                                                console.log(
-                                                                    err
-                                                                );
-                                                                //return res.status(500).send;
-                                                            }
-                                                            //return res.status(200).send;
-                                                        }
-                                                    );
-                                                }
-                                            }
-                                        }
-                                    );
-                                } else if (foundSecureRecord.type == 'seed') {
-                                    Seed.findOne(
-                                        { _id: foundSecureRecord.recordID },
-                                        function (err, foundSeed) {
-                                            if (err) {
-                                                console.log('1');
-                                                //res.status(500).sned();
-                                            } else {
-                                                if (!foundSeed) {
-                                                    console.log('2');
-                                                    //res.status(404).sned();
-                                                } else {
-                                                    if (
-                                                        foundSeed.UIDs.length ==
-                                                        1
-                                                    ) {
-                                                        Seed.findOneAndDelete(
-                                                            {
-                                                                _id: foundSecureRecord.recordID,
-                                                            },
-                                                            function (err) {
-                                                                if (err) {
-                                                                    console.log(
-                                                                        err
-                                                                    );
-                                                                    //return res.status(500).send;
-                                                                }
-                                                                //return res.status(200).send;
-                                                            }
-                                                        );
-                                                    }
-                                                    SecureRecord.findOneAndDelete(
-                                                        {
-                                                            _id: args.secureRecordID,
-                                                        },
-                                                        function (err) {
-                                                            if (err) {
-                                                                console.log(
-                                                                    err
-                                                                );
-                                                                //return res.status(500).send;
-                                                            }
-                                                            //return res.status(200).send;
-                                                        }
-                                                    );
-                                                }
-                                            }
-                                        }
-                                    );
-                                } else if (foundSecureRecord.type == 'note') {
-                                    Note.findOne(
-                                        { _id: foundSecureRecord.recordID },
-                                        function (err, foundNote) {
-                                            if (err) {
-                                                console.log('1');
-                                                //res.status(500).sned();
-                                            } else {
-                                                if (!foundNote) {
-                                                    console.log('2');
-                                                    //res.status(404).sned();
-                                                } else {
-                                                    if (
-                                                        foundNote.UIDs.length ==
-                                                        1
-                                                    ) {
-                                                        Note.findOneAndDelete(
-                                                            {
-                                                                _id: foundSecureRecord.recordID,
-                                                            },
-                                                            function (err) {
-                                                                if (err) {
-                                                                    console.log(
-                                                                        err
-                                                                    );
-                                                                    //return res.status(500).send;
-                                                                }
-                                                                //return res.status(200).send;
-                                                            }
-                                                        );
-                                                    }
-                                                    SecureRecord.findOneAndDelete(
-                                                        {
-                                                            _id: args.secureRecordID,
-                                                        },
-                                                        function (err) {
-                                                            if (err) {
-                                                                console.log(
-                                                                    err
-                                                                );
-                                                                //return res.status(500).send;
-                                                            }
-                                                            //return res.status(200).send;
-                                                        }
-                                                    );
-                                                }
-                                            }
-                                        }
-                                    );
-                                }
-                            }
-                        }
-                    }
+            resolve: async (parent, args, context) => {
+                const secureRecord = await SecureRecord.findOne({
+                    _id: args.secureRecordId,
+                });
+                if (!secureRecord)
+                    throwDBError({ secureRecordId: 'Could not find' }, 404);
+                if (secureRecord.uid != context.token.uid)
+                    throwDBError({ secureRecordId: 'Unauthorized' }, 403);
+                const database =
+                    secureRecord.type == 'account'
+                        ? WebsiteCredentials
+                        : secureRecord.type == 'seed'
+                        ? Seed
+                        : Note;
+                const data = await database.findOneAndUpdate(
+                    { _id: secureRecord.recordId },
+                    trusted({
+                        $pull: {
+                            owners: {
+                                username: sanitize(args.owner),
+                            },
+                        },
+                    }),
+                    { new: false }
                 );
+                if (!data) throwDBError({ secureRecordId: 'Corrupted' }, 410);
+                if (data.owners.length == 1) {
+                    await database.findOneAndDelete({
+                        _id: secureRecord.recordId,
+                    });
+                }
+                await SecureRecord.findOneAndDelete({
+                    _id: args.secureRecordId,
+                });
+
+                return secureRecord;
             },
         },
         deleteShare: {
-            type: ShareType,
+            type: SecureRecordType,
             args: {
-                secureRecordID: { type: new GraphQLNonNull(GraphQLString) },
-                shareID: { type: new GraphQLNonNull(GraphQLString) },
+                secureRecordId: { type: new GraphQLNonNull(GraphQLString) },
+                shareId: { type: new GraphQLNonNull(GraphQLString) },
             },
-            resolve(parent, args) {
-                SecureRecord.findOne(
-                    { _id: args.secureRecordID },
-                    function (err, foundSecureRecord) {
-                        if (err) {
-                            console.log('1');
-                            //res.status(500).sned();
-                        } else {
-                            if (!foundSecureRecord) {
-                                console.log('2');
-                                //res.status(404).sned();
-                            } else {
-                                if (
-                                    foundSecureRecord.UID != context.token.UID
-                                ) {
-                                    return; //error
-                                }
-                                Share.findOneAndDelete(
-                                    { _id: args.shareID },
-                                    function (err) {
-                                        if (err) {
-                                            console.log(err);
-                                            //return res.status(500).send;
-                                        }
-                                        //return res.status(200).send;
-                                    }
-                                );
-                            }
-                        }
-                    }
-                );
+            resolve: async (parent, args) => {
+                const secureRecord = await SecureRecord.findOne({
+                    _id: args.secureRecordId,
+                });
+
+                if (!secureRecord)
+                    throwDBError({ secureRecordId: 'Could not find' }, 404);
+                if (secureRecord.uid != context.token.uid)
+                    throwDBError({ secureRecordId: 'Unauthorized' }, 403);
+
+                return await Share.findOneAndDelete({
+                    _id: args.shareId,
+                    recordId: secureRecord.recordId,
+                });
             },
         },
         updatePassword: {
-            type: HexagonUser,
+            type: GraphQLBoolean,
             args: {
                 oldPassword: { type: new GraphQLNonNull(GraphQLString) },
                 newPassword: { type: new GraphQLNonNull(GraphQLString) },
             },
-            resolve(parent, args, context) {
-                console.log('success');
-                HexagonUser.findOne(
-                    { UID: context.token.UID },
-                    async function (err, foundUser) {
-                        if (err) {
-                            console.log('1');
-                            //res.status(500).sned();
-                        } else {
-                            if (!foundUser) {
-                                console.log('2');
-                                //res.status(404).sned();
-                            } else {
-                                const auth = await bcrypt.compare(
-                                    oldPassword,
-                                    foundUser.password
-                                );
-                                if (auth) {
-                                    //decode masterkey and UID, update with new info using the new encryption?
-                                    foundUser.password = '';
-                                    foundUser.masterKey = '';
-                                    foundUser.UID = '';
-                                    return foundUser.save();
-                                }
-                                //throw Error("Incorrect password");
-                            }
-                        }
-                    }
-                );
+            resolve: async (parent, args, context) => {
+                const user = await HexagonUser.findOne({
+                    uid: context.token.uid,
+                });
+                if (!user) throwDBError({ user: 'Could not find user' }, 404);
+                if (await bcrypt.compare(args.oldPassword, user.password)) {
+                    const [masterKey] = await cryptoService.decryptSecrets(
+                        [hexagonUser.masterKey],
+                        args.oldPassword
+                    );
+                    const [encryptedMasterKey, encryptedUid] =
+                        await cryptoService.encryptSecrets(
+                            [masterKey, context.token.uid],
+                            password
+                        );
+
+                    user.password = args.newPassword;
+                    user.masterKey = encryptedMasterKey;
+                    user.uid = encryptedUid;
+                    await user.save();
+                    return true;
+                }
             },
         },
         revokeShare: {
-            type: ShareType,
+            type: GraphQLBoolean,
             args: {
-                secureRecordID: { type: new GraphQLNonNull(GraphQLString) },
+                secureRecordId: { type: new GraphQLNonNull(GraphQLString) },
                 owner: { type: new GraphQLNonNull(GraphQLString) },
             },
-            resolve(parent, args, context) {
-                SecureRecord.findOne(
-                    { _id: args.secureRecordID },
-                    function (err, foundSecureRecord) {
-                        if (err) {
-                            console.log('1');
-                            //res.status(500).sned();
-                        } else {
-                            if (!foundSecureRecord) {
-                                console.log('2');
-                                //res.status(404).sned();
-                            } else {
-                                if (foundSecureRecord.type == 'account') {
-                                    WebsiteCredentials.findOneAndUpdate(
-                                        { _id: foundSecureRecord.recordID },
-                                        {
-                                            $pull: {
-                                                UIDs: {
-                                                    UID: context.token.UID,
-                                                },
-                                            },
-                                        }
-                                    );
-                                } else if (foundSecureRecord.type == 'seed') {
-                                    Seed.findOneAndUpdate(
-                                        { _id: foundSecureRecord.recordID },
-                                        {
-                                            $pull: {
-                                                UIDs: {
-                                                    UID: context.token.UID,
-                                                },
-                                            },
-                                        }
-                                    );
-                                } else if (foundSecureRecord.type == 'note') {
-                                    Note.findOneAndUpdate(
-                                        { _id: foundSecureRecord.recordID },
-                                        {
-                                            $pull: {
-                                                UIDs: {
-                                                    UID: context.token.UID,
-                                                },
-                                            },
-                                        }
-                                    );
-                                }
-                                SecureRecord.findOneAndDelete({
-                                    _id: args.secureRecordID,
-                                });
-                            }
-                        }
-                    }
+            resolve: async (parent, args, context) => {
+                const secureRecord = await SecureRecord.findOne({
+                    _id: args.secureRecordId,
+                });
+
+                if (!secureRecord)
+                    throwDBError({ secureRecordId: 'Could not find' }, 404);
+                if (secureRecord.uid != context.token.uid)
+                    throwDBError({ secureRecordId: 'Unauthorized' }, 403);
+
+                const database =
+                    secureRecord.type == 'account'
+                        ? WebsiteCredentials
+                        : secureRecord.type == 'seed'
+                        ? Seed
+                        : Note;
+
+                const record = await database.findOneAndUpdate(
+                    { _id: secureRecord.recordId },
+                    trusted({
+                        $pull: {
+                            owners: {
+                                username: sanitize(args.owner),
+                            },
+                        },
+                    }),
+                    { new: false }
                 );
+                if (!record) throwDBError({ secureRecordId: 'Corrupted' }, 410);
+
+                const idx = record.owners.findIndex(
+                    (owner) => owner.username === args.owner
+                );
+                if (idx === -1) throwDBError({ owner: 'Does not exist' }, 404);
+
+                const deletedRecord = await SecureRecord.findOneAndDelete({
+                    _id: record.owners[idx].secureRecordId,
+                });
+
+                if (record.owners.length === 1) {
+                    await database.findOneAndDelete({
+                        _id: secureRecord.recordId,
+                    });
+                }
+                return deletedRecord == true;
             },
         },
         AcceptOrDeclineShare: {
             type: ShareType,
             args: {
                 shareKey: { type: new GraphQLNonNull(GraphQLString) },
-                shareID: { type: new GraphQLNonNull(GraphQLString) },
+                shareid: { type: new GraphQLNonNull(GraphQLString) },
                 isAccepted: { type: new GraphQLNonNull(GraphQLBoolean) },
                 masterKey: { type: new GraphQLNonNull(GraphQLString) },
             },
-            resolve(parent, args, context) {
-                Share.findOne(
-                    { _id: args.ShareID },
-                    function (err, foundShare) {
-                        if (err) {
-                            console.log('1');
-                            //res.status(500).sned();
-                        } else {
-                            if (!foundShare) {
-                                console.log('2');
-                                //res.status(404).sned();
-                            } else {
-                                if (
-                                    foundShare.token.username !=
-                                    foundShare.reciever
-                                ) {
-                                    return; //wrong person
-                                }
-                                if (args.isAccepted) {
-                                    SecureRecord.findOne(
-                                        { _id: foundShare.secureRecordID },
-                                        function (err, foundSecureRecord) {
-                                            if (err) {
-                                                console.log('1');
-                                                //res.status(500).sned();
-                                            } else {
-                                                if (!foundSecureRecord) {
-                                                    console.log('2');
-                                                    //res.status(404).sned();
-                                                } else {
-                                                    let secureRecord =
-                                                        new SecureRecord({
-                                                            name: foundSecureRecord.name,
-                                                            key: foundSecureRecord.key,
-                                                            recordID:
-                                                                foundShare.recordID,
-                                                            UID: context.token
-                                                                .UID,
-                                                            type: foundSecureRecord.type,
-                                                        });
-                                                    secureRecord.save(function (
-                                                        err,
-                                                        updatedSecureRecord
-                                                    ) {
-                                                        if (err) {
-                                                            console.log(err);
-                                                            //res.status(500).send();
-                                                        } else {
-                                                            if (
-                                                                foundSecureRecord.type ==
-                                                                'account'
-                                                            ) {
-                                                                WebsiteCredentials.findOneAndUpdate(
-                                                                    {
-                                                                        _id: foundShare.recordID,
-                                                                    },
-                                                                    {
-                                                                        $push: {
-                                                                            UIDs: {
-                                                                                UID: context
-                                                                                    .token
-                                                                                    .UID,
-                                                                                secureRecordID:
-                                                                                    updatedSecureRecord._id,
-                                                                            },
-                                                                        },
-                                                                    }
-                                                                );
-                                                            } else if (
-                                                                foundSecureRecord.type ==
-                                                                'seed'
-                                                            ) {
-                                                                Seed.findOneAndUpdate(
-                                                                    {
-                                                                        _id: foundShare.recordID,
-                                                                    },
-                                                                    {
-                                                                        $push: {
-                                                                            UIDs: {
-                                                                                UID: context
-                                                                                    .token
-                                                                                    .UID,
-                                                                                secureRecordID:
-                                                                                    updatedSecureRecord._id,
-                                                                            },
-                                                                        },
-                                                                    }
-                                                                );
-                                                            } else if (
-                                                                foundSecureRecord.type ==
-                                                                'note'
-                                                            ) {
-                                                                Note.findOneAndUpdate(
-                                                                    {
-                                                                        _id: foundShare.recordID,
-                                                                    },
-                                                                    {
-                                                                        $push: {
-                                                                            UIDs: {
-                                                                                UID: context
-                                                                                    .token
-                                                                                    .UID,
-                                                                                secureRecordID:
-                                                                                    updatedSecureRecord._id,
-                                                                            },
-                                                                        },
-                                                                    }
-                                                                );
-                                                            }
-                                                            Share.findOneAndDelete(
-                                                                {
-                                                                    _id: args.ShareID,
-                                                                }
-                                                            );
-                                                        }
-                                                    });
-                                                }
-                                            }
-                                        }
-                                    );
-                                }
-                            }
-                        }
+            resolve: async (parent, args, context) => {
+                const share = await Share.findOne({ _id: args.Shareid });
+
+                if (!share) throwDBError({ shareId: 'Could not find' }, 404);
+                const [key] = await cryptoService.decryptSecrets(
+                    [share.key],
+                    args.shareKey
+                );
+                const [receiver] = await cryptoService.decryptData(
+                    [share.receiver],
+                    key
+                );
+                if (receiver != context.token.username)
+                    throwDBError({ receiver: 'Unauthorized' }, 403);
+
+                await Share.findOneAndDelete({
+                    _id: args.shareId,
+                });
+
+                const secureRecord = await new SecureRecord({
+                    name: share.name,
+                    key,
+                    recordId: share.recordId,
+                    uid: context.token.uid,
+                    type: share.type,
+                }).save();
+
+                const [encryptedMasterEmail] = await cryptoService.encryptData(
+                    [context.token.username],
+                    key
+                );
+
+                const database =
+                    secureRecord.type == 'account'
+                        ? WebsiteCredentials
+                        : secureRecord.type == 'seed'
+                        ? Seed
+                        : Note;
+
+                database.findOneAndUpdate(
+                    { _id: share.recordId },
+                    {
+                        $push: {
+                            owners: {
+                                username: encryptedMasterEmail,
+                                secureRecordId: secureRecord._id,
+                            },
+                        },
                     }
                 );
             },

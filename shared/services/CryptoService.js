@@ -1,6 +1,6 @@
 // sourced from https://github.com/bradyjoslin/webcrypto-example
 
-export default class CryptoService {
+class CryptoService {
     crypto;
     enc = new TextEncoder();
     dec = new TextDecoder('utf-8');
@@ -42,6 +42,12 @@ export default class CryptoService {
         );
     }
 
+    generatePlainSecret() {
+        return this.buff_to_base64(
+            this.crypto.getRandomValues(new Uint8Array(32))
+        );
+    }
+
     async encryptSingle(plainText, aesKey) {
         const iv = this.crypto.getRandomValues(new Uint8Array(12));
         const encryptedContent = await this.crypto.subtle.encrypt(
@@ -65,7 +71,11 @@ export default class CryptoService {
     async encryptMultiple(plainData, aesKey) {
         return await Promise.all(
             plainData.map(async (plainText) =>
-                this.buff_to_base64(await this.encryptSingle(plainText, aesKey))
+                plainText
+                    ? this.buff_to_base64(
+                          await this.encryptSingle(plainText, aesKey)
+                      )
+                    : ''
             )
         );
     }
@@ -73,7 +83,9 @@ export default class CryptoService {
     async decryptMultiple(encryptedData, aesKey) {
         return await Promise.all(
             encryptedData.map((cipherText) =>
-                this.decryptSingle(this.base64_to_buf(cipherText), aesKey)
+                cipherText
+                    ? this.decryptSingle(this.base64_to_buf(cipherText), aesKey)
+                    : ''
             )
         );
     }
@@ -121,6 +133,48 @@ export default class CryptoService {
             ['decrypt']
         );
         return await this.decryptMultiple(encryptedData, aesKey);
+    }
+
+    async encryptSecrets(plainSecrets, password) {
+        const wrapperSalt = this.crypto.getRandomValues(new Uint8Array(16));
+        const passwordAES = await this.getPasswordKey(password).then((key) =>
+            this.deriveKey(key, wrapperSalt, 'AES-GCM', ['encrypt'])
+        );
+
+        return await Promise.all(
+            plainSecrets.map(async (plainSecret) => {
+                const encryptedSecretBuff = await this.encryptSingle(
+                    plainSecret,
+                    passwordAES
+                );
+                const buff = new Uint8Array(
+                    encryptedSecretBuff.length + wrapperSalt.length
+                );
+                buff.set(wrapperSalt, 0);
+                buff.set(encryptedSecretBuff, wrapperSalt.length);
+
+                return this.buff_to_base64(buff);
+            })
+        );
+    }
+
+    async decryptSecrets(encryptedSecrets, password) {
+        const wrapperSalt = this.base64_to_buf(encryptedSecrets[0]).slice(
+            0,
+            16
+        );
+        const passwordAES = await this.getPasswordKey(password).then((key) =>
+            this.deriveKey(key, wrapperSalt, 'AES-GCM', ['decrypt'])
+        );
+
+        return await Promise.all(
+            encryptedSecrets.map(async (encryptedSecret) => {
+                return this.decryptSingle(
+                    this.base64_to_buf(encryptedSecret).slice(16),
+                    passwordAES
+                );
+            })
+        );
     }
 
     async encryptWrappedData(plainData, secret) {
@@ -195,3 +249,5 @@ export default class CryptoService {
         return hashHex;
     }
 }
+
+module.exports = CryptoService;

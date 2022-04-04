@@ -167,6 +167,19 @@ const onDeleteAccept = async function (this: NotesViewContext) {
     update({ isDeleteLoading: false });
 };
 
+const updateCount = function (this: NotesViewContext) {
+    const { state, update } = this;
+    state.noteService
+        .getNoteCount()
+        .then((totalNotes) => {
+            update({
+                totalNotes,
+                ...(!totalNotes && { isLoading: false }),
+            });
+        })
+        .catch(() => update({ tableErrorText: loadErrorText }));
+};
+
 const handleEvent = function (this: NotesViewContext) {
     const { event, update, dispatch, state } = this;
     switch (event.type) {
@@ -195,20 +208,18 @@ const handleEvent = function (this: NotesViewContext) {
             });
             break;
 
+        case DashboardEventType.RERENDER_DATA:
+            updateCount.call(this);
+            break;
+
         default:
             break;
     }
 };
 
 const init = function (this: NotesViewContext) {
-    const { state, update, dispatch } = this;
-    dispatch(setDisplay(Display.NOTES));
-    state.noteService
-        .getNoteCount()
-        .then((totalCredentials) => {
-            update({ totalNotes: totalCredentials });
-        })
-        .catch(() => update({ tableErrorText: loadErrorText }));
+    this.dispatch(setDisplay(Display.NOTES));
+    updateCount.call(this);
 };
 
 type NotesViewState = {

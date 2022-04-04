@@ -1,4 +1,4 @@
-import { parse } from 'psl';
+const { parse } = require('psl');
 
 const parser = (function () {
     'use strict';
@@ -26,8 +26,15 @@ const parser = (function () {
             const matcher = /^[A-Z2-7]+=*$/;
             return text.length % 8 === 0 && matcher.test(text);
         },
+        isEmail: (email) => {
+            // taken from https://stackoverflow.com/questions/46155/whats-the-best-way-to-validate-an-email-address-in-javascript
+            const emailMatcher =
+                /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return emailMatcher.test(email);
+        },
+        isSortValid: (sortType) => sortType === 'asc' || sortType === 'desc',
     };
     return module;
 })();
 
-export default parser;
+module.exports = parser;

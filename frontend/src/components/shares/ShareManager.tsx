@@ -38,6 +38,7 @@ import {
     DashboardEvent,
     DashboardEventType,
 } from '../../store/slices/DashboardSlice';
+import parser from 'hexagon-shared/utils/parser';
 
 export enum ShareView {
     OWNER,
@@ -115,10 +116,8 @@ const onEmailChange = function (
     event: React.ChangeEvent<HTMLInputElement>
 ) {
     // taken from https://stackoverflow.com/questions/46155/whats-the-best-way-to-validate-an-email-address-in-javascript
-    const emailMatcher =
-        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     const value = event.target.value.toLowerCase();
-    const isInputValid = emailMatcher.test(value);
+    const isInputValid = parser.isEmail(value);
     this.update({
         currentEmail: value.trim(),
         invalidInputText: '',
@@ -251,6 +250,7 @@ const onOwnerShareDelete = async function (this: ShareManagerContext) {
 };
 
 const onClose = function (this: ShareManagerContext) {
+    if (this.state.isLoading || this.state.isDeleteLoading) return;
     this.props.onClose();
     if (this.state.isModified) {
         this.update({
@@ -480,7 +480,9 @@ export default function ShareManager(props: ShareManagerProps) {
             </Box>
             <ConfirmationDialog
                 isOpen={state.isDeleteOpen}
-                onClose={() => update({ isDeleteOpen: false })}
+                onClose={() => {
+                    if (!state.isDeleteLoading) update({ isDeleteOpen: false });
+                }}
                 onAccept={
                     state.currentTab === ShareView.CREATE
                         ? onOwnerShareDelete.bind(context)

@@ -1,152 +1,86 @@
 import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
+import { GraphQLErrors } from '@apollo/client/errors';
 
 const countCredentialsQuery = gql`
     query {
-        countWebsiteCredentials {
-            name
+        countWebsiteCredentials
+    }
+`;
+
+const searchCredentialsQuery = gql`
+    query ($name: String!, $exactMatch: Boolean!) {
+        searchCredentials(exactMatch: $exactMatch, name: $name) {
+            _id
+            key
+            credential {
+                username
+            }
         }
     }
 `;
 
-const findCredentialsContainsQuery = gql`
-    query ($name: String!, $contains: Boolean!, $getShares: Boolean!) {
-        findCredentialsContains(
-            getShares: $getShares
-            contains: $contains
-            name: $name
-        ) {
+const getCredentialsQuery = gql`
+    query ($offset: Int!, $limit: Int!, $sortType: String!) {
+        getCredentials(offset: $offset, limit: $limit, sortType: $sortType) {
             _id
             name
             key
-            recordID
-            credentials {
-                _id
+            credential {
                 username
                 password
+                owners
+            }
+            pendingShares {
+                receiver
+                _id
             }
         }
     }
 `;
 
-const findCredentialsContainsWithSharesQuery = gql`
-    query ($name: String!, $contains: Boolean!, $getShares: Boolean!) {
-        findCredentialsContains(
-            getShares: $getShares
-            contains: $contains
-            name: $name
-        ) {
-            _id
-            name
-            key
-            recordID
-            credentials {
-                _id
-                username
-                password
-                UIDs {
-                    UID
-                }
-            }
-            share{
-                reciever
-                shareId
-            }
-        }
-    }
-`;
-
-const findCredentialsQuery = gql`
-    query (
-        $offset: Int!
-        $limit: Int!
-        $sortType: String!
-        $getShares: Boolean!
-    ) {
-        findCredentials(
-            getShares: $getShares
-            offset: $offset
-            limit: $limit
-            sortType: $sortType
-        ) {
-            _id
-            name
-            key
-            recordID
-            credentials {
-                _id
-                username
-                password
-            }
-        }
-    }
-`;
-
-const findCredentialsWithSharesQuery = gql`
-    query (
-        $offset: Int!
-        $limit: Int!
-        $sortType: String!
-        $getShares: Boolean!
-    ) {
-        findCredentials(
-            getShares: $getShares
-            offset: $offset
-            limit: $limit
-            sortType: $sortType
-        ) {
-            _id
-            name
-            key
-            recordID
-            credentials {
-                _id
-                username
-                password
-                UIDs {
-                    UID
-                }
-            }
-            share{
-                reciever
-                shareId
-            }
-        }
-    }
-`;
-
-const addWebsiteCredentialsMutation = gql`
+const addCredentialMutation = gql`
     mutation (
         $name: String!
         $username: String!
         $password: String!
         $key: String!
+        $masterUsername: String!
     ) {
-        addWebsiteCredentials(
+        addWebsiteCredential(
             name: $name
             username: $username
             password: $password
             key: $key
+            masterUsername: $masterUsername
         ) {
             _id
         }
     }
 `;
 
-const updateCredentialsMutation = gql`
+const updateCredentialMutation = gql`
     mutation (
         $username: String!
         $password: String!
-        $secureRecordID: String!
+        $secureRecordId: String!
     ) {
-        updateCredentials(
+        updateCredential(
             username: $username
             password: $password
-            secureRecordID: $secureRecordID
+            secureRecordId: $secureRecordId
         ) {
             _id
         }
     }
 `;
+
+export type CredentialDto = {
+    _id: string;
+    name: string;
+    key: string;
+    credential: { username: string; password?: string; owners?: string[] };
+    pendingShares?: { receiver: string; _id: string }[];
+};
 
 class CredentialController {
     private client!: ApolloClient<NormalizedCacheObject>;
@@ -156,101 +90,94 @@ class CredentialController {
         this.token = token;
     }
 
-    private buildQuery(query: any, variables: any) {
-        return {
-            query,
+    private async executeQuery(
+        query: any,
+        variables: any,
+        isMutation: boolean
+    ): Promise<any> {
+        const execute: (options: any) => Promise<any> = isMutation
+            ? this.client.mutate
+            : this.client.query;
+        return execute({
+            [isMutation ? 'mutation' : 'query']: query,
             context: {
                 headers: {
-                    jwt: this.token, // this header will reach the server
+                    jwt: this.token,
                 },
             },
             variables,
-        };
+        })
+            .then((res) => res.data)
+            .catch((err) => {
+                const error = JSON.parse(err.message);
+                error.status = Number(error.status);
+                throw error;
+            });
     }
 
-    public findCredentials(
-        offset: number,
-        limit: number,
-        sortType: string,
-        getShares: boolean
-    ) {
-        if (getShares) {
-            return this.client.query(
-                this.buildQuery(findCredentialsWithSharesQuery, {
-                    offset: offset,
-                    limit: limit,
-                    sortType: sortType,
-                    getShares: getShares,
-                })
-            );
-        } else {
-            return this.client.query(
-                this.buildQuery(findCredentialsQuery, {
-                    offset: offset,
-                    limit: limit,
-                    sortType: sortType,
-                    getShares: getShares,
-                })
-            );
-        }
+    public getCredentials(offset: number, limit: number, sortType: string) {
+        return this.executeQuery(
+            getCredentialsQuery,
+            {
+                offset: offset,
+                limit: limit,
+                sortType: sortType,
+            },
+            false
+        ).then((data) => data.getCredentials as CredentialDto[]);
     }
 
-    public findCredentialsContains(
-        name: string,
-        contains: boolean,
-        getShares: boolean
-    ) {
-        if (getShares) {
-            return this.client.query(
-                this.buildQuery(findCredentialsContainsWithSharesQuery, {
-                    name: name,
-                    contains: contains,
-                    getShares: getShares,
-                })
-            );
-        } else {
-            return this.client.query(
-                this.buildQuery(findCredentialsContainsQuery, {
-                    name: name,
-                    contains: contains,
-                    getShares: getShares,
-                })
-            );
-        }
+    public searchCredentials(name: string, exactMatch: boolean) {
+        return this.executeQuery(
+            searchCredentialsQuery,
+            {
+                name: name,
+                exactMatch: exactMatch,
+            },
+            false
+        ).then((data) => data.searchCredentials as CredentialDto[]);
     }
 
-    public countWebsiteCredentials() {
-        return this.client.query(this.buildQuery(countCredentialsQuery, {}));
+    public countCredentials() {
+        return this.executeQuery(countCredentialsQuery, {}, false).then(
+            (data) => data.countWebsiteCredentials as number
+        );
     }
 
-    public addWebsiteCredentials(
+    public addCredential(
         name: string,
         username: string,
         password: string,
-        key: string
+        key: string,
+        masterUsername: string
     ) {
-        return this.client.query(
-            this.buildQuery(addWebsiteCredentialsMutation, {
-                name: name,
-                username: username,
-                password: password,
-                key: key,
-            })
-        );
+        return this.executeQuery(
+            addCredentialMutation,
+            {
+                name,
+                username,
+                password,
+                key,
+                masterUsername,
+            },
+            true
+        ).then((data) => data.addWebsiteCredential._id as string);
     }
 
     public updateCredentials(
         username: string,
         password: string,
-        secureRecordID: string
+        secureRecordId: string
     ) {
-        return this.client.query(
-            this.buildQuery(updateCredentialsMutation, {
-                username: username,
-                password: password,
-                secureRecordID: secureRecordID,
-            })
-        );
+        return this.executeQuery(
+            updateCredentialMutation,
+            {
+                username,
+                password,
+                secureRecordId,
+            },
+            true
+        ).then((data) => data.updateCredential._id as string);
     }
 
     async checkBreach(hashPrefix: string): Promise<string> {

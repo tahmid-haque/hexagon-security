@@ -12,6 +12,15 @@ export default class CryptoService {
         keyType: string,
         keyUsage: KeyUsage[]
     ) => Promise<CryptoKey>;
+    generatePlainSecret: () => string;
+    encryptSecrets: (
+        encryptedSecrets: string[],
+        password: string
+    ) => Promise<string>;
+    decryptSecrets: (
+        plainSecrets: string[],
+        password: string
+    ) => Promise<string>;
     encryptSingle: (
         plainText: string,
         aesKey: CryptoKey
