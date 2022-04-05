@@ -12,6 +12,7 @@ const cryptoService = new CryptoService(crypto);
 const sanitize = require('mongo-sanitize');
 const { trusted } = require('mongoose');
 const bcrypt = require('bcrypt');
+const mailgun = require('mailgun-js');
 
 const {
     GraphQLObjectType,
@@ -23,6 +24,10 @@ const {
     GraphQLInt,
     GraphQLError,
 } = graphql;
+
+const DOMAIN = 'hexagon-web.xyz';
+const mailKey = process.env.MAILGUN_API_KEY ?? '';
+const mg = mailgun({ apiKey: mailKey, domain: DOMAIN });
 
 const throwDBError = (err, status) => {
     throw new GraphQLError('Custom error', {
@@ -449,11 +454,28 @@ const Mutation = new GraphQLObjectType({
                             ? 'mfa'
                             : 'notes')
                 );
-                console.log(
-                    `http://localhost:3000/app/share?shareId=${shareId}&shareKey=${shareKey}&next=${nextLocation}`
-                );
+                const share_link = `http://localhost:3000/app/share?shareId=${shareId}&shareKey=${shareKey}&next=${nextLocation}`;
+                const sender = context.token.username;
+                const share_type =
+                    share.type === 'account'
+                        ? 'credential'
+                        : dto.type === 'seed'
+                        ? 'MFA credential'
+                        : 'note';
+                console.log(share_link);
 
-                // TODO: send email with record type, shareId, shareKey
+                const mailgunData = {
+                    from: 'Hexagon Security Team <noreply@hexagon-web.xyz>',
+                    to: receiver,
+                    subject: 'Hexagon Share Invitation',
+                    template: 'send_share',
+                    'h:X-Mailgun-Variables': JSON.stringify({
+                        sender,
+                        share_type,
+                        share_link,
+                    }),
+                };
+                await mailgun.messages.create(DOMAIN_NAME, mailgunData);
 
                 return share;
             },
