@@ -181,16 +181,6 @@ const onUpdateSubmit = async (
     } catch (error: any) {
         update({ isLoading: false });
 
-        //need some error if current password is incorrect
-
-        // if (error.status === 409) {
-        //     return update({
-        //         isExists: true,
-        //         id: error.id,
-        //         key: error.key,
-        //     });
-        // }
-
         return dispatch(
             sendToast({
                 message:

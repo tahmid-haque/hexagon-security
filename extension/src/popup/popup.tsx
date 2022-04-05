@@ -1,126 +1,53 @@
-import React, { useState, useEffect } from 'react'
-import ReactDOM from 'react-dom'
-import { Card, Box, Button, Typography, Tab } from '@mui/material';
-import {  TabContext, TabList, TabPanel } from '@mui/lab';
-import './popup.css'
-import './signin.css'
-import PopupPasswords from './passwords/passwords'
-import Header from '../sharedComponents/header/header'
-import PasswordGenerator from './passwordGenerator';
-import parser from '../utils/parser'
-import MFAKeyForm from './mfaKeys';
+import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import './popup.css';
+import './Signin/signin.css';
+import Header from '../sharedComponents/header/header';
+import PasswordGenerator from './PasswordGenerator/PasswordGenerator';
+import parser from '../../../shared/utils/parser';
+import MFAKeyForm from './MFAKey/MFAKeys';
+import { useComponentState } from '../../../frontend/src/utils/hooks';
+import SigninPage from './Signin/SigninPage';
+import PopupBody from './PopupBody/PopupBody';
 
-const SigninPage = () => {
-  const onClickSignin = () => {
-    chrome.tabs.create({active:true, url:"http://localhost:3000/authenticate"});
-  }
-
-  return (
-    <div className='signin-page'>
-      <div className='signin-dialog'>
-        <div className='signin-message'>You are not logged in</div>
-        <Button variant="outlined" color="inherit" size='large' onClick={onClickSignin}>Sign In</Button>
-      </div>
-    </div>
-  )
+type PopupState = {
+  isLoggedIn: boolean;
 }
 
-type User = {
-  name: string
+type PopupProps = {
+  isLoggedIn: boolean;
+  username?: string;
+  currentUrl?: string;
 }
 
-const GreetUser = ({ name }: User) => {
-  const clickAction = () => {
-    chrome.storage.local.remove("hexagonAccount");
-    window.close(); 
-  }
-  
-  return (
-    <div className='container'>
-      <Box mb={"2px"}>
-        <Card>
-          <Box display={"flex"} justifyContent={"space-between"} alignItems={"center"}>
-            <div className='greeting'>Hello {name}...</div>
-            <Button variant="outlined" color="primary" sx={{px:"8px", m:"10px", height:"30px", fontSize:13}} onClick={clickAction}>Sign Out</Button>
-          </Box>
-        </Card>
-      </Box>
-    </div>
-  )
-}
+const Popup = (props : PopupProps) => {
+  const { state, update } = useComponentState({
+    isLoggedIn: props.isLoggedIn, 
+});
 
-const PopupHome = ({ name, url }: {name:string, url:string}) => {
-  const [value, setValue] = React.useState('1');
-
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-  };
-
-  return (
-
-    <div className='home-container'>
-      <GreetUser name={name} />
-
-      <Box sx={{ width: '100%', typography: 'body1' }}>
-        <TabContext value={value}>
-          <Box sx={{backgroundColor: '#f2f2f2', marginBottom: "0px"}}>
-            <TabList onChange={handleChange} aria-label="chrome extension popup tabs">
-              <Tab label="Home" value="1"/>
-              <Tab label="Generator" value="2" />
-              <Tab label="2FA Keys" value="3" />
-            </TabList>
-          </Box>
-          <TabPanel value="1" sx={{height: "337px", width: '100%', typography: 'body1', padding: '0'}}>
-            <PopupPasswords url={url}/>
-          </TabPanel>
-          <TabPanel value="2" sx={{height: "337px", padding: '0'}}>
-            <PasswordGenerator />
-          </TabPanel>
-          <TabPanel value="3" sx={{height: "337px", padding: '0'}}>
-            <MFAKeyForm url={url} />
-          </TabPanel>
-        </TabContext>
-      </Box>
-    </div>
-
-  )
-}
-
-const PopupBody = ({ name, url }: {name:string, url:string}) => {
-  if(!name){
-    return <SigninPage />
-  }
-  return <PopupHome name={name} url={url}/>
-}
-
-const App = ({url, name} : {url:string, name:string}) => {
   return (
     <div>
       <Header url={"icon.png"} clickAction ={ () => window.close() } />
-      <PopupBody name={name} url={url} />
+      {props.isLoggedIn
+        ? <PopupBody name={props.username} url={props.currentUrl} /> 
+        : <SigninPage />
+      }
     </div>
   )
 }
 
-const root = document.createElement('div')
-document.body.appendChild(root)
+const root = document.createElement('div');
+document.body.appendChild(root);
 
 chrome.storage.local.get(['hexagonAccount'], function(account){
-  if(!account.hexagonAccount){
-    ReactDOM.render(<App url={null} name={null} />, root)
-  } else {
-    console.log(account.hexagonAccount);
-
     {chrome.tabs.query({currentWindow: true, active: true}, function(result){
-      console.log(result[0].url);
+      let currentUrl;
       try{
-        let currentURL = parser.extractDomain(result[0].url);
-        ReactDOM.render(<App url={currentURL} name={account.hexagonAccount.username} />, root)
+        currentUrl = parser.extractDomain(result[0].url);
+        
       } catch{
-        let currentURL = null;
-        ReactDOM.render(<App url={currentURL} name={account.hexagonAccount.username} />, root)
+        currentUrl = null;
       }
+      ReactDOM.render(<Popup isLoggedIn={account.hexagonAccount? true : false} currentUrl={currentUrl} username={account.hexagonAccount? account.hexagonAccount.username : ''} />, root)
     })}
-
-  }
 })

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, HTMLAttributes, HtmlHTMLAttributes } from 'react'
 import ReactDOM from 'react-dom'
 import { AutofillOverlay, SavePassOverlay } from './overlay'
-import parser from '../utils/parser'
-import { useComponentState } from '../utils/hooks'
+import parser from '../../../shared/utils/parser'
+// import { useComponentState } from '../utils/hooks'
+import { useComponentState } from '../../../frontend/src/utils/hooks'
 
 
 type OverlayProps = {
@@ -131,7 +132,8 @@ function displaySavePassSamePage(){
         let prev = parser.extractDomain(result.url);
         if(result.url != window.location.href && result.password){
             if(current === prev){
-                ReactDOM.render(<App username={result.username} password={result.password} isSaveOpen={true} />, root);
+                if(result.username)
+                    ReactDOM.render(<App username={result.username} password={result.password} isSaveOpen={true} />, root);
                 clearStorage();
             }
         }
@@ -144,7 +146,8 @@ function displaySavePassDiffPage(){
         let current = parser.extractDomain(window.location.href);
         let prev = parser.extractDomain(result.url);
         if(current === prev && result.password){
-            ReactDOM.render(<App username={result.username} password={result.password} isSaveOpen={true} />, root);
+            if(result.username)
+                ReactDOM.render(<App username={result.username} password={result.password} isSaveOpen={true} />, root);
             clearStorage();
         }
         if(current !== prev) clearStorage();
