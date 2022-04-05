@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const MFASeedScehma = new Schema({
+const MFASeedSchema = new Schema({
     username: {
         type: String,
         required: true,
@@ -18,4 +18,4 @@ const MFASeedScehma = new Schema({
     ],
 });
 
-module.exports = mongoose.model('Seed', MFASeedScehma);
+module.exports = mongoose.model('Seed', MFASeedSchema);

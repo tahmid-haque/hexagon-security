@@ -27,7 +27,7 @@ const {
 
 const DOMAIN = 'hexagon-web.xyz';
 const mailKey = process.env.MAILGUN_API_KEY ?? '';
-const mg = mailgun({ apiKey: mailKey, domain: DOMAIN });
+const mg = mailKey ? mailgun({ apiKey: mailKey, domain: DOMAIN }) : null;
 
 const throwDBError = (err, status) => {
     throw new GraphQLError('Custom error', {
@@ -459,14 +459,14 @@ const Mutation = new GraphQLObjectType({
                 const share_type =
                     share.type === 'account'
                         ? 'credential'
-                        : dto.type === 'seed'
+                        : share.type === 'seed'
                         ? 'MFA credential'
                         : 'note';
                 console.log(share_link);
 
                 const mailgunData = {
                     from: 'Hexagon Security Team <noreply@hexagon-web.xyz>',
-                    to: receiver,
+                    to: args.receiver,
                     subject: 'Hexagon Share Invitation',
                     template: 'send_share',
                     'h:X-Mailgun-Variables': JSON.stringify({
@@ -475,7 +475,7 @@ const Mutation = new GraphQLObjectType({
                         share_link,
                     }),
                 };
-                await mailgun.messages.create(DOMAIN_NAME, mailgunData);
+                if (mg) await mg.messages.create(DOMAIN_NAME, mailgunData);
 
                 return share;
             },
