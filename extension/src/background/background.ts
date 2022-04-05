@@ -1,6 +1,30 @@
-import parser from '../utils/parser'
+import parser from '../../../shared/utils/parser'
 
 let validUrls = ['amazon.ca', 'facebook.com', 'twitter.com', 'yelp.ca', 'utoronto.ca', 'instagram.com', 'grademy.work'];
+
+
+//api call to login and get token
+
+
+//api call to get username/passwords for current url
+
+
+//api call to add account details
+
+
+//check if account exists already
+
+
+//api call to update account details
+
+
+//api call to save mfa key
+
+
+//api call to delete account details
+
+
+
 
 // from https://stackoverflow.com/questions/18371339/how-to-retrieve-name-from-email-address
 function extractName(email: string){
@@ -37,8 +61,12 @@ chrome.runtime.onMessageExternal.addListener(
       console.log(request.user.username);
       console.log(extractName(request.user.username));
       console.log(request.user.password);
-      
-      chrome.storage.local.set({'hexagonAccount':{username: extractName(request.user.username), email: request.user.username, password: request.user.password}});
-      sendResponse({loggedIn: true});
+      chrome.storage.local.get(['hexagonAccount'], function(result){
+        if(!result.hexagonAccount){
+          chrome.storage.local.set({'hexagonAccount':{username: extractName(request.user.username), email: request.user.username, password: request.user.password}});
+          sendResponse({loggedIn: true});
+        }
+        sendResponse({loggedIn: false});
+      })
     }
   });

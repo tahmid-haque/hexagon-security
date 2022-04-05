@@ -12,12 +12,8 @@ import {
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ReplayIcon from '@mui/icons-material/Replay';
-import { TabContext, TabList, TabPanel } from '@mui/lab';
-import './popup.css';
-import './signin.css';
-import PopupPasswords from './passwords/passwords';
-import Header from '../sharedComponents/header/header';
-import { passwordStrength } from 'check-password-strength';
+import '../popup.css';
+import '../Signin/signin.css';
 import PasswordStrengthBar from 'react-password-strength-bar';
 
 const generatePass = (): string => {

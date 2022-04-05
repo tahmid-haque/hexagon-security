@@ -13,23 +13,23 @@ type PasswordInfo = {
     password: string
 }
 
+const onFormSubmit = (e: SyntheticEvent, username: string) => {
+    e.preventDefault();
+    let password = document.querySelector("#hexagon-updated-password-" + username) as HTMLInputElement;
+    console.log(password.value);
+    console.log(username);
+    let form = document.querySelector("#hexagon-update-pass-" + username) as HTMLFormElement;
+    form.reset();
+}
+
 const PasswordCardForm = ({username, password}: {username:string, password:string}) => {
 
     const [showPass, setShowPass] = useState(false);
     const icon = <IconButton onClick={() => setShowPass(showPass => !showPass)}><VisibilityIcon fontSize='small'/></IconButton>
 
-    const onFormSubmit = (e: SyntheticEvent) => {
-        e.preventDefault();
-        let password = document.querySelector("#hexagon-updated-password-" + username) as HTMLInputElement;
-        console.log(password.value);
-        console.log(username);
-        let form = document.querySelector("#hexagon-update-pass-" + username) as HTMLFormElement;
-        form.reset();
-    }
-
     return (
         <Card sx={{borderTop: "solid 1.5px #3a5cb5", borderRadius: "0 0 2px 2px"}}>
-            <Box id={"hexagon-update-pass-" + username} padding={2} pt={"8px"} display="flex" justifyContent={"space-between"} alignItems={"flex-end"} component={"form"} onSubmit={onFormSubmit}>
+            <Box id={"hexagon-update-pass-" + username} padding={2} pt={"8px"} display="flex" justifyContent={"space-between"} alignItems={"flex-end"} component={"form"} onSubmit={e => onFormSubmit(e, username)}>
                 {showPass
                     ?   <TextField
                             id={"hexagon-updated-password-" + username}
@@ -37,7 +37,7 @@ const PasswordCardForm = ({username, password}: {username:string, password:strin
                             label="Password"
                             autoComplete="current-password"
                             variant="standard"
-                            defaultValue={password}
+                            defaultValue=''
                             InputProps={{
                                 endAdornment: icon,
                             }}
@@ -49,7 +49,7 @@ const PasswordCardForm = ({username, password}: {username:string, password:strin
                             type="password"
                             autoComplete="current-password"
                             variant="standard"
-                            defaultValue={password}
+                            defaultValue=''
                             InputProps={{
                                 endAdornment: icon,
                             }}
