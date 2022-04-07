@@ -28,6 +28,11 @@ class RedisController {
         this.redisClient.connect();
     }
 
+    /**
+     * Attempt to connect to redis one time and execute the callback.
+     * @param {() => any} callback
+     * @returns
+     */
     async tryConnectOnce(callback) {
         if (!this.isConnected) await this.redisClient.connect();
         return callback();

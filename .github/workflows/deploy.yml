@@ -57,7 +57,7 @@ jobs:
               uses: appleboy/ssh-action@v0.1.4
               env:
                   CR_PAT: ${{ secrets.CR_PAT }}
-                  CR_PAT_OWNER: ${{ secret.CR_PAT_OWNER }}
+                  CR_PAT_OWNER: ${{ secrets.CR_PAT_OWNER }}
               with:
                   host: ${{ secrets.SSH_HOST }}
                   username: ${{ secrets.SSH_USERNAME }}
