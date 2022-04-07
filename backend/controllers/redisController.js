@@ -1,5 +1,8 @@
 const redis = require('redis');
 
+/**
+ * Controller to manage the in-memory cache for the JWT blacklist.
+ */
 class RedisController {
     redisClient;
     isConnected = false;

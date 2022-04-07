@@ -5,7 +5,11 @@ const crypto = require('crypto').webcrypto;
 const cryptoService = new CryptoService(crypto);
 const { createToken } = require('../middleware/authMiddleware');
 
-//handle errors
+/**
+ * Return the provided error after converting it to the app format
+ * @param {any} err the error
+ * @returns
+ */
 const handleErrors = (err) => {
     let errors = { username: '', password: '' };
     let status = 400;
@@ -29,6 +33,11 @@ const handleErrors = (err) => {
     return { errors, status };
 };
 
+/**
+ * Sign up a new user given their username and password.
+ * @param {*} req express request object
+ * @param {*} res express response object
+ */
 module.exports.signup_post = async (req, res) => {
     const { username, password } = req.body;
 
