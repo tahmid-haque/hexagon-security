@@ -56,6 +56,9 @@ jobs:
 
             - name: SSH Remote Commands
               uses: appleboy/ssh-action@v0.1.4
+              env:
+                  CR_PAT: ${{ secrets.CR_PAT }}
+                  CR_PAT_OWNER: ${{ secret.CR_PAT_OWNER }}
               with:
                   host: ${{ secrets.SSH_HOST }}
                   username: ${{ secrets.SSH_USERNAME }}
@@ -63,7 +66,7 @@ jobs:
                   passphrase: ${{ secrets.SSH_PASSPHRASE }}
                   port: 22
                   script: |
-                      echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ secret.CR_PAT_OWNER }} --password-stdin
+                      echo "$CR_PAT | docker login https://ghcr.io -u $CR_PAT_OWNER --password-stdin
                       cd /app
                       mkdir -p scripts && mv db-setup.sh scripts/
                       docker-compose pull && docker-compose up -d

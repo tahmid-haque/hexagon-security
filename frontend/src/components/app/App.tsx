@@ -8,10 +8,8 @@ import {
     clearToasts,
     consumeToast,
     sendToast,
-    Toast,
 } from '../../store/slices/ToastSlice';
 import { useAppDispatch, useAppSelector } from '../../store/store';
-import { useComponentState } from '../../utils/hooks';
 import './App.scss';
 
 const UpTransition = (props: any) => {
