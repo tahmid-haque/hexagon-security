@@ -53,9 +53,9 @@ services:
         expose:
             - 80
         environment:
-            - VIRTUAL_HOST=hexagon-web.xyz
+            - VIRTUAL_HOST=hexagon-web.xyz,www.hexagon-web.xyz
             - VIRTUAL_PATH=/
-            - LETSENCRYPT_HOST=hexagon-web.xyz
+            - LETSENCRYPT_HOST=hexagon-web.xyz,www.hexagon-web.xyz
 
     backend:
         image: ghcr.io/utscc09/project-noaccess-backend
@@ -68,9 +68,9 @@ services:
             - 4000
         environment:
             - MAILGUN_API_KEY=${MAILGUN_API_KEY}
-            - VIRTUAL_HOST=hexagon-web.xyz
+            - VIRTUAL_HOST=hexagon-web.xyz,www.hexagon-web.xyz
             - VIRTUAL_PATH=/api
-            - LETSENCRYPT_HOST=hexagon-web.xyz
+            - LETSENCRYPT_HOST=hexagon-web.xyz,www.hexagon-web.xyz
             - NODE_ENV=production
             - MONGODB_URI=${MONGODB_URI}
             - JWT_SECRET=${JWT_SECRET}

@@ -32,15 +32,15 @@ jobs:
             - name: Create env file
               run: |
                   touch .env
-                  echo MAILGUN_API_KEY=${{ secrets.MAILGUN_API_KEY }} >> .env
-                  echo ACME_EMAIL=${{ secrets.ACME_EMAIL }} >> .env
-                  echo MONGODB_DATABASE_NAME=${{ secrets.MONGODB_DATABASE_NAME }} >> .env
-                  echo MONGODB_USERNAME=${{ secrets.MONGODB_USERNAME }} >> .env
-                  echo MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }} >> .env
-                  echo MONGODB_URI=${{ secrets.MONGODB_URI }} >> .env
-                  echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
-                  echo REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} >> .env
-                  echo REDIS_URI=${{ secrets.REDIS_URI }} >> .env
+                  echo "MAILGUN_API_KEY=${{ secrets.MAILGUN_API_KEY }}" >> .env
+                  echo "ACME_EMAIL=${{ secrets.ACME_EMAIL }}" >> .env
+                  echo "MONGODB_DATABASE_NAME=${{ secrets.MONGODB_DATABASE_NAME }}" >> .env
+                  echo "MONGODB_USERNAME=${{ secrets.MONGODB_USERNAME }}" >> .env
+                  echo "MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }}" >> .env
+                  echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env
+                  echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+                  echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+                  echo "REDIS_URI=${{ secrets.REDIS_URI }}" >> .env
 
             - name: SCP Command to Transfer Files
               uses: appleboy/scp-action@v0.1.2
@@ -65,7 +65,6 @@ jobs:
                   passphrase: ${{ secrets.SSH_PASSPHRASE }}
                   port: 22
                   script: |
-                      echo "$CR_PAT | docker login https://ghcr.io -u $CR_PAT_OWNER --password-stdin
                       cd /app
-                      mkdir -p scripts && mv db-setup.sh scripts/
+                      docker-compose down
                       docker-compose pull && docker-compose up -d
