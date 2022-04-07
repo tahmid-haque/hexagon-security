@@ -8,4 +8,17 @@ db.createUser(
     roles: [ { role: "readWrite", db: "$MONGO_INITDB_DATABASE" } ]
   }
 )
+
+use admin
+db.auth("$MONGO_INITDB_ROOT_USERNAME", "$MONGO_INITDB_ROOT_PASSWORD")
+
+db.createUser({
+  "user": "datadog",
+  "pwd": "$DATADOG_AGENT_PASSWORD",
+  "roles": [
+    { role: "read", db: "admin" },
+    { role: "clusterMonitor", db: "admin" },
+    { role: "read", db: "local" }
+  ]
+})
 EOF

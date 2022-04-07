@@ -41,6 +41,7 @@ jobs:
                   echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
                   echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
                   echo "REDIS_URI=${{ secrets.REDIS_URI }}" >> .env
+                  echo "DATAGOG_API_KEY=${{ secrets.DATAGOG_API_KEY }}" >> .env
 
             - name: SCP Command to Transfer Files
               uses: appleboy/scp-action@v0.1.2
@@ -64,7 +65,4 @@ jobs:
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
                   passphrase: ${{ secrets.SSH_PASSPHRASE }}
                   port: 22
-                  script: |
-                      cd /app
-                      docker-compose down
-                      docker-compose pull && docker-compose up -d
+                  script: systemctl restart hexagon-app

@@ -8,6 +8,7 @@ const { requireAuth } = require('./middleware/authMiddleware');
 const sanitize = require('mongo-sanitize');
 const helmet = require('helmet');
 const isProd = process.env.NODE_ENV === 'production';
+const tracer = require('dd-trace').init(); // Do not remove! This is for datadog collections
 
 function cleanBody(req, res, next) {
     req.body = sanitize(req.body);
