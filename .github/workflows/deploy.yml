@@ -45,14 +45,14 @@ jobs:
 
             - name: SCP Command to Transfer Files
               uses: appleboy/scp-action@v0.1.2
+              with:
                   host: ${{ secrets.SSH_HOST }}
                   username: ${{ secrets.SSH_USERNAME }}
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
                   passphrase: ${{ secrets.SSH_PASSPHRASE }}
                   port: 22
-                  source: ".env, docker-compose.yml, scripts/db-setup.sh"
-                  target: "/app"
-
+                  source: '.env, docker-compose.yml, scripts/db-setup.sh'
+                  target: '/app'
 
             - name: SSH Remote Commands
               uses: appleboy/ssh-action@v0.1.4
