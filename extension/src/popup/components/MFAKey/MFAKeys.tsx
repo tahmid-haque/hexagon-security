@@ -1,7 +1,7 @@
-import React, { useState, useEffect, SyntheticEvent } from 'react'
+import React, { useState, useEffect, SyntheticEvent } from 'react';
 import { Card, Box, Button, Typography, Tab, TextField, IconButton } from '@mui/material';
-import '../popup.css'
-import '../Signin/signin.css'
+import '../../popup.css';
+import '../Signin/signin.css';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
 

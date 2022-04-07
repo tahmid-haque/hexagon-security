@@ -1,22 +1,22 @@
-import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import CircularProgress from '@mui/material/CircularProgress';
-import Grow from '@mui/material/Grow';
-import Slide from '@mui/material/Slide';
-import TextField from '@mui/material/TextField';
-import parser from 'hexagon-shared/utils/parser';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import AccountService from '../../services/AccountService';
-import { updateAccount } from '../../store/slices/AccountSlice';
-import { clearNextLocation } from '../../store/slices/LocationSlice';
-import { sendToast } from '../../store/slices/ToastSlice';
-import { useAppDispatch, useAppSelector } from '../../store/store';
-import { useComponentState } from '../../utils/hooks';
-import PasswordField from '../shared/PasswordField';
-import styles from './AuthForm.module.scss';
+import { faChevronLeft } from "@fortawesome/free-solid-svg-icons/faChevronLeft";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import Grow from "@mui/material/Grow";
+import Slide from "@mui/material/Slide";
+import TextField from "@mui/material/TextField";
+import parser from "hexagon-shared/utils/parser";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import AccountService from "../../services/AccountService";
+import { updateAccount } from "../../store/slices/AccountSlice";
+import { clearNextLocation } from "../../store/slices/LocationSlice";
+import { sendToast } from "../../store/slices/ToastSlice";
+import { useAppDispatch, useAppSelector } from "../../store/store";
+import { useComponentState } from "../../utils/hooks";
+import PasswordField from "../shared/PasswordField";
+import styles from "./AuthForm.module.scss";
 
 type AuthFormState = {
     isSignUp: boolean;
@@ -39,7 +39,7 @@ const onEmailSubmit = async (
 ) => {
     if (!state.isInputValid || !state.currentEmail) {
         return update({
-            invalidInputText: 'Please enter a valid email',
+            invalidInputText: "Please enter a valid email",
             isInputValid: false,
         });
     }
@@ -53,8 +53,8 @@ const onEmailSubmit = async (
         dispatch(
             sendToast({
                 message:
-                    'Something went wrong and we were unable to verify your information. Please try again later.',
-                severity: 'error',
+                    "Something went wrong and we were unable to verify your information. Please try again later.",
+                severity: "error",
             })
         );
     }
@@ -69,7 +69,7 @@ const onEmailChange = (
     const isInputValid = parser.isEmail(value);
     update({
         currentEmail: value.trim(),
-        invalidInputText: '',
+        invalidInputText: "",
         isInputValid,
     });
 };
@@ -79,10 +79,10 @@ const onBackButtonClick = (
 ) => {
     update({
         isEmailEntered: false,
-        currentPassword: '',
+        currentPassword: "",
         showPassword: false,
         isInputValid: true,
-        invalidInputText: '',
+        invalidInputText: "",
     });
 };
 
@@ -94,7 +94,7 @@ const onPasswordChange = (
     update({
         currentPassword: value,
         isInputValid: value.length > 0,
-        invalidInputText: '',
+        invalidInputText: "",
     });
 };
 
@@ -107,7 +107,7 @@ const onPasswordSubmit = async (
 ) => {
     if (!state.currentPassword) {
         return update({
-            invalidInputText: 'Please enter a password',
+            invalidInputText: "Please enter a password",
             isInputValid: false,
         });
     }
@@ -127,52 +127,45 @@ const onPasswordSubmit = async (
         );
 
         //send message to chrome extension here
-        const hexagonExtensionId = 'cpionbifpgemolinhilabicjppibdhck';
+        const hexagonExtensionId = "cpionbifpgemolinhilabicjppibdhck";
 
         try {
-            chrome.runtime.sendMessage(
-                hexagonExtensionId,
-                {
-                    sentFrom: 'Hexagon',
-                    user: {
-                        username: state.currentEmail,
-                        password: state.currentPassword,
-                    },
+            chrome.runtime.sendMessage(hexagonExtensionId, {
+                sentFrom: "Hexagon",
+                user: {
+                    username: state.currentEmail,
+                    password: state.currentPassword,
                 },
-                function (response) {
-                    if (response.loggedIn)
-                        console.log('logged in to chrome extension');
-                }
-            );
+            });
         } catch {
-            console.log('extension not installed');
+            console.log("extension not installed");
         }
 
-        window.localStorage.setItem('lastUser', state.currentEmail);
+        window.localStorage.setItem("lastUser", state.currentEmail);
 
         dispatch(
             sendToast({
                 message: `Welcome to Hexagon, ${state.currentEmail}`,
-                severity: 'success',
+                severity: "success",
             })
         );
         update({ isShown: false });
         setTimeout(() => {
-            navigate(location ? location : '/');
+            navigate(location ? location : "/");
             dispatch(clearNextLocation());
         }, 500);
     } catch (error: any) {
         if (error.status === 401) {
             update({
-                invalidInputText: 'Invalid username or password',
+                invalidInputText: "Invalid username or password",
                 isInputValid: false,
             });
         } else {
             dispatch(
                 sendToast({
                     message:
-                        'Something went wrong and we were unable to authenticate. Please try again later.',
-                    severity: 'error',
+                        "Something went wrong and we were unable to authenticate. Please try again later.",
+                    severity: "error",
                 })
             );
         }
@@ -185,8 +178,8 @@ export default function AuthForm() {
         isSignUp: false,
         isEmailEntered: false,
         showPassword: false,
-        currentEmail: '',
-        currentPassword: '',
+        currentEmail: "",
+        currentPassword: "",
         isLoading: false,
         isInputValid: true,
         isShown: true,
@@ -196,7 +189,7 @@ export default function AuthForm() {
     const location = useAppSelector((state) => state.location);
     const bodyRef: React.RefObject<HTMLDivElement> = useRef(null);
     useEffect(() => {
-        const lastUser = window.localStorage.getItem('lastUser');
+        const lastUser = window.localStorage.getItem("lastUser");
         if (lastUser)
             update({
                 currentEmail: lastUser,
@@ -208,13 +201,13 @@ export default function AuthForm() {
     const input = !state.isEmailEntered ? (
         <TextField
             fullWidth
-            id='email'
+            id="email"
             error={!state.isInputValid}
-            label='Email'
+            label="Email"
             value={state.currentEmail}
-            type='text'
-            helperText={state.invalidInputText ?? ''}
-            variant='standard'
+            type="text"
+            helperText={state.invalidInputText ?? ""}
+            variant="standard"
             onChange={(e: any) => onEmailChange(e, update)}
         />
     ) : (
@@ -235,14 +228,14 @@ export default function AuthForm() {
                 </div>
                 <div className={styles.body} ref={bodyRef}>
                     <Slide
-                        direction='down'
+                        direction="down"
                         in={state.isEmailEntered}
                         container={bodyRef.current}
                         unmountOnExit
                     >
-                        <div className={styles['username-greeting']}>
-                            Welcome,{' '}
-                            <span className={styles['current-email']}>
+                        <div className={styles["username-greeting"]}>
+                            Welcome,{" "}
+                            <span className={styles["current-email"]}>
                                 {state.currentEmail}
                             </span>
                             .
@@ -250,15 +243,15 @@ export default function AuthForm() {
                     </Slide>
                     <div className={styles.prompt}>
                         {state.isEmailEntered
-                            ? 'Enter your master password to continue.'
-                            : 'Enter your email to begin.'}
+                            ? "Enter your master password to continue."
+                            : "Enter your email to begin."}
                     </div>
                     {input}
                 </div>
                 <div className={styles.footer}>
-                    <Box sx={{ position: 'relative' }}>
+                    <Box sx={{ position: "relative" }}>
                         <Button
-                            variant='contained'
+                            variant="contained"
                             onClick={
                                 state.isEmailEntered
                                     ? () =>
@@ -276,31 +269,31 @@ export default function AuthForm() {
                         >
                             {state.isEmailEntered
                                 ? state.isSignUp
-                                    ? 'Sign Up'
-                                    : 'Sign In'
-                                : 'Continue'}
+                                    ? "Sign Up"
+                                    : "Sign In"
+                                : "Continue"}
                         </Button>
                         {state.isLoading && (
                             <CircularProgress
                                 size={24}
                                 sx={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    left: '50%',
-                                    marginTop: '-12px',
-                                    marginLeft: '-12px',
+                                    position: "absolute",
+                                    top: "50%",
+                                    left: "50%",
+                                    marginTop: "-12px",
+                                    marginLeft: "-12px",
                                 }}
                             />
                         )}
                     </Box>
                     <Slide
-                        direction='up'
+                        direction="up"
                         in={state.isEmailEntered}
                         container={bodyRef.current}
                         unmountOnExit
                     >
                         <Button
-                            variant='text'
+                            variant="text"
                             startIcon={<FontAwesomeIcon icon={faChevronLeft} />}
                             onClick={useCallback(
                                 () => onBackButtonClick(update),

@@ -1,4 +1,4 @@
-import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
+import { ApolloClient, gql, NormalizedCacheObject } from "@apollo/client";
 
 export type AuthenticationResponse = {
     masterKey: string;
@@ -15,10 +15,10 @@ const updatePasswordMutation = gql`
 
 const doPOST = (url: string, body: any) => {
     return fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
+            Accept: "application/json",
+            "Content-Type": "application/json",
         },
         body: JSON.stringify(body),
     }).then((res) => {
@@ -28,6 +28,12 @@ const doPOST = (url: string, body: any) => {
 };
 
 class AccountController {
+    private hostPrefix: string;
+
+    constructor(hostPrefix: string = "") {
+        this.hostPrefix = hostPrefix;
+    }
+
     public updatePassword(
         oldPassword: string,
         newPassword: string,
@@ -49,14 +55,16 @@ class AccountController {
     }
 
     async checkExists(email: string) {
-        return doPOST('/api/auth/exists', { username: email });
+        return doPOST(this.hostPrefix + "/api/auth/exists", {
+            username: email,
+        });
     }
 
     async signIn(
         email: string,
         password: string
     ): Promise<AuthenticationResponse> {
-        return doPOST('/api/auth/signin', {
+        return doPOST(this.hostPrefix + "/api/auth/signin", {
             username: email,
             password,
         }) as any as AuthenticationResponse;
@@ -66,7 +74,7 @@ class AccountController {
         email: string,
         password: string
     ): Promise<AuthenticationResponse> {
-        return doPOST('/api/auth/signup', {
+        return doPOST(this.hostPrefix + "/api/auth/signup", {
             username: email,
             password,
         }) as any as AuthenticationResponse;

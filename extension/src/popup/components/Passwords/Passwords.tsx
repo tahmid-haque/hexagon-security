@@ -3,8 +3,8 @@ import { Card, Box, Typography, TextField, IconButton, Avatar, Button } from '@m
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/Edit';
-import '../popup.css'
-import './passwords.css'
+import '../../popup.css';
+import './passwords.css';
 
 
 type PasswordInfo = {
@@ -80,7 +80,7 @@ const PasswordCard = ({ website, username, password } : PasswordInfo) => {
                     </div>
                     <div className='site-info'>
                         <Typography variant='button' sx={{ fontWeight: 'bold' }} display="block">{website}</Typography>
-                        <Typography variant='caption' sx={{ fontWeight: 'light', color: "#424242" }} display="block" onDoubleClick={() => navigator.clipboard.writeText(username)}>{username}</Typography>
+                        <Typography variant='body2' sx={{ fontWeight: 'light', color: "#424242" }} display="block" onDoubleClick={() => navigator.clipboard.writeText(username)}>{username}</Typography>
                         <div className='pass-info'>
                             {showPass
                                 ? <TextField value={password} 
