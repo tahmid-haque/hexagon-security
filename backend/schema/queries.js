@@ -86,7 +86,7 @@ const RootQuery = new GraphQLObjectType({
             },
         },
         /**
-         * Sorts the records by sortType, starts from the given offSet and returns 
+         * Sorts the records by sortType, starts from the given offSet and returns
          * records upto the given limit
          * @param {GraphQLString} sortType ascending or descending
          * @param {GraphQLInt} offset offset
@@ -114,7 +114,7 @@ const RootQuery = new GraphQLObjectType({
             },
         },
         /**
-         * Sorts the records by sortType, starts from the given offSet and returns 
+         * Sorts the records by sortType, starts from the given offSet and returns
          * records upto the given limit
          * @param {GraphQLString} sortType ascending or descending
          * @param {GraphQLInt} offset offset
@@ -142,7 +142,7 @@ const RootQuery = new GraphQLObjectType({
             },
         },
         /**
-         * Sorts the records by sortType, starts from the given offSet and returns 
+         * Sorts the records by sortType, starts from the given offSet and returns
          * records upto the given limit
          * @param {GraphQLString} sortType ascending or descending
          * @param {GraphQLInt} offset offset
@@ -245,6 +245,6 @@ const RootQuery = new GraphQLObjectType({
     },
 });
 
-module.exports = Object.freeze({
+module.exports = {
     RootQuery,
-});
+};
