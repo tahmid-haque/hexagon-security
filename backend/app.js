@@ -55,6 +55,7 @@ app.use(
         schema: schema,
         graphiql: true,
         customFormatErrorFn: (err) => {
+            // custom error formatter for graphql responses
             const formattedError = {
                 ...err,
                 extensions: {
