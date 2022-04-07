@@ -32,20 +32,45 @@ const mg = mailKey
     : null;
 if (!mg) console.log('emails disabled');
 
+/**
+ * Throws an error based on the error and status code
+ * @param {any} err the error
+ * @param {any} status the status
+ * @returns {any} GraphQLError
+ */
 const throwDBError = (err, status) => {
     throw new GraphQLError('Custom error', {
         extensions: { ...err, status: status ?? 500 },
     });
 };
 
+/**
+ * Extracts and returns data related to the record model
+ * @param {any} recordModel record model
+ * @returns {any} data related to the recordModel
+ */
 const extractRecord = (recordModel) => {
     const record = recordModel.toObject();
     return { ...record, owners: record.owners.map((owner) => owner.username) };
 };
 
+/**
+ * Series of mutations for adding records to the database, updating passwords
+ * and already existing data, creating shares, and deleting objects from the database
+ */
 const Mutation = new GraphQLObjectType({
     name: 'Mutation',
     fields: {
+        /**
+         * Attempts to create a secure record with the given arguments, returns
+         * the newly created record on success
+         * @param {GraphQLString} name website url
+         * @param {GraphQLString} username username for the website
+         * @param {GraphQLString} password password for the website
+         * @param {GraphQLString} key key used for encryption
+         * @param {GraphQLString} masterUsername username for the hexagon user
+         * @returns {any} newly created record data
+         */
         addWebsiteCredential: {
             type: SecureRecordType,
             args: {
@@ -81,6 +106,15 @@ const Mutation = new GraphQLObjectType({
                 };
             },
         },
+        /**
+         * Attempts to create a secure record with the given arguments, returns
+         * the newly created record on success
+         * @param {GraphQLString} title title of the note
+         * @param {GraphQLString} note content of the note
+         * @param {GraphQLString} key key used for encryption
+         * @param {GraphQLString} masterUsername username for the hexagon user
+         * @returns {any} newly created record data
+         */
         addNote: {
             type: SecureRecordType,
             args: {
@@ -115,6 +149,16 @@ const Mutation = new GraphQLObjectType({
                 };
             },
         },
+        /**
+         * Attempts to create a secure record with the given arguments, returns
+         * the newly created record on success
+         * @param {GraphQLString} name website url
+         * @param {GraphQLString} username username for the website
+         * @param {GraphQLString} seed MFA seed for the website
+         * @param {GraphQLString} key key used for encryption
+         * @param {GraphQLString} masterUsername username for the hexagon user
+         * @returns {any} newly created record data
+         */
         addSeed: {
             type: SecureRecordType,
             args: {
@@ -150,6 +194,14 @@ const Mutation = new GraphQLObjectType({
                 };
             },
         },
+        /**
+         * Attempts to create a share record with the given arguments, returns
+         * the newly created share object on success
+         * @param {GraphQLString} secureRecordId points to secure record
+         * @param {GraphQLString} receiver the user who you wish to add as an owner
+         * @param {GraphQLString} key key used for encryption
+         * @returns {any} newly created share data
+         */
         addShare: {
             type: ShareType,
             args: {
@@ -223,6 +275,14 @@ const Mutation = new GraphQLObjectType({
                 return share;
             },
         },
+        /**
+         * Attempts to update an existing note record with a new title and content,
+         * throws an error on failure
+         * @param {GraphQLString} title updates with the new title
+         * @param {GraphQLString} note updates with the new note content
+         * @param {GraphQLString} secureRecordId points to the note record to be updated
+         * @returns {any} newly created note data
+         */
         updateNote: {
             type: SecureRecordType,
             args: {
@@ -253,6 +313,14 @@ const Mutation = new GraphQLObjectType({
                 };
             },
         },
+        /**
+         * Attempts to update an existing credentials record with a new username and password,
+         * throws an error on failure
+         * @param {GraphQLString} username updates with the new username
+         * @param {GraphQLString} password updates with the new note password
+         * @param {GraphQLString} secureRecordId points to the note record to be updated
+         * @returns {any} newly created credentials data
+         */
         updateCredential: {
             type: SecureRecordType,
             args: {
@@ -283,6 +351,12 @@ const Mutation = new GraphQLObjectType({
                 };
             },
         },
+        /**
+         * Attempts to delete an existing secure record,
+         * throws an error on failure
+         * @param {GraphQLString} secureRecordId record to be deleted
+         * @returns {any} deleted secure record
+         */
         deleteSecureRecord: {
             type: SecureRecordType,
             args: {
@@ -325,6 +399,13 @@ const Mutation = new GraphQLObjectType({
                 return secureRecord;
             },
         },
+        /**
+         * Attempts to delete an existing share record,
+         * throws an error on failure
+         * @param {GraphQLString} secureRecordId id of which shareId belongs to
+         * @param {GraphQLString} shareId share to be deleted
+         * @returns {any} deleted share record
+         */
         deleteShare: {
             type: ShareType,
             args: {
@@ -347,6 +428,13 @@ const Mutation = new GraphQLObjectType({
                 });
             },
         },
+        /**
+         * Attempts to update the password of the hexagon user,
+         * throws an error on failure
+         * @param {GraphQLString} oldPassword current password for the user
+         * @param {GraphQLString} newPassword password to be updated with
+         * @returns {any} updated user object
+         */
         updatePassword: {
             type: GraphQLBoolean,
             args: {
@@ -378,6 +466,13 @@ const Mutation = new GraphQLObjectType({
                 return true;
             },
         },
+        /**
+         * Attempts to revoke a share from the given secureRecordId,
+         * throws an error on failure
+         * @param {GraphQLString} owner username of the owner to be revoked
+         * @param {GraphQLString} secureRecordId Id of the record to perform the revoke action
+         * @returns {any} boolean value
+         */
         revokeShare: {
             type: GraphQLBoolean,
             args: {
@@ -431,6 +526,17 @@ const Mutation = new GraphQLObjectType({
                 return deletedCount === 1;
             },
         },
+        /**
+         * Finalizes a share based on given arguments,
+         * If isAccepted is true, user becomes a new owner of the recordID,
+         * throws an error on any failures
+         * @param {GraphQLString} shareKey key used for decryption
+         * @param {GraphQLString} shareId Id pointing to share record request
+         * @param {GraphQLBoolean} isAccepted determines if user accepts or declines share request
+         * @param {GraphQLString} masterUsername username of the current user
+         * @param {GraphQLString} recordKey key used to create to secure record
+         * @returns {any} boolean value
+         */
         finalizeShare: {
             type: GraphQLString,
             args: {

@@ -19,15 +19,31 @@ const {
     GraphQLError,
 } = graphql;
 
+/**
+ * Throws an error based on the error and status code
+ * @param {any} err the error
+ * @param {any} status the status
+ * @returns {any} GraphQLError
+ */
 const throwDBError = (err, status) => {
     throw new GraphQLError('Custom error', {
         extensions: { ...err, status: status ?? 500 },
     });
 };
 
+/**
+ * Series of queries for searching and getting data
+ */
 const RootQuery = new GraphQLObjectType({
     name: 'RootQueryType',
     fields: {
+        /**
+         * Searches for a website credential given URL/name, if exactMatch
+         * is false then returns all secure records containing the given name
+         * @param {GraphQLString} name domain url or name
+         * @param {GraphQLBoolean} exactMatch boolean value
+         * @returns {any} SecureRecord data for website credentials
+         */
         searchCredentials: {
             type: new GraphQLList(SecureRecordType),
             args: {
@@ -45,6 +61,13 @@ const RootQuery = new GraphQLObjectType({
                 });
             },
         },
+        /**
+         * Searches for a MFA given URL/name, if exactMatch
+         * is false then returns all secure records containing the given name
+         * @param {GraphQLString} name domain url or name
+         * @param {GraphQLBoolean} exactMatch boolean value
+         * @returns {any} SecureRecord data for MFA
+         */
         searchMFAs: {
             type: new GraphQLList(SecureRecordType),
             args: {
@@ -62,6 +85,14 @@ const RootQuery = new GraphQLObjectType({
                 });
             },
         },
+        /**
+         * Sorts the records by sortType, starts from the given offSet and returns 
+         * records upto the given limit
+         * @param {GraphQLString} sortType ascending or descending
+         * @param {GraphQLInt} offset offset
+         * @param {GraphQLInt} limit limit
+         * @returns {any} list of SecureRecord data for credentials
+         */
         getCredentials: {
             type: new GraphQLList(SecureRecordType),
             args: {
@@ -82,6 +113,14 @@ const RootQuery = new GraphQLObjectType({
                     .limit(args.limit);
             },
         },
+        /**
+         * Sorts the records by sortType, starts from the given offSet and returns 
+         * records upto the given limit
+         * @param {GraphQLString} sortType ascending or descending
+         * @param {GraphQLInt} offset offset
+         * @param {GraphQLInt} limit limit
+         * @returns {any} list of SecureRecord data for notes
+         */
         getNotes: {
             type: new GraphQLList(SecureRecordType),
             args: {
@@ -102,6 +141,14 @@ const RootQuery = new GraphQLObjectType({
                     .limit(args.limit);
             },
         },
+        /**
+         * Sorts the records by sortType, starts from the given offSet and returns 
+         * records upto the given limit
+         * @param {GraphQLString} sortType ascending or descending
+         * @param {GraphQLInt} offset offset
+         * @param {GraphQLInt} limit limit
+         * @returns {any} list of SecureRecord data for MFAs
+         */
         getMFAs: {
             type: new GraphQLList(SecureRecordType),
             args: {
@@ -122,6 +169,13 @@ const RootQuery = new GraphQLObjectType({
                     .limit(args.limit);
             },
         },
+        /**
+         * Searches for the share given by shareId, decrypts and verifies using shareKey
+         * and returns the data
+         * @param {GraphQLString} shareKey key used for decryption
+         * @param {GraphQLString} shareId id used for searching
+         * @returns {any} share record
+         */
         getShare: {
             type: ShareType,
             args: {
@@ -146,6 +200,10 @@ const RootQuery = new GraphQLObjectType({
                 return { ...share.toObject(), key };
             },
         },
+        /**
+         * counts the number of MFAs for the current user and returns the count
+         * @returns {any} number of MFA records
+         */
         countMFAs: {
             type: GraphQLInt,
             args: {},
@@ -156,6 +214,10 @@ const RootQuery = new GraphQLObjectType({
                 }).count();
             },
         },
+        /**
+         * counts the number of notes for the current user and returns the count
+         * @returns {any} number of note records
+         */
         countNotes: {
             type: GraphQLInt,
             args: {},
@@ -166,6 +228,10 @@ const RootQuery = new GraphQLObjectType({
                 }).count();
             },
         },
+        /**
+         * counts the number of credentials for the current user and returns the count
+         * @returns {any} number of credentials records
+         */
         countWebsiteCredentials: {
             type: GraphQLInt,
             args: {},

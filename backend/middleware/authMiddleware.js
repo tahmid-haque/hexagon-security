@@ -4,6 +4,13 @@ const JWT_SECRET = process.env.JWT_TOKEN ?? 'secret';
 const RedisController = require('../controllers/redisController');
 const redisController = new RedisController();
 
+/**
+ * Checks if authentication is needed by using the token to verify
+ * @param {any} res the response
+ * @param {any} req the request
+ * @param {any} next the next functionto perform
+ * @returns {any} response with status code
+ */
 const requireAuth = (req, res, next) => {
     const token = req.headers.jwt;
     if (token) {
@@ -31,6 +38,12 @@ const requireAuth = (req, res, next) => {
     }
 };
 
+/**
+ * Creates a personalized jwt token using uid and username
+ * @param {any} uid the uid
+ * @param {any} username the username
+ * @returns {any} jwt token
+ */
 const maxAge = 24 * 60 * 60; // 1 day
 const createToken = (uid, username) => {
     return jwt.sign(
@@ -38,7 +51,13 @@ const createToken = (uid, username) => {
         JWT_SECRET
     );
 };
-
+/**
+ * Retires the token
+ * @param {any} req the request
+ * @param {any} res the response
+ * @param {any} next the next functionto perform
+ * @returns {any} response with status code
+ */
 const retireToken = async (req, res, next) => {
     await redisController.set(req.originalToken, 1, {
         EX: Number(req.token.exp) - Math.floor(Date.now() / 1000),

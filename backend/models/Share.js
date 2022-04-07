@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+/**
+ * Schema for share records which contains 
+ * a type, name, recordId - pointint to a specific record, 
+ * receiver - the new owner, and key
+ */
 const ShareSchema = new Schema({
     type: {
         type: String,
