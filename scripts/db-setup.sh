@@ -1,5 +1,4 @@
 # adapted from https://github.com/docker-library/mongo/issues/399s
-
 # script to setup mongoDB on initial database creation
 mongo -- "$MONGO_INITDB_DATABASE" <<EOF
 db.createUser(
