@@ -10,6 +10,11 @@ const {
     GraphQLList,
 } = graphql;
 
+/**
+ * Extracts and returns data related to the record model
+ * @param {any} recordModel record model
+ * @returns {any} data related to the recordModel
+ */
 const extractRecord = (recordModel) => {
     const record = recordModel.toObject();
     return { ...record, owners: record.owners.map((owner) => owner.username) };

@@ -32,17 +32,32 @@ const mg = mailKey
     : null;
 if (!mg) console.log('emails disabled');
 
+/**
+ * Throws an error based on the error and status code
+ * @param {any} err the error
+ * @param {any} status the status
+ * @returns {any} GraphQLError
+ */
 const throwDBError = (err, status) => {
     throw new GraphQLError('Custom error', {
         extensions: { ...err, status: status ?? 500 },
     });
 };
 
+/**
+ * Extracts and returns data related to the record model
+ * @param {any} recordModel record model
+ * @returns {any} data related to the recordModel
+ */
 const extractRecord = (recordModel) => {
     const record = recordModel.toObject();
     return { ...record, owners: record.owners.map((owner) => owner.username) };
 };
 
+/**
+ * Series of mutations for adding records to the database, updating passwords
+ * and already existing data, creating shares, and deleting objects from the database
+ */
 const Mutation = new GraphQLObjectType({
     name: 'Mutation',
     fields: {

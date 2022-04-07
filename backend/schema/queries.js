@@ -19,12 +19,21 @@ const {
     GraphQLError,
 } = graphql;
 
+/**
+ * Throws an error based on the error and status code
+ * @param {any} err the error
+ * @param {any} status the status
+ * @returns {any} GraphQLError
+ */
 const throwDBError = (err, status) => {
     throw new GraphQLError('Custom error', {
         extensions: { ...err, status: status ?? 500 },
     });
 };
 
+/**
+ * Series of queries for searching and getting data
+ */
 const RootQuery = new GraphQLObjectType({
     name: 'RootQueryType',
     fields: {
