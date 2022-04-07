@@ -1,0 +1,68 @@
+name: Deploy latest version
+
+on:
+    push:
+        # Only run this workflow if it is a commit to production
+        branches:
+            - production
+        # Run this workflow if the commit has modified any files the CI depends on
+        paths:
+            - scripts/**
+            - docker-compose.yml
+
+    # Run this workflow after building any images
+    workflow_run:
+        workflows: ['Build and publish frontend', 'Build and publish backend']
+
+concurrency:
+    group: deployment
+    cancel-in-progress: true
+
+jobs:
+    # Deploy images to Digital Ocean
+    push:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: /
+
+        steps:
+            - uses: actions/checkout@v2
+
+            # suggested on https://stackoverflow.com/questions/60176044/how-do-i-use-an-env-file-with-github-actions
+            - name: Create env file
+              run: |
+                  touch .env
+                  echo MAILGUN_API_KEY=${{ secrets.MAILGUN_API_KEY }} >> .env
+                  echo ACME_EMAIL=${{ secrets.ACME_EMAIL }} >> .env
+                  echo MONGODB_DATABASE_NAME=${{ secrets.MONGODB_DATABASE_NAME }} >> .env
+                  echo MONGODB_USERNAME=${{ secrets.MONGODB_USERNAME }} >> .env
+                  echo MONGODB_PASSWORD=${{ secrets.MONGODB_PASSWORD }} >> .env
+                  echo MONGODB_URI=${{ secrets.MONGODB_URI }} >> .env
+                  echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
+                  echo REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} >> .env
+                  echo REDIS_URI=${{ secrets.REDIS_URI }} >> .env
+
+            - name: SCP Command to Transfer Files
+              uses: appleboy/scp-action@v0.1.2
+                  host: ${{ secrets.SSH_HOST }}
+                  username: ${{ secrets.SSH_USERNAME }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+                  passphrase: ${{ secrets.SSH_PASSPHRASE }}
+                  port: 22
+                  source: ".env, docker-compose.yml, scripts/db-setup.sh"
+                  target: "/app"
+
+
+            - name: SSH Remote Commands
+              uses: appleboy/ssh-action@v0.1.4
+              with:
+                  host: ${{ secrets.SSH_HOST }}
+                  username: ${{ secrets.SSH_USERNAME }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+                  passphrase: ${{ secrets.SSH_PASSPHRASE }}
+                  port: 22
+                  script: |
+                      echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ secret.CR_PAT_OWNER }} --password-stdin
+                      cd /app
+                      docker-compose pull && docker-compose up -d
