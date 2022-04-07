@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import "./popup.css";
 import "./components/Signin/signin.css";
-import Header from "../sharedComponents/header/header";
+import Header from "../sharedComponents/header/Header";
 import parser from "hexagon-shared/utils/parser";
 import { useComponentState } from "hexagon-frontend/src/utils/hooks";
 import SigninPage from "./components/Signin/SigninPage";

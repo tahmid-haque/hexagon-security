@@ -1,17 +1,7 @@
 import parser from "hexagon-shared/utils/parser";
 import AccountService from "hexagon-frontend/src/services/AccountService";
-import { credentialsAPI } from "../utils/credentialsApi";
-import { authenticationAPI } from "../utils/authenticationApi";
-
-let validUrls = [
-    "amazon.ca",
-    "facebook.com",
-    "twitter.com",
-    "yelp.ca",
-    "utoronto.ca",
-    "instagram.com",
-    "grademy.work",
-];
+import { credentialsAPI } from "../utils/credentialsAPI";
+import { authenticationAPI } from "../utils/authenticationAPI";
 
 //api call to save mfa key
 

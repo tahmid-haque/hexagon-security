@@ -1,50 +1,20 @@
 import CredentialService from "hexagon-frontend/src/services/CredentialService";
-import { ApolloClient, InMemoryCache } from "@apollo/client";
 import CryptoService from "hexagon-shared/services/CryptoService";
 import { Credential } from "../contentScript/contentScript";
+import { Account, client, cryptoService } from "./serviceUtils";
 
 export const credentialsAPI = (function () {
-    type Account = {
-        email: string;
-        masterKey: string;
-        jwt: string;
-    };
-
-    const client = new ApolloClient({
-        uri: "http://localhost:3000/api/graphql",
-        cache: new InMemoryCache(),
-        defaultOptions: {
-            query: { fetchPolicy: "no-cache" },
-            mutate: { fetchPolicy: "no-cache" },
-        },
-    });
-
-    const cryptoService = new CryptoService(crypto);
-
-    const newCredential = (id, username, password, url): Credential => {
-        return { id: id, username: username, password: password, url: url };
+    const newCredential = (id, username, password, url, key): Credential => {
+        return {
+            id: id,
+            username: username,
+            password: password,
+            url: url,
+            key: key,
+        };
     };
 
     const module = {
-        newCredential: (id, username, password, url): Credential => {
-            return { id: id, username: username, password: password, url: url };
-        },
-
-        getCount: async (account: Account) => {
-            try {
-                const credentialService = new CredentialService(
-                    cryptoService,
-                    account,
-                    client
-                );
-                await credentialService
-                    .getCredentialCount()
-                    .then((count) => console.log(count));
-            } catch (err) {
-                console.log(err);
-            }
-        },
-
         createCredential: async (account: Account, url, username, password) => {
             try {
                 const credentialService = new CredentialService(
@@ -52,11 +22,13 @@ export const credentialsAPI = (function () {
                     account,
                     client
                 );
-                await credentialService
-                    .createCredential(url, username, password)
-                    .then(() => console.log("credential created"));
+                await credentialService.createCredential(
+                    url,
+                    username,
+                    password
+                );
             } catch (err) {
-                console.log(err);
+                throw "Unable to create credential";
             }
         },
 
@@ -67,11 +39,9 @@ export const credentialsAPI = (function () {
                     account,
                     client
                 );
-                await credentialService
-                    .deleteCredential(id)
-                    .then(() => console.log("credential deleted"));
+                await credentialService.deleteCredential(id);
             } catch (err) {
-                console.log(err);
+                throw "Unable to delete credential";
             }
         },
 
@@ -80,7 +50,8 @@ export const credentialsAPI = (function () {
             id,
             url,
             username,
-            password
+            password,
+            key
         ) => {
             try {
                 const credentialService = new CredentialService(
@@ -89,16 +60,10 @@ export const credentialsAPI = (function () {
                     client
                 );
                 await credentialService
-                    .updateCredential(
-                        id,
-                        url,
-                        username,
-                        password,
-                        account.masterKey
-                    )
+                    .updateCredential(id, url, username, password, key)
                     .then(() => console.log("credential updated"));
             } catch (err) {
-                console.log(err);
+                throw "Unable to update credential";
             }
         },
 
@@ -114,7 +79,7 @@ export const credentialsAPI = (function () {
                     username
                 );
             } catch (err) {
-                console.log(err);
+                throw "Unable to check credential right now";
             }
         },
 
@@ -128,10 +93,16 @@ export const credentialsAPI = (function () {
 
                 let creds = await credentialService.getWebsiteCredentials(url);
                 return creds.map((cred) =>
-                    newCredential(cred.id, cred.user, cred.password, cred.name)
+                    newCredential(
+                        cred.id,
+                        cred.user,
+                        cred.password,
+                        cred.name,
+                        cred.key
+                    )
                 );
             } catch (err) {
-                console.log(err);
+                throw "Unable to fetch credentials right now";
             }
         },
     };
