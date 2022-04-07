@@ -19,6 +19,7 @@ export type Credential = {
     username: string;
     password: string;
     url: string;
+    key: string;
 };
 
 // set value of a field, taken from https://github.com/facebook/react/issues/10135
