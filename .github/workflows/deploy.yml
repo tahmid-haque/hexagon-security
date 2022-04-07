@@ -22,9 +22,6 @@ jobs:
     # Deploy images to Digital Ocean
     push:
         runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: /
 
         steps:
             - uses: actions/checkout@v2

@@ -33,6 +33,11 @@ const handleErrors = (err) => {
     return { errors, status };
 };
 
+/**
+ * Sign up a new user given their username and password.
+ * @param {*} req express request object
+ * @param {*} res express response object
+ */
 module.exports.signup_post = async (req, res) => {
     const { username, password } = req.body;
 

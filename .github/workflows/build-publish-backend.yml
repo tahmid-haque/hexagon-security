@@ -22,9 +22,6 @@ jobs:
     push:
         runs-on: ubuntu-latest
         if: github.event_name == 'push'
-        defaults:
-            run:
-                working-directory: /
 
         steps:
             - uses: actions/checkout@v2
