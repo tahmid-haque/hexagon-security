@@ -7675,6 +7675,8 @@ __metadata:
     css-loader: ^5.2.4
     generate-password: ^1.7.0
     generate-password-ts: ^1.6.3
+    hexagon-frontend: "workspace:*"
+    hexagon-shared: "workspace:*"
     html-webpack-plugin: ^4.5.2
     material-ui-popup-state: ^2.0.0
     psl: ^1.8.0
@@ -7692,7 +7694,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"hexagon-frontend@workspace:frontend":
+"hexagon-frontend@workspace:*, hexagon-frontend@workspace:frontend":
   version: 0.0.0-use.local
   resolution: "hexagon-frontend@workspace:frontend"
   dependencies:
@@ -7740,6 +7742,11 @@ __metadata:
 "hexagon@workspace:.":
   version: 0.0.0-use.local
   resolution: "hexagon@workspace:."
+  dependencies:
+    "@apollo/client": ^3.5.10
+    "@shopify/react-web-worker": ^4.0.10
+    graphql: ^16.3.0
+    react-router-dom: ^6.3.0
   languageName: unknown
   linkType: soft
 
@@ -12061,6 +12068,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-router-dom@npm:^6.3.0":
+  version: 6.3.0
+  resolution: "react-router-dom@npm:6.3.0"
+  dependencies:
+    history: ^5.2.0
+    react-router: 6.3.0
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: ">=16.8"
+  checksum: 77603a654f8a8dc7f65535a2e5917a65f8d9ffcb06546d28dd297e52adcc4b8a84377e0115f48dca330b080af2da3e78f29d590c89307094d36927d2b1751ec3
+  languageName: node
+  linkType: hard
+
 "react-router@npm:6.2.2":
   version: 6.2.2
   resolution: "react-router@npm:6.2.2"
@@ -12069,6 +12089,17 @@ __metadata:
   peerDependencies:
     react: ">=16.8"
   checksum: 1a2e7006d4d56bfae8ff11dd5ec15e8049578864dfb2764652510eb0ce4af26a8949790a3732c4f7beb14bcb6500469ea18841b8cfc953e09828e4e4113922f0
+  languageName: node
+  linkType: hard
+
+"react-router@npm:6.3.0":
+  version: 6.3.0
+  resolution: "react-router@npm:6.3.0"
+  dependencies:
+    history: ^5.2.0
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 7be673f5e72104be01e6ab274516bdb932efd93305243170690f6560e3bd1035dd1df3d3c9ce1e0f452638a2529f43a1e77dcf0934fc8031c4783da657be13ca
   languageName: node
   linkType: hard
 

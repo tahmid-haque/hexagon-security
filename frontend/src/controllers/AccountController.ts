@@ -34,6 +34,12 @@ const doRequest = (
 };
 
 class AccountController {
+    private hostPrefix: string;
+
+    constructor(hostPrefix: string = '') {
+        this.hostPrefix = hostPrefix;
+    }
+
     public updatePassword(
         oldPassword: string,
         newPassword: string,
@@ -55,14 +61,16 @@ class AccountController {
     }
 
     async checkExists(email: string) {
-        return doRequest('/api/auth/exists', { username: email });
+        return doRequest(this.hostPrefix + '/api/auth/exists', {
+            username: email,
+        });
     }
 
     async signIn(
         email: string,
         password: string
     ): Promise<AuthenticationResponse> {
-        return doRequest('/api/auth/signin', {
+        return doRequest(this.hostPrefix + '/api/auth/signin', {
             username: email,
             password,
         }) as any as AuthenticationResponse;
@@ -72,14 +80,14 @@ class AccountController {
         email: string,
         password: string
     ): Promise<AuthenticationResponse> {
-        return doRequest('/api/auth/signup', {
+        return doRequest(this.hostPrefix + '/api/auth/signup', {
             username: email,
             password,
         }) as any as AuthenticationResponse;
     }
 
     async signOut(token: string): Promise<AuthenticationResponse> {
-        return doRequest('/api/auth/signout', null, true, {
+        return doRequest(this.hostPrefix + '/api/auth/signout', null, true, {
             jwt: token,
         }) as any;
     }

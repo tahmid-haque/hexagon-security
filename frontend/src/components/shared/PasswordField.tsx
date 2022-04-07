@@ -1,7 +1,7 @@
-import { IconButton, InputAdornment, TextField, Tooltip } from '@mui/material';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { useState } from 'react';
+import { IconButton, InputAdornment, TextField, Tooltip } from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import React, { useState } from "react";
 
 export type PasswordFieldProps = {
     password: string;
@@ -33,27 +33,27 @@ export default function PasswordField(props: PasswordFieldProps) {
             fullWidth
             error={props.isError}
             value={props.password}
-            label={`${props.label ?? 'Password'}`}
-            type={showPassword ? 'text' : 'password'}
-            helperText={props.errorMessage ?? ''}
-            variant='standard'
+            label={`${props.label ?? "Password"}`}
+            type={showPassword ? "text" : "password"}
+            helperText={props.errorMessage ?? ""}
+            variant="standard"
             InputProps={{
                 readOnly: props.readonly ?? false,
                 endAdornment: (
-                    <InputAdornment position='end'>
+                    <InputAdornment position="end">
                         <Tooltip
                             arrow
-                            title={`${showPassword ? 'Hide' : 'Show'} ${
-                                props.label ?? 'Password'
+                            title={`${showPassword ? "Hide" : "Show"} ${
+                                props.label ?? "Password"
                             }`}
                         >
                             <IconButton
-                                aria-label='toggle password visibility'
+                                aria-label="toggle password visibility"
                                 onClick={onTogglePasswordViewClick.bind({
                                     setShowPassword,
                                     props,
                                 })}
-                                edge='end'
+                                edge="end"
                             >
                                 {showPassword ? (
                                     <VisibilityOff />

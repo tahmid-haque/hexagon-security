@@ -131,20 +131,13 @@ const onPasswordSubmit = async (
         const hexagonExtensionId = 'cpionbifpgemolinhilabicjppibdhck';
 
         try {
-            chrome.runtime.sendMessage(
-                hexagonExtensionId,
-                {
-                    sentFrom: 'Hexagon',
-                    user: {
-                        username: state.currentEmail,
-                        password: state.currentPassword,
-                    },
+            chrome.runtime.sendMessage(hexagonExtensionId, {
+                sentFrom: 'Hexagon',
+                user: {
+                    username: state.currentEmail,
+                    password: state.currentPassword,
                 },
-                function (response: any) {
-                    if (response.loggedIn)
-                        console.log('logged in to chrome extension');
-                }
-            );
+            });
         } catch {
             console.log('extension not installed');
         }

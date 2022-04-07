@@ -1,5 +1,5 @@
-import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
-import { executeQuery } from '../utils/controller';
+import { ApolloClient, gql, NormalizedCacheObject } from "@apollo/client";
+import { executeQuery } from "../utils/controller";
 
 const countCredentialsQuery = gql`
     query {
@@ -14,6 +14,25 @@ const searchCredentialsQuery = gql`
             key
             credential {
                 username
+            }
+        }
+    }
+`;
+
+const searchWebsiteCredentialsQuery = gql`
+    query ($name: String!, $exactMatch: Boolean!) {
+        searchCredentials(exactMatch: $exactMatch, name: $name) {
+            _id
+            name
+            key
+            credential {
+                username
+                password
+                owners
+            }
+            pendingShares {
+                receiver
+                _id
             }
         }
     }
@@ -116,6 +135,17 @@ class CredentialController {
         ).then((data) => data.searchCredentials as CredentialDto[]);
     }
 
+    public searchWebsiteCredentials(name: string, exactMatch: boolean) {
+        return this.executeQuery(
+            searchWebsiteCredentialsQuery,
+            {
+                name: name,
+                exactMatch: exactMatch,
+            },
+            false
+        ).then((data) => data.searchCredentials as CredentialDto[]);
+    }
+
     public countCredentials() {
         return this.executeQuery(countCredentialsQuery, {}, false).then(
             (data) => data.countWebsiteCredentials as number
@@ -160,7 +190,7 @@ class CredentialController {
 
     async checkBreach(hashPrefix: string): Promise<string> {
         return fetch(`https://api.pwnedpasswords.com/range/${hashPrefix}`, {
-            method: 'GET',
+            method: "GET",
         }).then((res) => {
             if (!res.ok) throw { status: res.status, errors: res.text() };
             else return res.text();

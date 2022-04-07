@@ -36,9 +36,13 @@
         "cross-env": "^7.0.3",
         "generate-password": "^1.7.0",
         "generate-password-ts": "^1.6.3",
+        "hexagon-frontend": "workspace:*",
+        "hexagon-shared": "workspace:*",
         "material-ui-popup-state": "^2.0.0",
         "psl": "^1.8.0",
         "react-password-strength-bar": "^0.4.0",
         "valid-url": "^1.0.9"
-    }
+    },
+    "main": "webpack.common.js",
+    "license": "ISC"
 }

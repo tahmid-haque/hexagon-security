@@ -2,35 +2,35 @@ import {
     ApolloClient,
     NormalizedCacheObject,
     useApolloClient,
-} from '@apollo/client';
-import GppBadIcon from '@mui/icons-material/GppBad';
-import GppGoodIcon from '@mui/icons-material/GppGood';
-import GppGoodOutlinedIcon from '@mui/icons-material/GppGoodOutlined';
-import GppMaybeIcon from '@mui/icons-material/GppMaybe';
-import { Box, Tooltip } from '@mui/material';
-import { GridColDef, GridSortDirection } from '@mui/x-data-grid';
-import { ReactElement, useEffect } from 'react';
-import { useOutletContext } from 'react-router-dom';
-import CredentialService from '../../services/CredentialService';
+} from "@apollo/client";
+import GppBadIcon from "@mui/icons-material/GppBad";
+import GppGoodIcon from "@mui/icons-material/GppGood";
+import GppGoodOutlinedIcon from "@mui/icons-material/GppGoodOutlined";
+import GppMaybeIcon from "@mui/icons-material/GppMaybe";
+import { Box, Tooltip } from "@mui/material";
+import { GridColDef, GridSortDirection } from "@mui/x-data-grid";
+import { ReactElement, useEffect } from "react";
+import { useOutletContext } from "react-router-dom";
+import CredentialService from "../../services/CredentialService";
 import {
     clearEvent,
     createEvent,
     DashboardEvent,
     DashboardEventType,
-} from '../../store/slices/DashboardSlice';
-import { sendToast } from '../../store/slices/ToastSlice';
-import { useAppDispatch, useAppSelector } from '../../store/store';
-import { useComponentState } from '../../utils/hooks';
-import AppTable from '../shared/AppTable';
-import ConfirmationDialog from '../shared/ConfirmationDialog';
-import OwnershipStatus from '../shared/OwnershipStatus';
-import { Owner, PendingShare } from '../shares/ShareManager';
-import ActionMenu from './action-menu/ActionMenu';
-import CredentialEditor from './credential-editor/CredentialEditor';
-import CredentialName from './name-field/CredentialName';
-import CredentialPassword from './password-field/CredentialPassword';
-import CredentialUser from './user-field/CredentialUser';
-import { Display, setDisplay } from '../../store/slices/DisplaySlice';
+} from "../../store/slices/DashboardSlice";
+import { sendToast } from "../../store/slices/ToastSlice";
+import { useAppDispatch, useAppSelector } from "../../store/store";
+import { useComponentState } from "../../utils/hooks";
+import AppTable from "../shared/AppTable";
+import ConfirmationDialog from "../shared/ConfirmationDialog";
+import OwnershipStatus from "../shared/OwnershipStatus";
+import { Owner, PendingShare } from "../shares/ShareManager";
+import ActionMenu from "./action-menu/ActionMenu";
+import CredentialEditor from "./credential-editor/CredentialEditor";
+import CredentialName from "./name-field/CredentialName";
+import CredentialPassword from "./password-field/CredentialPassword";
+import CredentialUser from "./user-field/CredentialUser";
+import { Display, setDisplay } from "../../store/slices/DisplaySlice";
 
 export type Credential = {
     id: string;
@@ -44,19 +44,19 @@ export type Credential = {
 };
 
 export enum CredentialStrength {
-    BREACHED = 'Potentially Breached Password',
-    WEAK = 'Weak Password',
-    MODERATE = 'Moderately Secure Password',
-    STRONG = 'Secure Password',
-    UNKNOWN = 'Security Unknown',
+    BREACHED = "Potentially Breached Password",
+    WEAK = "Weak Password",
+    MODERATE = "Moderately Secure Password",
+    STRONG = "Secure Password",
+    UNKNOWN = "Security Unknown",
 }
 
-const loadErrorText = 'Unable to load credentials. Please try again later.';
+const loadErrorText = "Unable to load credentials. Please try again later.";
 
 const columnDef: GridColDef[] = [
     {
-        field: 'name',
-        headerName: 'Name',
+        field: "name",
+        headerName: "Name",
         width: 300,
         flex: 1.5,
         sortable: true,
@@ -66,9 +66,9 @@ const columnDef: GridColDef[] = [
         },
     },
     {
-        field: 'user',
+        field: "user",
         flex: 1.5,
-        headerName: 'User',
+        headerName: "User",
         hideable: false,
         sortable: false,
         width: 200,
@@ -77,8 +77,8 @@ const columnDef: GridColDef[] = [
         },
     },
     {
-        field: 'password',
-        headerName: 'Password',
+        field: "password",
+        headerName: "Password",
         width: 200,
         sortable: false,
         filterable: false,
@@ -89,8 +89,8 @@ const columnDef: GridColDef[] = [
         },
     },
     {
-        field: 'strength',
-        headerName: 'Security',
+        field: "strength",
+        headerName: "Security",
         width: 71,
         sortable: false,
         filterable: false,
@@ -99,23 +99,23 @@ const columnDef: GridColDef[] = [
 
             switch (value) {
                 case CredentialStrength.STRONG:
-                    icon = <GppGoodIcon color='success' />;
+                    icon = <GppGoodIcon color="success" />;
                     break;
 
                 case CredentialStrength.MODERATE:
-                    icon = <GppGoodOutlinedIcon color='success' />;
+                    icon = <GppGoodOutlinedIcon color="success" />;
                     break;
 
                 case CredentialStrength.WEAK:
-                    icon = <GppBadIcon color='warning' />;
+                    icon = <GppBadIcon color="warning" />;
                     break;
 
                 case CredentialStrength.BREACHED:
-                    icon = <GppMaybeIcon color='error' />;
+                    icon = <GppMaybeIcon color="error" />;
                     break;
 
                 case CredentialStrength.UNKNOWN:
-                    icon = <GppMaybeIcon color='warning' />;
+                    icon = <GppMaybeIcon color="warning" />;
                     break;
 
                 default:
@@ -125,10 +125,10 @@ const columnDef: GridColDef[] = [
             return (
                 <Box
                     sx={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                     }}
                 >
                     <Tooltip arrow title={value}>
@@ -139,16 +139,16 @@ const columnDef: GridColDef[] = [
         },
     },
     {
-        field: 'ownership',
-        headerName: 'Ownership',
+        field: "ownership",
+        headerName: "Ownership",
         width: 88,
         sortable: false,
         filterable: false,
         renderCell: (params) => <OwnershipStatus data={params.row} />,
     },
     {
-        field: 'actions',
-        headerName: 'Actions',
+        field: "actions",
+        headerName: "Actions",
         width: 67,
         sortable: false,
         filterable: false,
@@ -191,7 +191,7 @@ const updateCredentials = async function (
                 dispatch(
                     sendToast({
                         message: `There were errors in loading a credential for ${credential.name}`,
-                        severity: 'error',
+                        severity: "error",
                     })
                 );
         });
@@ -218,8 +218,8 @@ const onDeleteAccept = async function (this: CredentialsViewContext) {
         await state.credentialService.deleteCredential(state.currentId!);
         dispatch(
             sendToast({
-                message: 'Successfully deleted your credential.',
-                severity: 'success',
+                message: "Successfully deleted your credential.",
+                severity: "success",
             })
         );
         update({ isDeleteOpen: false });
@@ -228,8 +228,8 @@ const onDeleteAccept = async function (this: CredentialsViewContext) {
         dispatch(
             sendToast({
                 message:
-                    'Something went wrong and we were unable to delete your credential. Please try again later.',
-                severity: 'error',
+                    "Something went wrong and we were unable to delete your credential. Please try again later.",
+                severity: "error",
             })
         );
     }
@@ -329,8 +329,8 @@ export default function CredentialsView() {
         isLoading: true,
         totalCredentials: 0,
         isDeleteLoading: false,
-        sortType: 'asc',
-        tableErrorText: '',
+        sortType: "asc",
+        tableErrorText: "",
         credentialService: new CredentialService(
             cryptoWorker,
             account,
@@ -343,14 +343,14 @@ export default function CredentialsView() {
     useEffect(handleEvent.bind(context), [event]);
 
     return (
-        <Box sx={{ height: '100%' }}>
+        <Box sx={{ height: "100%" }}>
             <AppTable
                 columnDef={columnDef}
                 content={state.credentials}
                 contentCount={state.totalCredentials}
                 errorText={state.tableErrorText}
                 isLoading={state.isLoading}
-                sortField='name'
+                sortField="name"
                 updateContent={updateCredentials.bind(context)}
             />
             <CredentialEditor
@@ -370,8 +370,8 @@ export default function CredentialsView() {
                 isOpen={state.isDeleteOpen}
                 onClose={() => update({ isDeleteOpen: false })}
                 onAccept={onDeleteAccept.bind(context)}
-                title='Delete Credential'
-                body='Are you sure you want to delete this credential? This action cannot be undone.'
+                title="Delete Credential"
+                body="Are you sure you want to delete this credential? This action cannot be undone."
                 isLoading={state.isDeleteLoading}
             />
         </Box>

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
-import ReactDOM from 'react-dom'
+import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { Card, Box, Button, Typography, Tab } from '@mui/material';
-import '../popup.css'
-import './signin.css'
+import '../../popup.css';
+import './signin.css';
 
 const onClickSignin = () => {
     chrome.tabs.create({active:true, url:"http://localhost:3000/authenticate"});

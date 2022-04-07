@@ -1,6 +1,6 @@
-import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
-import AccountController from '../controllers/AccountController';
-import { executeQuery } from '../utils/controller';
+import { ApolloClient, gql, NormalizedCacheObject } from "@apollo/client";
+import AccountController from "../controllers/AccountController";
+import { executeQuery } from "../utils/controller";
 
 const updatePasswordMutation = gql`
     mutation ($oldPassword: String!, $newPassword: String!) {
@@ -8,14 +8,15 @@ const updatePasswordMutation = gql`
     }
 `;
 class AccountService {
-    private accountController = new AccountController();
+    private accountController!: AccountController;
     private accountService: AccountService | null = null;
 
-    constructor() {
+    constructor(hostPrefix: string = "") {
         if (this.accountService) {
             return this.accountService;
         }
         this.accountService = this;
+        this.accountController = new AccountController(hostPrefix);
     }
 
     checkInUse(email: string) {

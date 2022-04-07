@@ -1,11 +1,11 @@
-import { Box, Button, CircularProgress, TextField } from '@mui/material';
-import { useEffect } from 'react';
-import NoteService from '../../../services/NoteService';
-import { sendToast } from '../../../store/slices/ToastSlice';
-import { useAppDispatch } from '../../../store/store';
-import { useComponentState } from '../../../utils/hooks';
-import AppModal from '../../shared/AppModal';
-import { Note } from '../NotesView';
+import { Box, Button, CircularProgress, TextField } from "@mui/material";
+import React, { useEffect } from "react";
+import NoteService from "../../../services/NoteService";
+import { sendToast } from "../../../store/slices/ToastSlice";
+import { useAppDispatch } from "../../../store/store";
+import { useComponentState } from "../../../utils/hooks";
+import AppModal from "../../shared/AppModal";
+import { Note } from "../NotesView";
 
 export type NoteEditorProps = {
     isOpen: boolean;
@@ -25,9 +25,9 @@ type NoteEditorState = {
 
 const initState: NoteEditorState = {
     isTitleValid: true,
-    titleError: '',
-    title: '',
-    body: '',
+    titleError: "",
+    title: "",
+    body: "",
     isLoading: false,
 };
 
@@ -51,7 +51,7 @@ const onTitleChange = (
     update({
         title: value,
         isTitleValid: value.length > 0,
-        titleError: '',
+        titleError: "",
     });
 };
 
@@ -74,7 +74,7 @@ const onCreateSubmit = async (
 ) => {
     if (!state.title) {
         return update({
-            titleError: 'Please enter a title',
+            titleError: "Please enter a title",
             isTitleValid: false,
         });
     }
@@ -83,8 +83,8 @@ const onCreateSubmit = async (
         await props.noteService.createNote(state.title, state.body);
         dispatch(
             sendToast({
-                message: 'Successfully created your note.',
-                severity: 'success',
+                message: "Successfully created your note.",
+                severity: "success",
             })
         );
     } catch (error) {
@@ -92,8 +92,8 @@ const onCreateSubmit = async (
         return dispatch(
             sendToast({
                 message:
-                    'Something went wrong and we were unable to save your note. Try again later.',
-                severity: 'error',
+                    "Something went wrong and we were unable to save your note. Try again later.",
+                severity: "error",
             })
         );
     }
@@ -109,7 +109,7 @@ const onEditSubmit = async (
 ) => {
     if (!state.title) {
         return update({
-            titleError: 'Please enter a title',
+            titleError: "Please enter a title",
             isTitleValid: false,
         });
     }
@@ -123,8 +123,8 @@ const onEditSubmit = async (
         );
         dispatch(
             sendToast({
-                message: 'Successfully updated your note.',
-                severity: 'success',
+                message: "Successfully updated your note.",
+                severity: "success",
             })
         );
     } catch (error) {
@@ -132,8 +132,8 @@ const onEditSubmit = async (
         return dispatch(
             sendToast({
                 message:
-                    'Something went wrong and we were unable to save your note. Try again later.',
-                severity: 'error',
+                    "Something went wrong and we were unable to save your note. Try again later.",
+                severity: "error",
             })
         );
     }
@@ -153,17 +153,17 @@ export default function NoteEditor(props: NoteEditorProps) {
     return (
         <AppModal
             isOpen={props.isOpen}
-            modalTitle={`${props.isEdit ? 'Edit' : 'Create'} Note`}
+            modalTitle={`${props.isEdit ? "Edit" : "Create"} Note`}
             onClose={onClose.bind(null, state, update, props.onClose, false)}
         >
             <TextField
                 fullWidth
                 error={!state.isTitleValid}
-                label='Title'
+                label="Title"
                 value={state.title}
-                type='text'
-                helperText={state.titleError ?? ''}
-                variant='standard'
+                type="text"
+                helperText={state.titleError ?? ""}
+                variant="standard"
                 onChange={onTitleChange.bind(null, update)}
             />
             <TextField
@@ -171,10 +171,10 @@ export default function NoteEditor(props: NoteEditorProps) {
                 multiline
                 minRows={3}
                 maxRows={10}
-                label='Body'
+                label="Body"
                 value={state.body}
-                type='text'
-                variant='standard'
+                type="text"
+                variant="standard"
                 onChange={(event) =>
                     update({
                         body: event.target.value,
@@ -182,9 +182,9 @@ export default function NoteEditor(props: NoteEditorProps) {
                 }
                 sx={{ my: 1 }}
             />
-            <Box sx={{ float: 'right', mt: 2, position: 'relative' }}>
+            <Box sx={{ float: "right", mt: 2, position: "relative" }}>
                 <Button
-                    variant='contained'
+                    variant="contained"
                     onClick={() =>
                         props.isEdit
                             ? onEditSubmit(state, update, props, dispatch)
@@ -198,11 +198,11 @@ export default function NoteEditor(props: NoteEditorProps) {
                     <CircularProgress
                         size={24}
                         sx={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            marginTop: '-12px',
-                            marginLeft: '-12px',
+                            position: "absolute",
+                            top: "50%",
+                            left: "50%",
+                            marginTop: "-12px",
+                            marginLeft: "-12px",
                         }}
                     />
                 )}

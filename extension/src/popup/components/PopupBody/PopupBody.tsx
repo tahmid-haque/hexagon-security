@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react'
-import ReactDOM from 'react-dom'
+import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { Card, Box, Button, Typography, Tab } from '@mui/material';
 import {  TabContext, TabList, TabPanel } from '@mui/lab';
-import '../popup.css'
-import '../Signin/signin.css'
-import PopupPasswords from '../Passwords/Passwords'
+import '../../popup.css';
+import '../Signin/signin.css';
+import PopupPasswords from '../Passwords/Passwords';
 import PasswordGenerator from '../PasswordGenerator/PasswordGenerator';
 import MFAKeyForm from '../MFAKey/MFAKeys';
 

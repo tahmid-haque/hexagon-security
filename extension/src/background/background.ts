@@ -1,72 +1,135 @@
-import parser from '../../../shared/utils/parser'
+import parser from "hexagon-shared/utils/parser";
+import AccountService from "hexagon-frontend/src/services/AccountService";
+import { credentialsAPI } from "../utils/credentialsApi";
+import { authenticationAPI } from "../utils/authenticationApi";
 
-let validUrls = ['amazon.ca', 'facebook.com', 'twitter.com', 'yelp.ca', 'utoronto.ca', 'instagram.com', 'grademy.work'];
-
-
-//api call to login and get token
-
-
-//api call to get username/passwords for current url
-
-
-//api call to add account details
-
-
-//check if account exists already
-
-
-//api call to update account details
-
+let validUrls = [
+    "amazon.ca",
+    "facebook.com",
+    "twitter.com",
+    "yelp.ca",
+    "utoronto.ca",
+    "instagram.com",
+    "grademy.work",
+];
 
 //api call to save mfa key
 
-
-//api call to delete account details
-
-
-
-
-// from https://stackoverflow.com/questions/18371339/how-to-retrieve-name-from-email-address
-function extractName(email: string){
-  return email.match(/^.+(?=@)/)[0];
-}
-
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.clear(); 
-  chrome.storage.local.set({'url': 'google.com', 'username': null, 'password': null, 'autofillClosed': false});
+    chrome.storage.local.clear();
+    chrome.storage.local.set({
+        url: "google.com",
+        username: null,
+        password: null,
+        autofillClosed: false,
+    });
+});
 
-})
-
-chrome.runtime.onMessage.addListener(
-  function(request, sender, sendResponse) {
-
-    // console.log(sender.tab ?
-    //             "from a content script:" + parser.extractDomain(sender.tab.url) :
-    //             "from the extension");
-
-    if (request.message === "isValidSite"){
-      try{
-        sendResponse({valid: validUrls.includes(parser.extractDomain(sender.tab.url))});
-      } catch {
-        sendResponse({valid: false});
-      }
-      
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+    if (request.message === "isValidSite") {
+        (async () => {
+            chrome.storage.local.get(["hexagonAccount"], function (result) {
+                if (!result.hexagonAccount) sendResponse({ valid: false });
+                else {
+                    credentialsAPI
+                        .getWebsiteCredentials(
+                            {
+                                email: result.hexagonAccount.email,
+                                masterKey: result.hexagonAccount.key,
+                                jwt: result.hexagonAccount.token,
+                            },
+                            sender.tab.url
+                        )
+                        .then((credentials) => {
+                            !credentials || credentials.length == 0
+                                ? sendResponse({ valid: false })
+                                : sendResponse({
+                                      valid: true,
+                                      credentials: credentials,
+                                  });
+                        });
+                }
+            });
+        })();
+        return true;
     }
-  }
-);
 
-chrome.runtime.onMessageExternal.addListener(
-  function(request, sender, sendResponse) {
-    if (request.sentFrom === "Hexagon"){
-      console.log(request.user.username);
-      console.log(extractName(request.user.username));
-      console.log(request.user.password);
-      chrome.storage.local.get(['hexagonAccount'], function(result){
-        if(!result.hexagonAccount){
-          chrome.storage.local.set({'hexagonAccount':{username: extractName(request.user.username), email: request.user.username, password: request.user.password}});
-          sendResponse({loggedIn: true});
-        }
-        sendResponse({loggedIn: false});
-      })
+    if (request.message === "credentialAlreadyExists") {
+        console.log(request);
+        (async () => {
+            chrome.storage.local.get(["hexagonAccount"], function (result) {
+                if (!result.hexagonAccount) sendResponse({ valid: false });
+                else {
+                    credentialsAPI
+                        .checkCredentialExists(
+                            {
+                                email: result.hexagonAccount.email,
+                                masterKey: result.hexagonAccount.key,
+                                jwt: result.hexagonAccount.token,
+                            },
+                            request.url,
+                            request.username
+                        )
+                        .then((exists) => {
+                            console.log(exists);
+                            exists
+                                ? sendResponse({
+                                      valid: false,
+                                  })
+                                : sendResponse({ valid: true });
+                        });
+                }
+            });
+        })();
+        return true;
     }
-  });
+
+    if (request.message === "createCredential") {
+        console.log(request);
+        (async () => {
+            chrome.storage.local.get(["hexagonAccount"], function (result) {
+                if (result.hexagonAccount) {
+                    credentialsAPI.createCredential(
+                        {
+                            email: result.hexagonAccount.email,
+                            masterKey: result.hexagonAccount.key,
+                            jwt: result.hexagonAccount.token,
+                        },
+                        request.url,
+                        request.username,
+                        request.password
+                    );
+                }
+            });
+        })();
+        return true;
+    }
+});
+
+chrome.runtime.onMessageExternal.addListener(function (
+    request,
+    sender,
+    sendResponse
+) {
+    if (request.sentFrom === "Hexagon") {
+        chrome.storage.local.get(["hexagonAccount"], function (result) {
+            if (
+                !result.hexagonAccount ||
+                (result.hexagonAccount &&
+                    result.hexagonAccount.email != request.user.username)
+            ) {
+                chrome.tabs.sendMessage(
+                    sender.tab.id,
+                    { message: "signin", email: request.user.username },
+                    function (response) {
+                        if (response.message === "accept")
+                            authenticationAPI.signIn(
+                                request.user.username,
+                                request.user.password
+                            );
+                    }
+                );
+            }
+        });
+    }
+});

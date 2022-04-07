@@ -1,17 +1,33 @@
-import { GridSortDirection } from '@mui/x-data-grid';
-import {
-    Credential,
-    CredentialStrength,
-} from '../components/credentials/CredentialsView';
-import { Account } from '../store/slices/AccountSlice';
+import { GridSortDirection } from "@mui/x-data-grid";
+import { Account } from "../store/slices/AccountSlice";
 import CredentialController, {
     CredentialDto,
-} from '../controllers/CredentialController';
-import * as CryptoWorker from '../workers/CryptoWorker';
-import { ApolloClient, NormalizedCacheObject } from '@apollo/client';
-import zxcvbn from 'zxcvbn';
-import { Owner, PendingShare } from '../components/shares/ShareManager';
-import SecureRecordController from '../controllers/SecureRecordController';
+} from "../controllers/CredentialController";
+import * as CryptoWorker from "../workers/CryptoWorker";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
+import zxcvbn from "zxcvbn";
+import { Owner, PendingShare } from "../components/shares/ShareManager";
+import SecureRecordController from "../controllers/SecureRecordController";
+
+type Credential = {
+    id: string;
+    name: string;
+    user: string;
+    password: string;
+    key: string;
+    strength: CredentialStrength;
+    shares: Owner[];
+    pendingShares: PendingShare[];
+};
+
+enum CredentialStrength {
+    BREACHED = "Potentially Breached Password",
+    WEAK = "Weak Password",
+    MODERATE = "Moderately Secure Password",
+    STRONG = "Secure Password",
+    UNKNOWN = "Security Unknown",
+}
+
 class CredentialService {
     private cryptoWorker: typeof CryptoWorker;
     private credentialController: CredentialController;
@@ -52,10 +68,10 @@ class CredentialService {
             const res = await this.credentialController.checkBreach(
                 hash.slice(0, 5)
             );
-            const data = res.split('\r\n');
+            const data = res.split("\r\n");
             const idx = this.binarySearchHash(data, hash.slice(5));
             if (idx !== -1) {
-                const [_, count] = data[idx].split(':');
+                const [_, count] = data[idx].split(":");
                 const isBreached = Number(count) >= 10;
                 return CredentialStrength.BREACHED;
             }
@@ -77,9 +93,9 @@ class CredentialService {
     }
 
     private async decryptCredential(dto: CredentialDto): Promise<Credential> {
-        let user = '';
-        let key = '';
-        let password = '';
+        let user = "";
+        let key = "";
+        let password = "";
         let shares: Owner[] = [];
         let pendingShares: PendingShare[] = [];
         let strength = CredentialStrength.UNKNOWN;
@@ -131,7 +147,7 @@ class CredentialService {
         };
     }
 
-    private async checkCredentialExists(
+    async checkCredentialExists(
         url: string,
         username: string
     ): Promise<{
@@ -200,6 +216,14 @@ class CredentialService {
             offset,
             limit,
             sortType!
+        );
+        return Promise.all(dtos.map(this.decryptCredential.bind(this)));
+    }
+
+    async getWebsiteCredentials(url: string): Promise<Credential[]> {
+        const dtos = await this.credentialController.searchWebsiteCredentials(
+            url,
+            true
         );
         return Promise.all(dtos.map(this.decryptCredential.bind(this)));
     }
