@@ -27,6 +27,8 @@ jobs:
 
         steps:
             - uses: actions/checkout@v2
+              with:
+                  ref: production
 
             # suggested on https://stackoverflow.com/questions/60176044/how-do-i-use-an-env-file-with-github-actions
             - name: Create env file
