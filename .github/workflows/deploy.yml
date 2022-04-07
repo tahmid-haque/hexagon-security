@@ -65,4 +65,5 @@ jobs:
                   script: |
                       echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ secret.CR_PAT_OWNER }} --password-stdin
                       cd /app
+                      mkdir -p scripts && mv db-setup.sh scripts/
                       docker-compose pull && docker-compose up -d
