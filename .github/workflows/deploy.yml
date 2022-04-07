@@ -13,6 +13,8 @@ on:
     # Run this workflow after building any images
     workflow_run:
         workflows: ['Build and publish frontend', 'Build and publish backend']
+        types:
+            - completed
 
 concurrency:
     group: deployment
