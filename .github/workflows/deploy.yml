@@ -42,6 +42,7 @@ jobs:
                   echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
                   echo "REDIS_URI=${{ secrets.REDIS_URI }}" >> .env
                   echo "DATAGOG_API_KEY=${{ secrets.DATAGOG_API_KEY }}" >> .env
+                  echo "DATADOG_AGENT_PASSWORD=${{ secrets.DATADOG_AGENT_PASSWORD }}" >> .env
 
             - name: SCP Command to Transfer Files
               uses: appleboy/scp-action@v0.1.2
@@ -65,4 +66,4 @@ jobs:
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
                   passphrase: ${{ secrets.SSH_PASSPHRASE }}
                   port: 22
-                  script: systemctl restart hexagon-app
+                  script: systemctl restart hexagon-app || systemctl start hexagon-app

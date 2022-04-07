@@ -29,8 +29,8 @@ services:
         container_name: nginx-proxy
         restart: always
         labels:
-            - com.datadoghq.ad.logs: '[{"source": "nginx-proxy", "service": "nginx-proxy"}]'
-            - com.datadoghq.tags.service: 'nginx-proxy'
+            com.datadoghq.ad.logs: '[{"source": "nginx-proxy", "service": "nginx-proxy"}]'
+            com.datadoghq.tags.service: 'nginx-proxy'
         ports:
             - '80:80'
             - '443:443'
@@ -45,8 +45,8 @@ services:
         container_name: nginx-proxy-acme
         restart: always
         labels:
-            - com.datadoghq.ad.logs: '[{"source": "nginx-acme", "service": "nginx-acme"}]'
-            - com.datadoghq.tags.service: 'nginx-acme'
+            com.datadoghq.ad.logs: '[{"source": "nginx-acme", "service": "nginx-acme"}]'
+            com.datadoghq.tags.service: 'nginx-acme'
         volumes_from:
             - nginx-proxy
         volumes:
@@ -98,8 +98,8 @@ services:
             - datadog
         restart: always
         labels:
-            - com.datadoghq.ad.logs: '[{"source": "backend", "service": "backend"}]'
-            - com.datadoghq.tags.service: 'backend'
+            com.datadoghq.ad.logs: '[{"source": "backend", "service": "backend"}]'
+            com.datadoghq.tags.service: 'backend'
         expose:
             - 4000
         environment:
