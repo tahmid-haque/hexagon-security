@@ -1,42 +1,49 @@
 const jwt = require('jsonwebtoken');
-const HexagonUser = require('../models/HexagonUser');
+const redis = require('redis');
+const JWT_SECRET = process.env.JWT_TOKEN ?? 'secret';
+const RedisController = require('../controllers/redisController');
+const redisController = new RedisController();
 
 const requireAuth = (req, res, next) => {
     const token = req.headers.jwt;
     if (token) {
-        jwt.verify(token, 'secret', (err, decodedToken) => {
+        jwt.verify(token, JWT_SECRET, async (err, decodedToken) => {
             if (err) {
+                console.log(14, err);
                 return res.status(401).end('Invalid JWT');
             } else {
-                const decodedToken = jwt.decode(token);
+                let isRetired = 'true';
+                try {
+                    console.log('key:', token);
+                    console.log('value:', await redisController.get(token));
+                    isRetired = Boolean(await redisController.get(token));
+                } catch (error) {
+                    console.log(22, error);
+                }
+                if (isRetired) return res.status(401).end('Invalid JWT');
                 req.token = decodedToken;
+                req.originalToken = token;
                 next();
             }
         });
     } else {
-        res.status(401).end('No JWT');
-        next();
+        return res.status(401).end('No JWT');
     }
 };
 
-const checkUser = (req, res, next) => {
-    const token = req.headers.jwt;
-    if (token) {
-        jwt.verify(token, 'secret', async (err, decodedToken) => {
-            if (err) {
-                res.redirect('/login');
-                res.locals.hexagonUser = null;
-                next();
-            } else {
-                let hexagonUser = await HexagonUser.findById(decodedToken.id);
-                res.locals.hexagonUser = hexagonUser;
-                next();
-            }
-        });
-    } else {
-        res.locals.hexagonUser = null;
-        next();
-    }
+const maxAge = 24 * 60 * 60; // 1 day
+const createToken = (uid, username) => {
+    return jwt.sign(
+        { uid, username, exp: Math.floor(Date.now() / 1000) + maxAge },
+        JWT_SECRET
+    );
 };
 
-module.exports = { requireAuth, checkUser };
+const retireToken = async (req, res, next) => {
+    await redisController.set(req.originalToken, 1, {
+        EX: Number(req.token.exp) - Math.floor(Date.now() / 1000),
+    });
+    res.status(200).json({ success: true });
+};
+
+module.exports = { requireAuth, retireToken, createToken };

@@ -1,5 +1,4 @@
-import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -7,7 +6,7 @@ import Grow from '@mui/material/Grow';
 import Slide from '@mui/material/Slide';
 import TextField from '@mui/material/TextField';
 import parser from 'hexagon-shared/utils/parser';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AccountService from '../../services/AccountService';
 import { updateAccount } from '../../store/slices/AccountSlice';
@@ -17,6 +16,8 @@ import { useAppDispatch, useAppSelector } from '../../store/store';
 import { useComponentState } from '../../utils/hooks';
 import PasswordField from '../shared/PasswordField';
 import styles from './AuthForm.module.scss';
+
+declare const chrome: any;
 
 type AuthFormState = {
     isSignUp: boolean;
@@ -139,7 +140,7 @@ const onPasswordSubmit = async (
                         password: state.currentPassword,
                     },
                 },
-                function (response) {
+                function (response: any) {
                     if (response.loggedIn)
                         console.log('logged in to chrome extension');
                 }
@@ -301,7 +302,15 @@ export default function AuthForm() {
                     >
                         <Button
                             variant='text'
-                            startIcon={<FontAwesomeIcon icon={faChevronLeft} />}
+                            sx={{
+                                'span.MuiButton-startIcon': {
+                                    mr: 0,
+                                    'svg.MuiSvgIcon-root': {
+                                        fontSize: 24,
+                                    },
+                                },
+                            }}
+                            startIcon={<ChevronLeftIcon />}
                             onClick={useCallback(
                                 () => onBackButtonClick(update),
                                 []

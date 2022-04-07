@@ -1,0 +1,42 @@
+const redis = require('redis');
+
+class RedisController {
+    redisClient;
+    isConnected = false;
+
+    constructor() {
+        this.redisClient = redis.createClient({ url: process.env.REDIS_URI });
+        this.redisClient.on('ready', () => {
+            this.isConnected = true;
+            console.log('Redis Connected');
+        });
+        this.redisClient.on('error', (err) => {
+            this.isConnected = false;
+            console.log('Redis Client Error', err);
+        });
+        this.redisClient.on('end', () => {
+            this.isConnected = false;
+            console.log('Redis Disconnected');
+        });
+        this.redisClient.on('reconnecting', () => {
+            this.isConnected = false;
+            console.log('Redis Reconnecting');
+        });
+        this.redisClient.connect();
+    }
+
+    async tryConnectOnce(callback) {
+        if (!this.isConnected) await this.redisClient.connect();
+        return callback();
+    }
+
+    async get(...args) {
+        return this.tryConnectOnce(() => this.redisClient.get(...args));
+    }
+
+    async set(...args) {
+        return this.tryConnectOnce(() => this.redisClient.set(...args));
+    }
+}
+
+module.exports = RedisController;

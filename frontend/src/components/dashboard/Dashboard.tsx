@@ -125,7 +125,6 @@ export default function Dashboard() {
     } as DashboardState);
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
-    
 
     const context = {
         account,
@@ -185,7 +184,7 @@ export default function Dashboard() {
                         isOpen={state.isShareOpen}
                         onClose={() => update({ isShareOpen: false })}
                     />
-                    <Settings 
+                    <Settings
                         isOpen={state.isSettingsOpen}
                         onClose={() => update({ isSettingsOpen: false })}
                         accountService={state.accountService}

@@ -13,14 +13,20 @@ const updatePasswordMutation = gql`
     }
 `;
 
-const doPOST = (url: string, body: any) => {
+const doRequest = (
+    url: string,
+    body: any,
+    isGet: boolean = false,
+    headers: any = {}
+) => {
     return fetch(url, {
-        method: 'POST',
+        method: isGet ? 'GET' : 'POST',
         headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json',
+            ...headers,
         },
-        body: JSON.stringify(body),
+        ...(!isGet && { body: JSON.stringify(body) }),
     }).then((res) => {
         if (!res.ok) throw { status: res.status, errors: res.json() };
         else return res.json();
@@ -49,14 +55,14 @@ class AccountController {
     }
 
     async checkExists(email: string) {
-        return doPOST('/api/auth/exists', { username: email });
+        return doRequest('/api/auth/exists', { username: email });
     }
 
     async signIn(
         email: string,
         password: string
     ): Promise<AuthenticationResponse> {
-        return doPOST('/api/auth/signin', {
+        return doRequest('/api/auth/signin', {
             username: email,
             password,
         }) as any as AuthenticationResponse;
@@ -66,10 +72,16 @@ class AccountController {
         email: string,
         password: string
     ): Promise<AuthenticationResponse> {
-        return doPOST('/api/auth/signup', {
+        return doRequest('/api/auth/signup', {
             username: email,
             password,
         }) as any as AuthenticationResponse;
+    }
+
+    async signOut(token: string): Promise<AuthenticationResponse> {
+        return doRequest('/api/auth/signout', null, true, {
+            jwt: token,
+        }) as any;
     }
 }
 

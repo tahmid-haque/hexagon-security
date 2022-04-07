@@ -1,9 +1,9 @@
 const CryptoService = require('hexagon-shared/services/CryptoService');
 const HexagonUser = require('../models/HexagonUser');
-const jwt = require('jsonwebtoken');
 const uuid = require('uuid');
 const crypto = require('crypto').webcrypto;
 const cryptoService = new CryptoService(crypto);
+const { createToken } = require('../middleware/authMiddleware');
 
 //handle errors
 const handleErrors = (err) => {
@@ -27,13 +27,6 @@ const handleErrors = (err) => {
         });
     }
     return { errors, status };
-};
-
-const maxAge = 3 * 24 * 60 * 60;
-const createToken = (uid, username) => {
-    return jwt.sign({ uid, username }, 'secret', {
-        expiresIn: maxAge,
-    });
 };
 
 module.exports.signup_post = async (req, res) => {

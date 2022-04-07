@@ -51,7 +51,10 @@ export default function DashboardHeader(props: DashboardHeaderProps) {
         <AppBar
             position='fixed'
             open={props.isNavOpen}
-            sx={{ transform: `translateY(${props.isShown ? 0 : -64}px)`, p: 0 }}
+            sx={{
+                transform: `translateY(${props.isShown ? 0 : -290}px)`,
+                p: 0,
+            }}
         >
             <Toolbar sx={{ paddingLeft: '0 !important' }}>
                 <Collapse

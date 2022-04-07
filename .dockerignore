@@ -1,5 +1,4 @@
-.DS_Store
-.pnp.*
+.git
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
@@ -7,4 +6,10 @@
 !.yarn/sdks
 !.yarn/versions
 **/node_modules
-.env
+**/build
+**/.env
+**/.gitignore
+**/package-lock.json
+**/README.md
+**/Dockerfile
+.dockerignore

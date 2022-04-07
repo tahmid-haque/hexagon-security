@@ -4,29 +4,48 @@ const schema = require('./schema/schema');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
-const { requireAuth, checkUser } = require('./middleware/authMiddleware');
-var sanitize = require('mongo-sanitize');
+const { requireAuth } = require('./middleware/authMiddleware');
+const sanitize = require('mongo-sanitize');
+const helmet = require('helmet');
+const isProd = process.env.NODE_ENV === 'production';
 
 function cleanBody(req, res, next) {
     req.body = sanitize(req.body);
     next();
 }
 const app = express();
+app.use(helmet());
 
-app.use(cors());
+const allowedOrigins = [
+    'https://hexagon-web.xyz',
+    'chrome-extension://cpionbifpgemolinhilabicjppibdhck',
+];
+
+if (!isProd) allowedOrigins.push('http://localhost:4000');
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin) return callback(null, true);
+            if (allowedOrigins.indexOf(origin) === -1) {
+                return callback(
+                    new Error(
+                        'The CORS policy for this site does not allow access from the specified Origin.'
+                    ),
+                    false
+                );
+            }
+            return callback(null, true);
+        },
+    })
+);
 app.use(express.json());
 
 mongoose.set('sanitizeFilter', true); // prevents noSQL injection
-mongoose.connect(
-    'mongodb+srv://junaid:123abc@cluster0.hcsm1.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
-);
+mongoose.connect(process.env.MONGODB_URI);
 mongoose.connection.once('open', () => {
     console.log('connected to database');
 });
-
-// var bodyParser = require('body-parser');
-// app.use(express.static('frontend'));
-// app.use(bodyParser.json());
 
 app.use(
     '/api/graphql',
@@ -59,7 +78,6 @@ app.use(
 
 app.use('/api/auth', authRoutes);
 
-const http = require('http');
 const PORT = 4000;
 
 app.listen(PORT, function (err) {

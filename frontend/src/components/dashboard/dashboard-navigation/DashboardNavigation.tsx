@@ -6,6 +6,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import NotesIcon from '@mui/icons-material/Notes';
 import SettingsIcon from '@mui/icons-material/Settings';
 import {
+    CircularProgress,
     CSSObject,
     List,
     ListItemButton,
@@ -19,6 +20,7 @@ import MuiDrawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AccountService from '../../../services/AccountService';
 import { navWidth } from '../../../shared/constants';
 import { clearAccount } from '../../../store/slices/AccountSlice';
 import {
@@ -26,7 +28,8 @@ import {
     DashboardEventType,
 } from '../../../store/slices/DashboardSlice';
 import { Display } from '../../../store/slices/DisplaySlice';
-import { useAppDispatch } from '../../../store/store';
+import { sendToast } from '../../../store/slices/ToastSlice';
+import { useAppDispatch, useAppSelector } from '../../../store/store';
 import styles from './DashboardNavigation.module.scss';
 
 const optionHeight = 48;
@@ -160,9 +163,11 @@ const getFeatureButtons = function (this: {
 };
 
 export default function DashboardNavigation(props: DashboardNavigationProps) {
+    const account = useAppSelector((state) => state.account);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const [featureButtons, setFeatureButtons] = useState([] as JSX.Element[]);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(
         () =>
@@ -172,14 +177,26 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
         [props.isNavOpen, props.currentPane]
     );
 
-    const onSignOutClick = () => {
-        dispatch(clearAccount());
+    const onSignOutClick = async () => {
+        try {
+            setIsLoading(true);
+            await new AccountService().signOut(account.jwt);
+            dispatch(clearAccount());
+        } catch (error) {
+            dispatch(
+                sendToast({
+                    message: 'We were unable to sign you out.',
+                    severity: 'error',
+                })
+            );
+        }
+        setIsLoading(false);
     };
     return (
         <Drawer
             variant='permanent'
             open={props.isNavOpen}
-            sx={{ transform: `translateX(${props.isShown ? 0 : -64}px)` }}
+            sx={{ transform: `translateX(${props.isShown ? 0 : -290}px)` }}
         >
             <div className={styles.options}>
                 <div>
@@ -227,7 +244,11 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
                                 onClick={onSignOutClick}
                                 disabled={props.currentPane === Display.NONE}
                             >
-                                <LogoutIcon />
+                                {isLoading ? (
+                                    <CircularProgress size={24} />
+                                ) : (
+                                    <LogoutIcon />
+                                )}
                             </IconButton>
                         )}
                     </DrawerEnd>

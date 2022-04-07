@@ -30,7 +30,7 @@ class AccountService {
             : this.accountController.signIn(email, password);
     }
 
-    async updatePassword(
+    updatePassword(
         oldPassword: string,
         newPassword: string,
         client: ApolloClient<NormalizedCacheObject>,
@@ -43,6 +43,10 @@ class AccountService {
             { oldPassword, newPassword },
             true
         ).then((data) => data.updatePassword);
+    }
+
+    signOut(token: string) {
+        return this.accountController.signOut(token);
     }
 }
 

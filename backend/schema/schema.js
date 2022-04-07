@@ -12,7 +12,9 @@ const cryptoService = new CryptoService(crypto);
 const sanitize = require('mongo-sanitize');
 const { trusted } = require('mongoose');
 const bcrypt = require('bcrypt');
-const mailgun = require('mailgun-js');
+const formData = require('form-data');
+const Mailgun = require('mailgun.js');
+const mailgun = new Mailgun(formData);
 
 const {
     GraphQLObjectType,
@@ -27,7 +29,10 @@ const {
 
 const DOMAIN = 'hexagon-web.xyz';
 const mailKey = process.env.MAILGUN_API_KEY ?? '';
-const mg = mailKey ? mailgun({ apiKey: mailKey, domain: DOMAIN }) : null;
+const mg = mailKey
+    ? mailgun.client({ username: 'hexagon-server', key: mailKey })
+    : null;
+if (!mg) console.log('emails disabled');
 
 const throwDBError = (err, status) => {
     throw new GraphQLError('Custom error', {
@@ -454,7 +459,7 @@ const Mutation = new GraphQLObjectType({
                             ? 'mfa'
                             : 'notes')
                 );
-                const share_link = `http://localhost:3000/app/share?shareId=${shareId}&shareKey=${shareKey}&next=${nextLocation}`;
+                const share_link = `https://hexagon-web.xyz/app/share?shareId=${shareId}&shareKey=${shareKey}&next=${nextLocation}`;
                 const sender = context.token.username;
                 const share_type =
                     share.type === 'account'
@@ -475,7 +480,7 @@ const Mutation = new GraphQLObjectType({
                         share_link,
                     }),
                 };
-                if (mg) await mg.messages.create(DOMAIN_NAME, mailgunData);
+                if (mg) await mg.messages.create(DOMAIN, mailgunData);
 
                 return share;
             },
