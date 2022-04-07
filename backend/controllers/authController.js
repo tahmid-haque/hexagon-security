@@ -60,6 +60,11 @@ module.exports.signup_post = async (req, res) => {
     }
 };
 
+/**
+ * Sign in a new user given their username and password.
+ * @param {*} req express request object
+ * @param {*} res express response object
+ */
 module.exports.login_post = async (req, res) => {
     const { username, password } = req.body;
 
@@ -77,6 +82,11 @@ module.exports.login_post = async (req, res) => {
     }
 };
 
+/**
+ * Check whether a user already exists given a username.
+ * @param {*} req express request object
+ * @param {*} res express response object
+ */
 module.exports.checkUser = async (req, res) => {
     const { username } = req.body;
     HexagonUser.findOne({ username }, (error, data) => {

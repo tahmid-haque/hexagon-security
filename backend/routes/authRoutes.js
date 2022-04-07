@@ -6,7 +6,7 @@ const router = Router();
 
 router.post('/signup', authController.signup_post);
 router.post('/signin', authController.login_post);
-router.post('/exists', authController.checkUser); //checks if a user exists in database
+router.post('/exists', authController.checkUser);
 router.get('/signout', requireAuth, retireToken);
 
 module.exports = router;

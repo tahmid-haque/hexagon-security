@@ -38,10 +38,20 @@ class RedisController {
         return callback();
     }
 
+    /**
+     * Attempt to get one value from Redis once
+     * @param  {...any} args command args
+     * @returns
+     */
     async get(...args) {
         return this.tryConnectOnce(() => this.redisClient.get(...args));
     }
 
+    /**
+     * Attempt to set one value in Redis once
+     * @param  {...any} args command args
+     * @returns
+     */
     async set(...args) {
         return this.tryConnectOnce(() => this.redisClient.set(...args));
     }
