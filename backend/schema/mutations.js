@@ -99,7 +99,7 @@ const Mutation = new GraphQLObjectType({
                     ],
                 }).save();
                 secureRecord.recordId = credential._id;
-                secureRecord.save();
+                await secureRecord.save();
                 return {
                     ...secureRecord.toObject(),
                     credential: extractRecord(credential),
@@ -142,7 +142,7 @@ const Mutation = new GraphQLObjectType({
                     ],
                 }).save();
                 secureRecord.recordId = note._id;
-                secureRecord.save();
+                await secureRecord.save();
                 return {
                     ...secureRecord.toObject(),
                     note: extractRecord(note),
@@ -187,7 +187,7 @@ const Mutation = new GraphQLObjectType({
                     ],
                 }).save();
                 secureRecord.recordId = seed._id;
-                secureRecord.save();
+                await secureRecord.save();
                 return {
                     ...secureRecord.toObject(),
                     credential: extractRecord(seed),
@@ -257,7 +257,6 @@ const Mutation = new GraphQLObjectType({
                         : share.type === 'seed'
                         ? 'MFA credential'
                         : 'note';
-                console.log(share_link);
 
                 const mailgunData = {
                     from: 'Hexagon Security Team <noreply@hexagon-web.xyz>',

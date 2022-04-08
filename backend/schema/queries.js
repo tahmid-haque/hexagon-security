@@ -50,11 +50,11 @@ const RootQuery = new GraphQLObjectType({
                 name: { type: new GraphQLNonNull(GraphQLString) },
                 exactMatch: { type: GraphQLBoolean },
             },
-            resolve(parent, args, context) {
+            resolve: async (parent, args, context) => {
                 const name = !args.exactMatch
                     ? trusted({ $regex: sanitize(args.name), $options: 'i' })
                     : parser.extractDomain(args.name);
-                return SecureRecord.find({
+                return await SecureRecord.find({
                     name,
                     type: 'account',
                     uid: context.token.uid,
@@ -74,11 +74,11 @@ const RootQuery = new GraphQLObjectType({
                 name: { type: new GraphQLNonNull(GraphQLString) },
                 exactMatch: { type: GraphQLBoolean },
             },
-            resolve(parent, args, context) {
+            resolve: async (parent, args, context) => {
                 const name = !args.exactMatch
                     ? trusted({ $regex: sanitize(args.name), $options: 'i' })
                     : parser.extractDomain(args.name);
-                return SecureRecord.find({
+                return await SecureRecord.find({
                     name,
                     type: 'seed',
                     uid: context.token.uid,
@@ -86,7 +86,7 @@ const RootQuery = new GraphQLObjectType({
             },
         },
         /**
-         * Sorts the records by sortType, starts from the given offSet and returns 
+         * Sorts the records by sortType, starts from the given offSet and returns
          * records upto the given limit
          * @param {GraphQLString} sortType ascending or descending
          * @param {GraphQLInt} offset offset
@@ -100,11 +100,11 @@ const RootQuery = new GraphQLObjectType({
                 offset: { type: GraphQLInt },
                 limit: { type: GraphQLInt },
             },
-            resolve(parent, args, context) {
+            resolve: async (parent, args, context) => {
                 if (!parser.isSortValid(args.sortType))
                     throwDBError({ sortType: 'Invalid sort type' }, 400);
 
-                return SecureRecord.find({
+                return await SecureRecord.find({
                     type: 'account',
                     uid: context.token.uid,
                 })
@@ -114,7 +114,7 @@ const RootQuery = new GraphQLObjectType({
             },
         },
         /**
-         * Sorts the records by sortType, starts from the given offSet and returns 
+         * Sorts the records by sortType, starts from the given offSet and returns
          * records upto the given limit
          * @param {GraphQLString} sortType ascending or descending
          * @param {GraphQLInt} offset offset
@@ -128,11 +128,11 @@ const RootQuery = new GraphQLObjectType({
                 offset: { type: GraphQLInt },
                 limit: { type: GraphQLInt },
             },
-            resolve(parent, args, context) {
+            resolve: async (parent, args, context) => {
                 if (!parser.isSortValid(args.sortType))
                     throwDBError({ sortType: 'Invalid sort type' }, 400);
 
-                return SecureRecord.find({
+                return await SecureRecord.find({
                     type: 'note',
                     uid: context.token.uid,
                 })
@@ -142,7 +142,7 @@ const RootQuery = new GraphQLObjectType({
             },
         },
         /**
-         * Sorts the records by sortType, starts from the given offSet and returns 
+         * Sorts the records by sortType, starts from the given offSet and returns
          * records upto the given limit
          * @param {GraphQLString} sortType ascending or descending
          * @param {GraphQLInt} offset offset
@@ -156,11 +156,11 @@ const RootQuery = new GraphQLObjectType({
                 offset: { type: GraphQLInt },
                 limit: { type: GraphQLInt },
             },
-            resolve(parent, args, context) {
+            resolve: async (parent, args, context) => {
                 if (!parser.isSortValid(args.sortType))
                     throwDBError({ sortType: 'Invalid sort type' }, 400);
 
-                return SecureRecord.find({
+                return await SecureRecord.find({
                     type: 'seed',
                     uid: context.token.uid,
                 })
@@ -207,8 +207,8 @@ const RootQuery = new GraphQLObjectType({
         countMFAs: {
             type: GraphQLInt,
             args: {},
-            resolve(parent, args, context) {
-                return SecureRecord.find({
+            resolve: async (parent, args, context) => {
+                return await SecureRecord.find({
                     type: 'seed',
                     uid: context.token.uid,
                 }).count();
@@ -221,8 +221,8 @@ const RootQuery = new GraphQLObjectType({
         countNotes: {
             type: GraphQLInt,
             args: {},
-            resolve(parent, args, context) {
-                return SecureRecord.find({
+            resolve: async (parent, args, context) => {
+                return await SecureRecord.find({
                     type: 'note',
                     uid: context.token.uid,
                 }).count();
@@ -235,8 +235,8 @@ const RootQuery = new GraphQLObjectType({
         countWebsiteCredentials: {
             type: GraphQLInt,
             args: {},
-            resolve(parent, args, context) {
-                return SecureRecord.find({
+            resolve: async (parent, args, context) => {
+                return await SecureRecord.find({
                     type: 'account',
                     uid: context.token.uid,
                 }).count();
