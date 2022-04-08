@@ -28,6 +28,11 @@ const searchWebsiteCredentialsQuery = gql`
             credential {
                 username
                 password
+                owners
+            }
+            pendingShares {
+                receiver
+                _id
             }
         }
     }
