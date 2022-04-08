@@ -110,13 +110,14 @@ The main components are developed as follows:
             protections are instituted at the container level including HTTPS-only access, and minimal
             port exposure.
 -   **Extension**
-    -   The Chrome extention is developed in `React` with `TypeScript`, `HTML` and `CSS`. A `React-TypeScript`
-        template was used to bootstrap the project. The extension runs separately to the other components
-        but relies on the frontend to sign in (via message passing), reusable servicees,
-        and the backend for data.
+    -   The Chrome extention is developed in `React` with `TypeScript`, `HTML` and `CSS`. A
+        `React-TypeScript-Extension` template was used to bootstrap the project. The extension runs
+        separately to the other components but relies on the frontend to sign in (via message passing),
+        reusable servicees, and the backend for data.
     -   Libraries
         -   `mui` for component building
         -   `fontsouce` for fonts
+        -   `generate-password` for secure password generation
         -   `react-password-strength-bar` for measuring password strength
     -   No third party APIs were used
     -   Security
@@ -138,8 +139,9 @@ requests to HTTPS. An `Nginx ACME` container was used to manage the SSL certific
 provided through `Let's Encrypt`. All of these containers were then configured on a single
 `Docker Compose` file to be run through a single command. To ensure reliability, all containers were
 configured to restart always and the `Docker Compose` file is attached to a Unix service so that it
-runs on startup and restarts on failure. This is all run on a `Digital Ocean` VM connected to a
-domain from `NameCheap`. Finally, this entire workflow is automated by a few `GitHub Actions` workflows
+runs on startup and restarts on failure. This is all run on a `Digital Ocean` VM, connected to a
+domain from `NameCheap`, and configured with a firewall to only allow certain types of traffic.
+Finally, this entire workflow is automated by a few `GitHub Actions` workflows
 that build and deploy the necessary containers on a push to the `production` branch. We manually
 configured the DNS records and populated `GitHub Secrets` once to enable these processes.
 

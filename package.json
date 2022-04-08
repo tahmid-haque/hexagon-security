@@ -5,7 +5,8 @@
         "client": "yarn workspace hexagon-frontend start",
         "client-build": "yarn workspace hexagon-frontend build",
         "server": "yarn workspace hexagon-backend start",
-        "extension": "yarn workspace hexagon-extension start"
+        "extension": "yarn workspace hexagon-extension start",
+        "extension-build": "yarn workspace hexagon-extension build"
     },
     "workspaces": [
         "backend",
