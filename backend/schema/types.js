@@ -4,11 +4,7 @@ const Share = require('../models/Share');
 const Seed = require('../models/Seed');
 const Note = require('../models/Note');
 
-const {
-    GraphQLObjectType,
-    GraphQLString,
-    GraphQLList,
-} = graphql;
+const { GraphQLObjectType, GraphQLString, GraphQLList } = graphql;
 
 /**
  * Extracts and returns data related to the record model
@@ -127,5 +123,5 @@ const ShareType = new GraphQLObjectType({
 
 module.exports = Object.freeze({
     ShareType,
-    SecureRecordType
-})
+    SecureRecordType,
+});
