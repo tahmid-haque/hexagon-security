@@ -535,7 +535,7 @@ const Mutation = new GraphQLObjectType({
          * @param {GraphQLBoolean} isAccepted determines if user accepts or declines share request
          * @param {GraphQLString} masterUsername username of the current user
          * @param {GraphQLString} recordKey key used to create to secure record
-         * @returns {any} boolean value
+         * @returns {any} secure record id
          */
         finalizeShare: {
             type: GraphQLString,

@@ -76,6 +76,14 @@ class MFAController {
         this.executeQuery = executeQuery.bind(this, client, token);
     }
 
+    /**
+     * Sorts the records by sortType, starts from the given offSet and returns 
+     * records upto the given limit
+     * @param {string} sortType ascending or descending
+     * @param {number} offset offset
+     * @param {number} limit limit
+     * @returns {any} list of SecureRecord data for MFAs
+     */
     public getMFAs(offset: number, limit: number, sortType: string) {
         return this.executeQuery(
             getMFAsQuery,
@@ -88,6 +96,13 @@ class MFAController {
         ).then((data) => data.getMFAs as MFADto[]);
     }
 
+    /**
+     * Searches for a MFA given URL/name, if exactMatch
+     * is false then returns all secure records containing the given name
+     * @param {string} name domain url or name
+     * @param {boolean} exactMatch boolean value
+     * @returns {any} SecureRecord data for MFA
+     */
     public searchMFAs(name: string, exactMatch: boolean) {
         return this.executeQuery(
             searchMFAsQuery,
@@ -99,12 +114,26 @@ class MFAController {
         ).then((data) => data.searchMFAs as MFADto[]);
     }
 
+    /**
+     * counts the number of MFAs for the current user and returns the count
+     * @returns {any} number of MFA records
+     */
     public countMFAs() {
         return this.executeQuery(countMFAsQuery, {}, false).then(
             (data) => data.countMFAs as number
         );
     }
 
+    /**
+     * Attempts to create a secure record with the given arguments, returns
+     * the newly created record on success
+     * @param {string} name website url
+     * @param {string} username username for the website
+     * @param {string} seed MFA seed for the website
+     * @param {string} key key used for encryption
+     * @param {string} masterUsername username for the hexagon user
+     * @returns {any} newly created record data
+     */
     public createMFA(
         name: string,
         username: string,
