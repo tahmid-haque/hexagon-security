@@ -1,6 +1,6 @@
 import { Box, LinearProgress } from '@mui/material';
 import { DataGrid, GridColDef, GridSortDirection } from '@mui/x-data-grid';
-import { RefObject, useEffect, useRef, useState } from 'react';
+import { RefObject, useEffect, useRef } from 'react';
 import {
     DashboardEvent,
     DashboardEventType,
@@ -170,7 +170,7 @@ export default function AppTable(props: AppTableProps) {
                 }}
                 sx={{
                     mx: 0,
-                    // remove focus outlinees
+                    // remove focus outlines
                     '&.MuiDataGrid-root .MuiDataGrid-cell, &.MuiDataGrid-root .MuiDataGrid-columnHeader':
                         {
                             outline: 'none',

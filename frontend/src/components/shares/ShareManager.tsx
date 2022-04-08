@@ -147,7 +147,7 @@ const onEmailChange = function (
  * @param this context in which to execute the function
  */
 const onEmailSubmit = async function (this: ShareManagerContext) {
-    const { state, update, dispatch, props } = this;
+    const { state, update, dispatch } = this;
     if (state.isLoading) return;
     if (!state.isInputValid || !state.currentEmail) {
         return update({
@@ -243,7 +243,7 @@ const onDeleteError = function (this: ShareManagerContext) {
  * @param this context in which to execute the function
  */
 const onPendingShareDelete = async function (this: ShareManagerContext) {
-    const { state, update, props } = this;
+    const { state, update } = this;
     update({ isDeleteLoading: true });
     try {
         await state.shareService.deletePendingShare(
@@ -268,7 +268,7 @@ const onPendingShareDelete = async function (this: ShareManagerContext) {
  * @param this context in which to execute the function
  */
 const onOwnerShareDelete = async function (this: ShareManagerContext) {
-    const { state, update, props } = this;
+    const { state, update } = this;
     update({ isDeleteLoading: true });
     try {
         await state.shareService.revokeShare(

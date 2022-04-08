@@ -1,15 +1,15 @@
-import { Box, IconButton, Tooltip } from '@mui/material';
-import { getShareInfo, ShareInfo } from '../shares/ShareManager';
 import LockIcon from '@mui/icons-material/Lock';
 import PeopleIcon from '@mui/icons-material/People';
-import { useAppDispatch } from '../../store/store';
+import { Box, IconButton, Tooltip } from '@mui/material';
 import {
     createEvent,
     DashboardEventType,
 } from '../../store/slices/DashboardSlice';
+import { useAppDispatch } from '../../store/store';
 import { Credential } from '../credentials/CredentialsView';
 import { MFA } from '../mfa/MFAView';
 import { Note } from '../notes/NotesView';
+import { getShareInfo } from '../shares/ShareManager';
 
 /**
  * OwnershipStatus component used to display ownership of a credential / MFA credential / note

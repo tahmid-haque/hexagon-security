@@ -54,7 +54,6 @@ export default function App() {
     // default routing
     useEffect(() => {
         if (location.pathname === '/') navigate('/app/credentials');
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location]);
 
     // show a toast if available

@@ -1,12 +1,11 @@
-import * as CryptoWorker from '../workers/CryptoWorker';
-import { MFA } from '../components/mfa/MFAView';
-import { Account } from '../store/slices/AccountSlice';
+import { ApolloClient, NormalizedCacheObject } from '@apollo/client';
 import { GridSortDirection } from '@mui/x-data-grid';
-import { promises } from 'dns';
+import { MFA } from '../components/mfa/MFAView';
 import { Owner, PendingShare } from '../components/shares/ShareManager';
 import MFAController, { MFADto } from '../controllers/MFAController';
 import SecureRecordController from '../controllers/SecureRecordController';
-import { ApolloClient, NormalizedCacheObject } from '@apollo/client';
+import { Account } from '../store/slices/AccountSlice';
+import * as CryptoWorker from '../workers/CryptoWorker';
 
 /**
  * Service used to manage all MFA credential related functions

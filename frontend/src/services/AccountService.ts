@@ -1,4 +1,4 @@
-import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
+import { ApolloClient, NormalizedCacheObject } from '@apollo/client';
 import AccountController from '../controllers/AccountController';
 
 /**
