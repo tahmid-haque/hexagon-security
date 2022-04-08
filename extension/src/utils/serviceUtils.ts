@@ -8,7 +8,7 @@ export type Account = {
 };
 
 export const client = new ApolloClient({
-    uri: "http://localhost:3000/api/graphql",
+    uri: "https://hexagon-web.xyz/api/graphql",
     cache: new InMemoryCache(),
     defaultOptions: {
         query: { fetchPolicy: "no-cache" },

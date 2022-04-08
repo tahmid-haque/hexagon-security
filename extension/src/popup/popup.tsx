@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
+import { Box, LinearProgress } from "@mui/material";
 import "./popup.css";
 import "./components/Signin/signin.css";
 import Header from "../sharedComponents/header/Header";
@@ -7,30 +8,54 @@ import parser from "hexagon-shared/utils/parser";
 import { useComponentState } from "hexagon-frontend/src/utils/hooks";
 import SigninPage from "./components/Signin/SigninPage";
 import PopupBody from "./components/PopupBody/PopupBody";
+import { authenticationAPI } from "../utils/authenticationAPI";
 
-type PopupState = {
-    isLoggedIn: boolean;
+export type HexagonAccount = {
+    username: string;
+    email: string;
+    password: string;
+    token: string;
+    masterKey: string;
 };
 
-type PopupProps = {
-    isLoggedIn: boolean;
-    username?: string;
-    currentUrl?: string;
-};
+const HexagonAccount = ({ url }: { url: string }) => {
+    const [credentials, setCredentials] = useState<HexagonAccount>(null);
+    const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
-const Popup = (props: PopupProps) => {
-    const { state, update } = useComponentState({
-        isLoggedIn: props.isLoggedIn,
+    useEffect(() => {
+        chrome.storage.local.get(["hexagonAccount"], async function (result) {
+            // console.log(result.hexagonAccount);
+            if (result.hexagonAccount) {
+                setCredentials({
+                    username: result.hexagonAccount.username,
+                    email: result.hexagonAccount.email,
+                    password: result.hexagonAccount.password,
+                    token: result.hexagonAccount.token,
+                    masterKey: result.hexagonAccount.key,
+                });
+                setIsLoggedIn(true);
+            } else setIsLoggedIn(false);
+        });
     });
 
     return (
         <div>
             <Header url={"icon.png"} clickAction={() => window.close()} />
-            {props.isLoggedIn ? (
-                <PopupBody name={props.username} url={props.currentUrl} />
-            ) : (
-                <SigninPage />
+            {isLoggedIn == null && (
+                <Box
+                    sx={{
+                        width: "350px",
+                        height: "432px",
+                        backgroundColor: "white",
+                    }}
+                >
+                    <LinearProgress />
+                </Box>
             )}
+            {isLoggedIn === true && (
+                <PopupBody account={credentials} url={url} />
+            )}
+            {isLoggedIn === false && <SigninPage />}
         </div>
     );
 };
@@ -38,30 +63,12 @@ const Popup = (props: PopupProps) => {
 const root = document.createElement("div");
 document.body.appendChild(root);
 
-chrome.storage.local.get(["hexagonAccount"], function (account) {
-    {
-        chrome.tabs.query(
-            { currentWindow: true, active: true },
-            function (result) {
-                let currentUrl;
-                try {
-                    currentUrl = parser.extractDomain(result[0].url);
-                } catch {
-                    currentUrl = null;
-                }
-                ReactDOM.render(
-                    <Popup
-                        isLoggedIn={account.hexagonAccount ? true : false}
-                        currentUrl={currentUrl}
-                        username={
-                            account.hexagonAccount
-                                ? account.hexagonAccount.username
-                                : ""
-                        }
-                    />,
-                    root
-                );
-            }
-        );
+chrome.tabs.query({ currentWindow: true, active: true }, function (result) {
+    let currentUrl;
+    try {
+        currentUrl = parser.extractDomain(result[0].url);
+    } catch {
+        currentUrl = null;
     }
+    ReactDOM.render(<HexagonAccount url={currentUrl} />, root);
 });

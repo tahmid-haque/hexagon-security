@@ -8,7 +8,7 @@ export const authenticationAPI = (function () {
         return email.match(/^.+(?=@)/)[0];
     };
 
-    const accountService = new AccountService("http://localhost:3000");
+    const accountService = new AccountService("https://hexagon-web.xyz");
 
     const module = {
         //api call to login and get token
@@ -33,6 +33,29 @@ export const authenticationAPI = (function () {
             } catch {
                 chrome.storage.local.clear();
             }
+        },
+
+        signOut: async (token: string) => {
+            try {
+                await accountService.signOut(token);
+            } catch {
+                throw "Unable to sign you out right now";
+            }
+        },
+
+        updateToken: async () => {
+            chrome.storage.local.get(
+                ["hexagonAccount"],
+                async function (result) {
+                    console.log(result.hexagonAccount);
+                    if (result.hexagonAccount) {
+                        module.signIn(
+                            result.hexagonAccount.email,
+                            result.hexagonAccount.password
+                        );
+                    } else chrome.storage.local.clear();
+                }
+            );
         },
     };
 

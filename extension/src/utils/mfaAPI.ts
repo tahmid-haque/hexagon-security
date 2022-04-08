@@ -1,5 +1,5 @@
 import MFAService from "hexagon-frontend/src/services/MFAService";
-import CryptoService from "hexagon-shared/services/CryptoService";
+import { authenticationAPI } from "./authenticationAPI";
 import { Account, client, cryptoService } from "./serviceUtils";
 
 export const mfaAPI = (function () {
@@ -23,7 +23,8 @@ export const mfaAPI = (function () {
             } catch (err) {
                 if (err.status === 409)
                     throw "MFA key already exists for account.";
-                else throw "Unable to create MFA key.";
+                if (err.status === 401) authenticationAPI.updateToken();
+                throw "Unable to create MFA key. Try again later.";
             }
         },
     };

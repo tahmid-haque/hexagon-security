@@ -7,13 +7,19 @@ import "../Signin/signin.css";
 import PopupPasswords from "../Passwords/Passwords";
 import PasswordGenerator from "../PasswordGenerator/PasswordGenerator";
 import MFAKeyForm from "../MFAKey/MFAKeys";
+import { authenticationAPI } from "../../../utils/authenticationAPI";
+import type { HexagonAccount } from "../../popup";
+import {
+    PopupMessage,
+    ErrorMessage,
+} from "../../../sharedComponents/PopupMessages/PopupMessage";
 
-const onLogOut = () => {
-    chrome.storage.local.clear();
-    window.close();
+type UserGreetingProps = {
+    name: string;
+    onLogout: () => void;
 };
 
-const UserGreeting = ({ name }: { name: string }) => {
+const UserGreeting = (props: UserGreetingProps) => {
     return (
         <div className="container">
             <Box mb={"2px"}>
@@ -23,7 +29,7 @@ const UserGreeting = ({ name }: { name: string }) => {
                         justifyContent={"space-between"}
                         alignItems={"center"}
                     >
-                        <div className="greeting">Hello {name}...</div>
+                        <div className="greeting">Hello {props.name}...</div>
                         <Button
                             variant="outlined"
                             color="primary"
@@ -33,7 +39,7 @@ const UserGreeting = ({ name }: { name: string }) => {
                                 height: "30px",
                                 fontSize: 13,
                             }}
-                            onClick={onLogOut}
+                            onClick={props.onLogout}
                         >
                             Sign Out
                         </Button>
@@ -44,16 +50,33 @@ const UserGreeting = ({ name }: { name: string }) => {
     );
 };
 
-const PopupBody = ({ name, url }: { name: string; url: string }) => {
+type PopupBodyProps = {
+    account: HexagonAccount;
+    url: string;
+};
+
+const PopupBody = (props: PopupBodyProps) => {
     const [value, setValue] = React.useState("1");
+    const [showError, setShowError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
 
+    const onLogout = async () => {
+        try {
+            await authenticationAPI.signOut(props.account.token);
+            chrome.storage.local.clear();
+        } catch (err) {
+            setErrorMessage(err);
+            setShowError(true);
+        }
+    };
+
     return (
         <div className="home-container">
-            <UserGreeting name={name} />
+            <UserGreeting name={props.account.username} onLogout={onLogout} />
 
             <Box sx={{ width: "100%", typography: "body1" }}>
                 <TabContext value={value}>
@@ -78,15 +101,21 @@ const PopupBody = ({ name, url }: { name: string; url: string }) => {
                             padding: "0",
                         }}
                     >
-                        <PopupPasswords url={url} />
+                        <PopupPasswords url={props.url} />
                     </TabPanel>
                     <TabPanel value="2" sx={{ height: "337px", padding: "0" }}>
                         <PasswordGenerator />
                     </TabPanel>
                     <TabPanel value="3" sx={{ height: "337px", padding: "0" }}>
-                        <MFAKeyForm url={url} />
+                        <MFAKeyForm url={props.url} />
                     </TabPanel>
                 </TabContext>
+                {showError && (
+                    <ErrorMessage
+                        message={errorMessage}
+                        onClose={() => setShowError(false)}
+                    />
+                )}
             </Box>
         </div>
     );

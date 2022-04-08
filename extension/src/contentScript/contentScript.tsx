@@ -11,8 +11,6 @@ import {
     SigninOverlay,
 } from "./Overlay/Overlay";
 import parser from "hexagon-shared/utils/parser";
-// import { useComponentState } from '../utils/hooks'
-import { useComponentState } from "hexagon-frontend/src/utils/hooks";
 
 export type Credential = {
     id: string;
@@ -277,6 +275,7 @@ window.addEventListener("load", function () {
     ) {
         if (request.message === "signin") {
             (async () => {
+                // ReactDOM.render(<App />, root);
                 ReactDOM.render(
                     <App
                         isSigninOpen={true}

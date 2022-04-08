@@ -1,5 +1,3 @@
-import parser from "hexagon-shared/utils/parser";
-import AccountService from "hexagon-frontend/src/services/AccountService";
 import { credentialsAPI } from "../utils/credentialsAPI";
 import { authenticationAPI } from "../utils/authenticationAPI";
 
@@ -49,6 +47,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         (async () => {
             chrome.storage.local.get(["hexagonAccount"], function (result) {
                 if (!result.hexagonAccount) sendResponse({ valid: false });
+                else if (sender.url.includes("hexagon-web.xyz"))
+                    sendResponse({ valid: false });
                 else {
                     credentialsAPI
                         .checkCredentialExists(
@@ -79,16 +79,43 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         (async () => {
             chrome.storage.local.get(["hexagonAccount"], function (result) {
                 if (result.hexagonAccount) {
-                    credentialsAPI.createCredential(
-                        {
-                            email: result.hexagonAccount.email,
-                            masterKey: result.hexagonAccount.key,
-                            jwt: result.hexagonAccount.token,
-                        },
-                        request.url,
-                        request.username,
-                        request.password
-                    );
+                    credentialsAPI
+                        .checkCredentialExists(
+                            {
+                                email: result.hexagonAccount.email,
+                                masterKey: result.hexagonAccount.key,
+                                jwt: result.hexagonAccount.token,
+                            },
+                            request.url,
+                            request.username
+                        )
+                        .then(async (exists) => {
+                            if (exists) {
+                                await credentialsAPI.updateCredential(
+                                    {
+                                        email: result.hexagonAccount.email,
+                                        masterKey: result.hexagonAccount.key,
+                                        jwt: result.hexagonAccount.token,
+                                    },
+                                    exists.id,
+                                    request.url,
+                                    request.username,
+                                    request.password,
+                                    exists.key
+                                );
+                            } else {
+                                await credentialsAPI.createCredential(
+                                    {
+                                        email: result.hexagonAccount.email,
+                                        masterKey: result.hexagonAccount.key,
+                                        jwt: result.hexagonAccount.token,
+                                    },
+                                    request.url,
+                                    request.username,
+                                    request.password
+                                );
+                            }
+                        });
                 }
             });
         })();
@@ -111,12 +138,23 @@ chrome.runtime.onMessageExternal.addListener(function (
                 chrome.tabs.sendMessage(
                     sender.tab.id,
                     { message: "signin", email: request.user.username },
-                    function (response) {
-                        if (response.message === "accept")
-                            authenticationAPI.signIn(
-                                request.user.username,
-                                request.user.password
-                            );
+                    async function (response) {
+                        if (response.message === "accept") {
+                            try {
+                                if (result.hexagonAccount) {
+                                    await authenticationAPI.signOut(
+                                        result.hexagonAccount.token
+                                    );
+                                }
+
+                                await authenticationAPI.signIn(
+                                    request.user.username,
+                                    request.user.password
+                                );
+                            } catch {
+                                chrome.storage.local.clear();
+                            }
+                        }
                     }
                 );
             }

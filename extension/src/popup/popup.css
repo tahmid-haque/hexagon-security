@@ -1,57 +1,61 @@
 body {
-  font-family: 'Lato', 'Roboto', 'Helvetica', 'Ariel', sans-serif;
-  background-color: #dadada;
-  width: 350px;
-  max-height: 500px;
-  padding: 0;
-  margin: 0;
-  border: 0;
-  background: radial-gradient(circle, rgba(62,159,255,1) 32%, rgba(58,92,181,1) 88%);
-  background-size: 300% 300%;
-  animation: gradient 12s ease infinite;
+    font-family: "Lato", "Roboto", "Helvetica", "Ariel", sans-serif;
+    background-color: #dadada;
+    width: 350px;
+    max-height: 500px;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background: radial-gradient(
+        circle,
+        rgba(62, 159, 255, 1) 32%,
+        rgba(58, 92, 181, 1) 88%
+    );
+    background-size: 300% 300%;
+    animation: gradient 12s ease infinite;
 }
 
 @keyframes gradient {
-  0% {
-		background-position: left top;
-	}
-	25% {
-		background-position: right bottom;
-	}
-  50%{
-    background-position: left bottom;
-  }
-  75%{
-    background-position: right top;
-  }
-	100% {
-		background-position: left top;
-	}
+    0% {
+        background-position: left top;
+    }
+    25% {
+        background-position: right bottom;
+    }
+    50% {
+        background-position: left bottom;
+    }
+    75% {
+        background-position: right top;
+    }
+    100% {
+        background-position: left top;
+    }
 }
 
-.home-container{
-  background-color: #dadada;
-  margin-top: 3px;
-  max-height: 440px !important;
-  overflow: scroll;
+.home-container {
+    background-color: #dadada;
+    margin-top: 3px;
+    max-height: 440px !important;
+    overflow: scroll;
 }
 
-.hexagon-subheading{
-  font-size: 16px !important;
-  font-weight: 375;
-  padding-bottom: 15px;
+.hexagon-subheading {
+    font-size: 16px !important;
+    font-weight: 375;
+    padding-bottom: 15px;
 }
 
-.MuiTabPanel-root{
-  background-color: #fafafa;
+.MuiTabPanel-root {
+    background-color: #fafafa;
 }
 
-.MuiTabs-root{
-  background-color: #e3f2fd;
+.MuiTabs-root {
+    background-color: #e3f2fd;
 }
 
-.hexagon-mfa-subheading{
-  font-size: 18px !important;
-  font-weight: 500;
-  padding-bottom: 20px;
+.hexagon-mfa-subheading {
+    font-size: 18px !important;
+    font-weight: 500;
+    padding-bottom: 20px;
 }
