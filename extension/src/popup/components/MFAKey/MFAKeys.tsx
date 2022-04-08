@@ -1,23 +1,20 @@
-import React, { useState, useEffect, SyntheticEvent } from "react";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import { Box, Button, IconButton, TextField } from "@mui/material";
+import parser from "hexagon-shared/utils/parser";
+import React, { SyntheticEvent, useState } from "react";
 import {
-    Card,
-    Box,
-    Button,
-    Typography,
-    Tab,
-    TextField,
-    IconButton,
-} from "@mui/material";
+    ErrorMessage,
+    PopupMessage,
+} from "../../../sharedComponents/PopupMessages/PopupMessage";
+import { mfaAPI } from "../../../utils/mfaAPI";
 import "../../popup.css";
 import "../Signin/signin.css";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import parser from "hexagon-shared/utils/parser";
-import { mfaAPI } from "../../../utils/mfaAPI";
-import {
-    PopupMessage,
-    ErrorMessage,
-} from "../../../sharedComponents/PopupMessages/PopupMessage";
 
+/**
+ * The MFA code creation form.
+ * @param param0
+ * @returns a react component
+ */
 const MFAKeyForm = ({ url }: { url: string }) => {
     const [showSecret, setShowSecret] = useState(false);
     const [showError, setShowError] = useState(false);
@@ -32,6 +29,10 @@ const MFAKeyForm = ({ url }: { url: string }) => {
         </IconButton>
     );
 
+    /**
+     * Validate input of form on submit and call method to create an MFA.
+     * @param e
+     */
     const onFormSubmit = async (e: SyntheticEvent) => {
         e.preventDefault();
         let website = document.querySelector(
@@ -51,6 +52,11 @@ const MFAKeyForm = ({ url }: { url: string }) => {
         form.reset();
     };
 
+    /**
+     * Call the api to create an MFA. Sets success message after creation or error message on errors.
+     * @param username
+     * @param seed
+     */
     const createMFA = async (username: string, seed: string) => {
         chrome.storage.local.get(["hexagonAccount"], async function (result) {
             if (result.hexagonAccount) {

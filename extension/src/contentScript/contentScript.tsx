@@ -1,9 +1,3 @@
-import React, {
-    useState,
-    useEffect,
-    HTMLAttributes,
-    HtmlHTMLAttributes,
-} from "react";
 import ReactDOM from "react-dom";
 import {
     AutofillOverlay,
@@ -12,6 +6,7 @@ import {
 } from "./Overlay/Overlay";
 import parser from "hexagon-shared/utils/parser";
 
+//properties of a credential
 export type Credential = {
     id: string;
     username: string;
@@ -20,8 +15,13 @@ export type Credential = {
     key: string;
 };
 
-// set value of a field, taken from https://github.com/facebook/react/issues/10135
+/**
+ * Given an element, set its value to value parameter
+ * @param element
+ * @param value
+ */
 function setNativeValue(element, value) {
+    // set value of a field, taken from https://github.com/facebook/react/issues/10135
     const { set: valueSetter } =
         Object.getOwnPropertyDescriptor(element, "value") || {};
     const prototype = Object.getPrototypeOf(element);
@@ -37,6 +37,12 @@ function setNativeValue(element, value) {
     }
 }
 
+/**
+ * Returns a function that takes in a username and password value and
+ * sets username and password fields to the corresponding value.
+ * @param props
+ * @returns a function that autofills username and password
+ */
 const autofill =
     (props: OverlayProps) => (username: string, password: string) => {
         if (props.usernameField) {
@@ -54,6 +60,12 @@ const autofill =
         closeOverlay();
     };
 
+/**
+ * Returns a function that takes in a username, password, and url value and
+ * sends a message to the background script to create the credential.
+ * @param props
+ * @returns a function that saves username and password
+ */
 const saveCredentials =
     (props: OverlayProps) =>
     (username: string, password: string, url: string) => {
@@ -66,14 +78,19 @@ const saveCredentials =
         closeOverlay();
     };
 
+/**
+ * Renders when overlay is closed
+ */
 const closeOverlay = () => {
     ReactDOM.render(<App />, root);
 };
 
+//root element for the content script's UI
 const root = document.createElement("div");
 root.id = "hexagon-extension-root";
 document.body.appendChild(root);
 
+//properties for the overlays to be rendered on a webpage
 type OverlayProps = {
     usernameField?: HTMLInputElement;
     passwordField?: HTMLInputElement;
@@ -89,6 +106,11 @@ type OverlayProps = {
     saveURL?: string;
 };
 
+/**
+ * Content script UI component for the overlays that get displayed on webpages
+ * @param props
+ * @returns a react component
+ */
 const App = (props: OverlayProps) => {
     return (
         <div>
@@ -123,6 +145,10 @@ const App = (props: OverlayProps) => {
     );
 };
 
+/**
+ * Searches the current webpage for a username field and returns it
+ * @returns an element
+ */
 const findUsernameField = () => {
     let usernameSelectors: string[] = ["username", "email", "user"];
     for (let elmt of document.querySelectorAll("input")) {
@@ -139,6 +165,10 @@ const findUsernameField = () => {
     return null;
 };
 
+/**
+ * Searches the current webpage for a password field and returns it
+ * @returns an element
+ */
 const findPasswordField = () => {
     for (let pass of document.querySelectorAll("[type='password']")) {
         if (pass.clientWidth == 0 || pass.clientHeight == 0) continue;
@@ -149,6 +179,10 @@ const findPasswordField = () => {
     return null;
 };
 
+/**
+ * Asks background script if credentials exist for websit. If yes, render the autofill overlay
+ * with the credentials the user can login with.
+ */
 function fillFormFields(
     usernameField: HTMLInputElement,
     passField: HTMLInputElement
@@ -156,7 +190,6 @@ function fillFormFields(
     chrome.runtime.sendMessage({ message: "isValidSite" }, function (response) {
         chrome.storage.local.get(["autofillClosed"], function (result) {
             if (!result.autofillClosed && response.valid) {
-                console.log(response.credentials);
                 ReactDOM.render(
                     <App
                         usernameField={usernameField}
@@ -171,6 +204,9 @@ function fillFormFields(
     });
 }
 
+/**
+ * Clear the passwords in chrome storage so only one possible credential is stored at a time
+ */
 function clearStorage() {
     chrome.storage.local.get(
         ["url", "hexagonAccount", "autofillClosed"],
@@ -185,6 +221,13 @@ function clearStorage() {
     );
 }
 
+/**
+ * Asks the background script if a crednetial already exists. If no, display the save credentials
+ * overlay form with the username and password.
+ * @param username
+ * @param password
+ * @param url
+ */
 async function displaySave(username: string, password: string, url: string) {
     chrome.runtime.sendMessage(
         { message: "credentialAlreadyExists", username: username, url: url },
@@ -205,14 +248,50 @@ async function displaySave(username: string, password: string, url: string) {
     );
 }
 
+/**
+ * Check chrome storage to see if if both a username and password field have been read.
+ * If yes, it's likely a signin/signup page and the save overlay should be displayed.
+ * Checks when the content script has not been reloaded, useful for SPAs.
+ */
 function displaySavePassSamePage() {
     chrome.storage.local.get(
         ["url", "username", "password"],
         async function (result) {
-            let current = parser.extractDomain(window.location.href);
-            let prev = parser.extractDomain(result.url);
-            if (result.url != window.location.href && result.password) {
-                if (current === prev) {
+            try {
+                let current = parser.extractDomain(window.location.href);
+                let prev = parser.extractDomain(result.url);
+                if (result.url != window.location.href && result.password) {
+                    if (current === prev) {
+                        if (result.username)
+                            await displaySave(
+                                result.username,
+                                result.password,
+                                current
+                            );
+                        clearStorage();
+                    }
+                }
+                chrome.storage.local.set({ url: window.location.href });
+            } catch {
+                chrome.storage.local.set({ url: window.location.href });
+            }
+        }
+    );
+}
+
+/**
+ * Check chrome storage to see if if both a username and password field have been read.
+ * If yes, it's likely a signin/signup page and the save overlay should be displayed.
+ * Checks when the content script has been reloaded from the start.
+ */
+function displaySavePassDiffPage() {
+    chrome.storage.local.get(
+        ["url", "username", "password"],
+        async function (result) {
+            try {
+                let current = parser.extractDomain(window.location.href);
+                let prev = parser.extractDomain(result.url);
+                if (current === prev && result.password) {
                     if (result.username)
                         await displaySave(
                             result.username,
@@ -221,34 +300,24 @@ function displaySavePassSamePage() {
                         );
                     clearStorage();
                 }
+                if (current !== prev) clearStorage();
+
+                chrome.storage.local.set({ url: window.location.href });
+            } catch {
+                chrome.storage.local.set({ url: window.location.href });
             }
-            chrome.storage.local.set({ url: window.location.href });
         }
     );
 }
 
-function displaySavePassDiffPage() {
-    chrome.storage.local.get(
-        ["url", "username", "password"],
-        async function (result) {
-            let current = parser.extractDomain(window.location.href);
-            let prev = parser.extractDomain(result.url);
-            if (current === prev && result.password) {
-                if (result.username)
-                    await displaySave(
-                        result.username,
-                        result.password,
-                        current
-                    );
-                clearStorage();
-            }
-            if (current !== prev) clearStorage();
-
-            chrome.storage.local.set({ url: window.location.href });
-        }
-    );
-}
-
+/**
+ * Sets event handlers for field1 which could be a username or password field.
+ * If it's clicked then the autofill overlay may potentially need to be displayed
+ * if a credential exists. Keeps track of input changes to the field as well.
+ * @param field1 username or password field
+ * @param field2 username or password field
+ * @param key the type of field1, 'username' or 'password'
+ */
 function setEventHandlers(
     field1: HTMLInputElement,
     field2: HTMLInputElement,
@@ -265,17 +334,17 @@ function setEventHandlers(
     });
 }
 
+//wait for webpage to load
 window.addEventListener("load", function () {
-    console.log("hello from content script");
-
+    //listen for messages from the background script
     chrome.runtime.onMessage.addListener(function (
         request,
         sender,
         sendResponse
     ) {
+        //display signin overlay when background script asks to signin to a Hexagon account
         if (request.message === "signin") {
             (async () => {
-                // ReactDOM.render(<App />, root);
                 ReactDOM.render(
                     <App
                         isSigninOpen={true}
@@ -296,23 +365,30 @@ window.addEventListener("load", function () {
         }
     });
 
+    //check to see if save overlay needs to be displayed
     displaySavePassDiffPage();
+    //determines whether autofill overlay should be displayed again on the same page
     chrome.storage.local.set({ autofillClosed: false });
 
+    //watches for mutations on the current page
     MutationObserver = window.MutationObserver;
 
     let observer = new MutationObserver(function (mutations, observer) {
+        //find username and password fields
         let usernameField = findUsernameField();
         let passwordField = findPasswordField() as HTMLInputElement;
 
+        //check to see if save overlay needs to be displayed
         displaySavePassSamePage();
 
+        //set even handlers for username and password fields if they exist
         if (usernameField) {
             setEventHandlers(usernameField, passwordField, "username");
         }
         if (passwordField) {
             setEventHandlers(passwordField, usernameField, "password");
         }
+        //if a login form is submitted, render an empty div in case a different overlap has not yet been closed
         if (usernameField && passwordField) {
             let loginForm = document.querySelector("form") as HTMLFormElement;
             if (loginForm) {
@@ -323,6 +399,7 @@ window.addEventListener("load", function () {
         }
     });
 
+    //changes for the MutationObserver to watch for
     observer.observe(document, {
         subtree: true,
         childList: true,
