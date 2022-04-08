@@ -13,6 +13,11 @@ export type ConfirmationDialogProps = {
     onReject?: () => void;
 };
 
+/**
+ * ConfirmationDialog component used to confirm a user action
+ * @param props props used to configure the ConfirmationDialog
+ * @returns a ConfirmationDialog component
+ */
 export default function ConfirmationDialog(props: ConfirmationDialogProps) {
     const onClose = props.isLoading ? () => {} : props.onClose;
 

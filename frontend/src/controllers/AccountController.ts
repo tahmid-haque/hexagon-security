@@ -1,4 +1,5 @@
 import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
+import { executeQuery } from '../utils/controller';
 
 export type AuthenticationResponse = {
     masterKey: string;
@@ -15,10 +16,11 @@ const updatePasswordMutation = gql`
 
 /**
  * Performs the http request
- * @param {string} url request url
- * @param {any} body body data
- * @param {boolean} isGet boolean value for get request
- * @param {any} headers headers data
+ * @param url request url
+ * @param body body data
+ * @param isGet boolean value for GET request
+ * @param headers headers data
+ * @returns the JSON response or throws an error
  */
 const doRequest = (
     url: string,
@@ -41,9 +43,16 @@ const doRequest = (
     });
 };
 
+/**
+ * Controller to communicate with the backend in all account related functions
+ */
 class AccountController {
     private hostPrefix: string;
 
+    /**
+     * Creates an AccountController to communicate with the backend
+     * @param hostPrefix the hostPrefix to attach to all requests, defaults as ''
+     */
     constructor(hostPrefix: string = '') {
         this.hostPrefix = hostPrefix;
     }
@@ -51,78 +60,68 @@ class AccountController {
     /**
      * Attempts to update the password of the hexagon user,
      * throws an error on failure
-     * @param {string} oldPassword current password for the user
-     * @param {string} newPassword password to be updated with
-     * @param {ApolloClient<NormalizedCacheObject>} client apollo client
-     * @param {string} token user's jwt token
-     * @returns {any} updated user object
+     * @param oldPassword current password for the user
+     * @param newPassword password to be updated with
+     * @param client apollo client
+     * @param token user's jwt token
+     * @returns the success status
      */
-    public updatePassword(
+    updatePassword(
         oldPassword: string,
         newPassword: string,
         client: ApolloClient<NormalizedCacheObject>,
         token: string
-    ) {
-        return client.query({
-            query: updatePasswordMutation,
-            context: {
-                headers: {
-                    jwt: token, // this header will reach the server
-                },
-            },
-            variables: {
-                oldPassword: oldPassword,
-                newPassword: newPassword,
-            },
-        });
+    ): Promise<boolean> {
+        return executeQuery(
+            client,
+            token,
+            updatePasswordMutation,
+            { oldPassword, newPassword },
+            true
+        ).then((data: any) => data.updatePassword);
     }
 
     /**
-     * Checks if a email exists in the database
-     * @param {string} email current password for the user
-     * @returns {any} boolean value
+     * Checks if an email exists in the database
+     * @param email current password for the user
+     * @returns an object indicating whether the account exists
      */
-    async checkExists(email: string) {
+    checkExists(email: string) {
         return doRequest(this.hostPrefix + '/api/auth/exists', {
             username: email,
         });
     }
 
     /**
-     * verifies credentials for signing in
-     * @param {string} email email to signIn
-     * @param {string} password password to signIn
+     * Verifies credentials for signing in
+     * @param email email to signIn
+     * @param password password to signIn
      */
-    async signIn(
-        email: string,
-        password: string
-    ): Promise<AuthenticationResponse> {
+    signIn(email: string, password: string): Promise<AuthenticationResponse> {
         return doRequest(this.hostPrefix + '/api/auth/signin', {
             username: email,
             password,
-        }) as any as AuthenticationResponse;
+        }) as any as Promise<AuthenticationResponse>;
     }
 
     /**
-     * verifies credentials for signing up to website
-     * @param {string} email email to signup
-     * @param {string} password password to signup
+     * Verifies credentials for signing up to website
+     * @param email email to signup
+     * @param password password to signup
      */
-    async signUp(
-        email: string,
-        password: string
-    ): Promise<AuthenticationResponse> {
+    signUp(email: string, password: string): Promise<AuthenticationResponse> {
         return doRequest(this.hostPrefix + '/api/auth/signup', {
             username: email,
             password,
-        }) as any as AuthenticationResponse;
+        }) as any as Promise<AuthenticationResponse>;
     }
 
     /**
-     * performs signout action using the user's token
-     * @param {string} token user's jwt token
+     * Performs signout action using the user's token
+     * @param token user's jwt
+     * @returns an object containing operation success
      */
-    async signOut(token: string): Promise<AuthenticationResponse> {
+    signOut(token: string): Promise<any> {
         return doRequest(this.hostPrefix + '/api/auth/signout', null, true, {
             jwt: token,
         }) as any;

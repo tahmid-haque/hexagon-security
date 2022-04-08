@@ -12,10 +12,19 @@ import {
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import './App.scss';
 
+/**
+ * Transition component used for toasts
+ * @param props props to pass the MUI Snackbar
+ * @returns an UpTransition component
+ */
 const UpTransition = (props: any) => {
     return <Slide {...props} direction='up' />;
 };
 
+/**
+ * App component housing the Hexagon frontend main component
+ * @returns an App component
+ */
 export default function App() {
     const { toast: toastQueue, dashboard: event } = useAppSelector(
         (state) => state
@@ -25,6 +34,7 @@ export default function App() {
     const location = useLocation();
     const dispatch = useAppDispatch();
 
+    // event handler for hiding toasts
     const onToastClose = useCallback(
         (
             event?: React.SyntheticEvent | Event,
@@ -41,15 +51,18 @@ export default function App() {
         [dispatch, toastQueue.length]
     );
 
+    // default routing
     useEffect(() => {
         if (location.pathname === '/') navigate('/app/credentials');
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location]);
 
+    // show a toast if available
     useEffect(() => {
         if (toastQueue.length) setIsToastOpen(true);
     }, [toastQueue.length]);
 
+    // event handler for signing out the user
     useEffect(() => {
         if (event.type !== DashboardEventType.SIGNOUT) return;
         setIsToastOpen(false);

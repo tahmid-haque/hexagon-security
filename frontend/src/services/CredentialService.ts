@@ -28,6 +28,9 @@ enum CredentialStrength {
     UNKNOWN = 'Security Unknown',
 }
 
+/**
+ * Service used to manage all website credential related functions
+ */
 class CredentialService {
     private cryptoWorker: typeof CryptoWorker;
     private credentialController: CredentialController;
@@ -35,6 +38,12 @@ class CredentialService {
     private masterKey: string;
     private masterEmail: string;
 
+    /**
+     * Find the index of the hash inside data. Returns -1 on failure.
+     * @param data data returned by the HaveIBeenPwned Passwords API
+     * @param hash hash to search for
+     * @returns the index of the hash
+     */
     // credits: https://www.geeksforgeeks.org/binary-search-in-javascript/
     private binarySearchHash(data: string[], hash: string): number {
         let start = 0,
@@ -58,6 +67,11 @@ class CredentialService {
         return -1;
     }
 
+    /**
+     * Calculates the strength of a password
+     * @param password password
+     * @returns the strength of the password
+     */
     private async calculatePasswordSecurity(
         password: string
     ): Promise<CredentialStrength> {
@@ -78,6 +92,12 @@ class CredentialService {
         return CredentialStrength.STRONG;
     }
 
+    /**
+     * Creates a set of encrypted strings relevant for a credential
+     * @param username username
+     * @param password password
+     * @returns an object containing encrypted [key, username, password, email]
+     */
     private async createEncryptedCredential(
         username: string,
         password: string
@@ -88,6 +108,11 @@ class CredentialService {
         );
     }
 
+    /**
+     * Decrypts a credential given the DTO and formats it into Credential format
+     * @param dto credential DTO
+     * @returns the decrypted credential with as many fields we were able to decrypt
+     */
     private async decryptCredential(dto: CredentialDto): Promise<Credential> {
         let user = '';
         let key = '';
@@ -143,6 +168,12 @@ class CredentialService {
         };
     }
 
+    /**
+     * Determine whether a credential exists for the given url and username
+     * @param url URL to check
+     * @param username username to check
+     * @returns the id and key of the existing credential if it exists, else null
+     */
     async checkCredentialExists(
         url: string,
         username: string
@@ -182,6 +213,12 @@ class CredentialService {
         }
     }
 
+    /**
+     * Creates a CredentialService
+     * @param cryptoWorker web worker used for all cryprographic operations
+     * @param account account information
+     * @param client GraphQL client used to communicate with backend
+     */
     constructor(
         cryptoWorker: any,
         account: Account,
@@ -200,10 +237,21 @@ class CredentialService {
         );
     }
 
+    /**
+     * Counts the number of credentials for this user
+     * @returns the number of credentials
+     */
     async getCredentialCount() {
         return this.credentialController.countCredentials();
     }
 
+    /**
+     * Retrieves a list of credentials sorted by sortType, from offset, limited to limit
+     * @param offset offset
+     * @param limit limit
+     * @param sortType sort direction
+     * @returns a list of credentials
+     */
     async getCredentials(
         offset: number,
         limit: number,
@@ -217,6 +265,11 @@ class CredentialService {
         return Promise.all(dtos.map(this.decryptCredential.bind(this)));
     }
 
+    /**
+     * Searches for all credentials matching url
+     * @param url domain to filter by
+     * @returns the matched credentials
+     */
     async getWebsiteCredentials(url: string): Promise<Credential[]> {
         const dtos = await this.credentialController.searchWebsiteCredentials(
             url,
@@ -225,6 +278,13 @@ class CredentialService {
         return Promise.all(dtos.map(this.decryptCredential.bind(this)));
     }
 
+    /**
+     * Creates a new credential based on the provided arguments
+     * @param url website url
+     * @param username username
+     * @param password password
+     * @returns the id of the created credential
+     */
     async createCredential(url: string, username: string, password: string) {
         const existError = await this.checkCredentialExists(url, username);
         // eslint-disable-next-line no-throw-literal
@@ -241,6 +301,15 @@ class CredentialService {
         );
     }
 
+    /**
+     * Updates a credential based on the provided arguments
+     * @param id the secure record id of the credential
+     * @param url website url
+     * @param username username
+     * @param password password
+     * @param key key for credential
+     * @returns the id of the updated credential
+     */
     async updateCredential(
         id: string,
         url: string,
@@ -262,6 +331,11 @@ class CredentialService {
         );
     }
 
+    /**
+     * Deletes a credential matching the provided id
+     * @param id secure record id
+     * @returns the id of the deleted secure record
+     */
     async deleteCredential(id: string) {
         return this.secureRecordController.deleteSecureRecord(id);
     }

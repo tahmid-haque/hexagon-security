@@ -11,7 +11,7 @@ import {
     IconButton,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import Header from "../../sharedComponents/header/Header";
+import Header from "../../sharedComponents/header/header";
 import { Credential } from "../contentScript";
 import "./overlay.css";
 

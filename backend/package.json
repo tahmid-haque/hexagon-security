@@ -1,7 +1,7 @@
 {
     "name": "hexagon-backend",
     "version": "1.0.0",
-    "description": "**Hexagon**",
+    "description": "A security application",
     "main": "app.js",
     "scripts": {
         "start": "node app.js",

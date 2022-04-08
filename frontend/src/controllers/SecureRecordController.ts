@@ -9,12 +9,21 @@ const deleteSecureRecordMutation = gql`
     }
 `;
 
+/**
+ * Controller to communicate with the backend in certain record related functions
+ */
 class SecureRecordController {
     private executeQuery: (
         query: any,
         variables: any,
         isMutation: boolean
     ) => Promise<any>;
+
+    /**
+     * Creates a SecureRecordController to communicate with the backend
+     * @param client the GraphQL client used to communicate with the backend
+     * @param token the user's JWT
+     */
     constructor(client: ApolloClient<NormalizedCacheObject>, token: string) {
         this.executeQuery = executeQuery.bind(this, client, token);
     }
@@ -22,10 +31,10 @@ class SecureRecordController {
     /**
      * Attempts to delete an existing secure record,
      * throws an error on failure
-     * @param {string} secureRecordId record to be deleted
-     * @returns {any} deleted secure record
+     * @param secureRecordId record to be deleted
+     * @returns the id of the deleted record
      */
-    public deleteSecureRecord(secureRecordId: string) {
+    deleteSecureRecord(secureRecordId: string) {
         return this.executeQuery(
             deleteSecureRecordMutation,
             { secureRecordId },

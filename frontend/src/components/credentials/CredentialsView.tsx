@@ -53,6 +53,7 @@ export enum CredentialStrength {
 
 const loadErrorText = 'Unable to load credentials. Please try again later.';
 
+// MUI Data Grid cofiguration
 const columnDef: GridColDef[] = [
     {
         field: 'name',
@@ -94,6 +95,7 @@ const columnDef: GridColDef[] = [
         width: 71,
         sortable: false,
         filterable: false,
+        // display the password strength
         renderCell: ({ value }) => {
             let icon: ReactElement<any, any>;
 
@@ -168,9 +170,21 @@ const columnDef: GridColDef[] = [
     },
 ];
 
+/**
+ * Determine whether a credential has valid data
+ * @param credential the credential to validate
+ * @returns true if the credential is valid, false otherwise
+ */
 const isCredentialValid = (credential: Credential) =>
     credential.user && credential.password && credential.key;
 
+/**
+ * Update the current credentials with new ones based on the requested attributes.
+ * @param this context in which to execute the function
+ * @param offset the start position of the requested credentials
+ * @param limit the number of credentials requested
+ * @param sortType the sort direction
+ */
 const updateCredentials = async function (
     this: CredentialsViewContext,
     offset: number,
@@ -203,6 +217,10 @@ const updateCredentials = async function (
     update({ isLoading: false });
 };
 
+/**
+ * Rerender the app table by obtaining fresh data
+ * @param this context in which to execute the function
+ */
 const rerenderView = function (this: CredentialsViewContext) {
     this.dispatch(
         createEvent({
@@ -211,6 +229,10 @@ const rerenderView = function (this: CredentialsViewContext) {
     );
 };
 
+/**
+ * Delete the current credential from the user's profile
+ * @param this context in which to execute the function
+ */
 const onDeleteAccept = async function (this: CredentialsViewContext) {
     const { update, state, dispatch } = this;
     update({ isDeleteLoading: true });
@@ -236,6 +258,10 @@ const onDeleteAccept = async function (this: CredentialsViewContext) {
     update({ isDeleteLoading: false });
 };
 
+/**
+ * Update the page to reflect the latest count
+ * @param this context in which to execute the function
+ */
 const updateCount = function (this: CredentialsViewContext) {
     const { state, update } = this;
     state.credentialService
@@ -249,6 +275,10 @@ const updateCount = function (this: CredentialsViewContext) {
         .catch(() => update({ tableErrorText: loadErrorText }));
 };
 
+/**
+ * Handle dashboard events dispatched by Redux
+ * @param this context in which to execute the function
+ */
 const handleEvent = function (this: CredentialsViewContext) {
     const { event, update, dispatch, state } = this;
     switch (event.type) {
@@ -286,6 +316,10 @@ const handleEvent = function (this: CredentialsViewContext) {
     }
 };
 
+/**
+ * Update the dashboard periphery to reflect the current view
+ * @param this context in which to execute the function
+ */
 const init = function (this: CredentialsViewContext) {
     this.dispatch(setDisplay(Display.CREDENTIALS));
     updateCount.call(this);
@@ -312,6 +346,10 @@ type CredentialsViewContext = {
     dispatch: any;
 };
 
+/**
+ * CredentialsView component used to view and manage website credentials
+ * @returns a CredentialsView component
+ */
 export default function CredentialsView() {
     const event = useAppSelector((state) => state.dashboard);
     const dispatch = useAppDispatch();

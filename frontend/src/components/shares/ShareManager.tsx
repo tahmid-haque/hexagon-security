@@ -68,6 +68,11 @@ export type ShareManagerProps = {
     onClose: () => void;
 };
 
+/**
+ * Extract share information from a credential, MFA credential or note
+ * @param data data to extract share frome
+ * @returns the extracted share information
+ */
 export const getShareInfo = (data: Credential | MFA | Note): ShareInfo => ({
     id: data.id,
     key: data.key,
@@ -97,6 +102,12 @@ type ShareManagerContext = {
     event: DashboardEvent;
 };
 
+/**
+ * Change the tab of the ShareManager to newView
+ * @param this context in which to execute the function
+ * @param _ UNUSED
+ * @param newView the next tab to move to
+ */
 const onViewChange = function (
     this: ShareManagerContext,
     _: any,
@@ -111,6 +122,11 @@ const onViewChange = function (
     });
 };
 
+/**
+ * Event handler to handle email field changes. Determine whether the email is valid and update the page.
+ * @param this context in which to execute the function
+ * @param event a ChangeEvent
+ */
 const onEmailChange = function (
     this: ShareManagerContext,
     event: React.ChangeEvent<HTMLInputElement>
@@ -125,6 +141,11 @@ const onEmailChange = function (
     });
 };
 
+/**
+ * Event handler for handling share creation. Check if the item is already shared with the
+ * requested user and if not, create the share.
+ * @param this context in which to execute the function
+ */
 const onEmailSubmit = async function (this: ShareManagerContext) {
     const { state, update, dispatch, props } = this;
     if (state.isLoading) return;
@@ -180,6 +201,11 @@ const onEmailSubmit = async function (this: ShareManagerContext) {
     update({ isLoading: false });
 };
 
+/**
+ * Handle delete post-effects by changing the tab and displaying a message
+ * @param this context in which to execute the function
+ * @param changeView next tab to switch to
+ */
 const onSuccessfulDelete = function (
     this: ShareManagerContext,
     changeView: boolean
@@ -197,6 +223,10 @@ const onSuccessfulDelete = function (
     });
 };
 
+/**
+ * Send a message indicating delete error
+ * @param this context in which to execute the function
+ */
 const onDeleteError = function (this: ShareManagerContext) {
     this.dispatch(
         sendToast({
@@ -207,6 +237,11 @@ const onDeleteError = function (this: ShareManagerContext) {
     );
 };
 
+/**
+ * Event handler for handling pending share removal by sending requests to the server and updating
+ * state.
+ * @param this context in which to execute the function
+ */
 const onPendingShareDelete = async function (this: ShareManagerContext) {
     const { state, update, props } = this;
     update({ isDeleteLoading: true });
@@ -228,6 +263,10 @@ const onPendingShareDelete = async function (this: ShareManagerContext) {
     update({ isDeleteLoading: false });
 };
 
+/**
+ * Event handler for handling share removal by sending requests to the server and updating state.
+ * @param this context in which to execute the function
+ */
 const onOwnerShareDelete = async function (this: ShareManagerContext) {
     const { state, update, props } = this;
     update({ isDeleteLoading: true });
@@ -249,6 +288,10 @@ const onOwnerShareDelete = async function (this: ShareManagerContext) {
     update({ isDeleteLoading: false });
 };
 
+/**
+ * Event handler to handle close events
+ * @param this context in which to execute the function
+ */
 const onClose = function (this: ShareManagerContext) {
     if (this.state.isLoading || this.state.isDeleteLoading) return;
     this.props.onClose();
@@ -261,6 +304,10 @@ const onClose = function (this: ShareManagerContext) {
     this.update({ currentEmail: '', invalidInputText: '', isInputValid: true });
 };
 
+/**
+ * Handle dashboard events dispatched by Redux
+ * @param this context in which to execute the function
+ */
 const handleDashboardEvent = function (this: ShareManagerContext) {
     if (this.event.type === DashboardEventType.SHARE_CLICK) {
         const shareInfo: ShareInfo = {
@@ -276,6 +323,13 @@ const handleDashboardEvent = function (this: ShareManagerContext) {
     }
 };
 
+/**
+ * Generates a list item containing an owner for the data
+ * @param email email of the owner
+ * @param isLoading whether a load operation is in progress
+ * @param onDelete function to execute when delete is clicked
+ * @returns the list item
+ */
 const generateOwnerItem = (
     email: string,
     isLoading: boolean,
@@ -315,6 +369,11 @@ const generateOwnerItem = (
     </Box>
 );
 
+/**
+ * Determine the next tab based on the share information
+ * @param shareInfo the share information
+ * @returns the next tab
+ */
 const getNextView = (shareInfo: ShareInfo) =>
     shareInfo.owners.length > 1
         ? ShareView.OWNER
@@ -322,6 +381,11 @@ const getNextView = (shareInfo: ShareInfo) =>
         ? ShareView.PENDING
         : ShareView.CREATE;
 
+/**
+ * ShareManager component used to manage shares for a note / credential / MFA credential
+ * @param props props used to configure the ShareManager
+ * @returns a ShareManager component
+ */
 export default function ShareManager(props: ShareManagerProps) {
     const account = useAppSelector((state) => state.account);
     const dispatch = useAppDispatch();

@@ -75,6 +75,12 @@ type SettingsContext = {
     props: SettingsProps;
 };
 
+/**
+ * Change the tab to newView
+ * @param this context in which to execute the function
+ * @param _ UNUSED
+ * @param newView the next tab to move to
+ */
 const onViewChange = function (
     this: SettingsContext,
     _: any,
@@ -86,6 +92,12 @@ const onViewChange = function (
     });
 };
 
+/**
+ * Event handler to handle old password field changes.
+ * Determine whether the old password is valid and update the page.
+ * @param update function used to update the state
+ * @param event a ChangeEvent
+ */
 const onOldPasswordChange = (
     update: (update: Partial<SettingsState>) => void,
     event: React.ChangeEvent<HTMLInputElement>
@@ -98,6 +110,12 @@ const onOldPasswordChange = (
     });
 };
 
+/**
+ * Event handler to handle new password field changes.
+ * Determine whether the new password is valid and update the page.
+ * @param update function used to update the state
+ * @param event a ChangeEvent
+ */
 const onNewPasswordChange = (
     update: (update: Partial<SettingsState>) => void,
     event: React.ChangeEvent<HTMLInputElement>
@@ -110,6 +128,11 @@ const onNewPasswordChange = (
     });
 };
 
+/**
+ * Event handler to handle old import field changes.
+ * @param update function used to update the state
+ * @param event a ChangeEvent
+ */
 const onFileUpload = (
     update: (update: Partial<SettingsState>) => void,
     event: React.ChangeEvent<HTMLInputElement>
@@ -122,17 +145,28 @@ const onFileUpload = (
     }
 };
 
+/**
+ * Event handler to handle close events
+ * @param state the current state of Settings
+ * @param update function used to update the state
+ * @param close callback to call on close
+ */
 const onClose = (
     state: SettingsState,
     update: (update: Partial<SettingsState>) => void,
-    close: (modified: boolean) => void,
-    modified: boolean
+    close: () => void
 ) => {
     if (state.isLoading) return;
     update(initState);
-    close(modified);
+    close();
 };
 
+/**
+ * Determine whether the form is valid
+ * @param state the current state of the Settings
+ * @param update function used to update the state
+ * @returns true if the form is valid, false otherwise
+ */
 const validateForm = (
     state: SettingsState,
     update: (update: Partial<SettingsState>) => void
@@ -155,6 +189,15 @@ const validateForm = (
     return error;
 };
 
+/**
+ * Event handler for handling master password update. Updates the password on the server.
+ * @param state the current state of the CredentialEditor
+ * @param update function used to update the state
+ * @param props the props passed to the CredentialEditor
+ * @param dispatch function used to dispatch redux actions
+ * @param client the GraphQL client used to communicate with the backend
+ * @param token the JWT token associated to the user
+ */
 const onUpdateSubmit = async (
     state: SettingsState,
     update: (update: Partial<SettingsState>) => void,
@@ -189,9 +232,14 @@ const onUpdateSubmit = async (
             })
         );
     }
-    onClose(state, update, props.onClose, true);
+    onClose(state, update, props.onClose);
 };
 
+/**
+ * Check whether the headers match the required format
+ * @param headers the headers to verify
+ * @returns true if the headers match, false otherwise
+ */
 const verifyHeaders = (headers: string[]): boolean => {
     if (headers.length !== 4) return false;
     if (
@@ -205,9 +253,15 @@ const verifyHeaders = (headers: string[]): boolean => {
     return true;
 };
 
+/**
+ * Read through the CSV content and create credentials as requested
+ * @param lines the CSV content
+ * @param update function used to update the state
+ * @param props the props passed to Settings
+ * @param dispatch function used to dispatch redux actions
+ */
 const readCSVFile = async (
     lines: string[],
-    state: SettingsState,
     update: (update: Partial<SettingsState>) => void,
     props: SettingsProps,
     dispatch: any
@@ -264,6 +318,13 @@ const readCSVFile = async (
     });
 };
 
+/**
+ * Event handler for handling import submission. Uses the CSV file to create credentials.
+ * @param state the current state of Settings
+ * @param update function used to update the state
+ * @param props the props passed to Settings
+ * @param dispatch function used to dispatch redux actions
+ */
 const onImportSubmit = async (
     state: SettingsState,
     update: (update: Partial<SettingsState>) => void,
@@ -272,7 +333,7 @@ const onImportSubmit = async (
 ) => {
     update({ isLoading: true, isImportLoadOpen: true, isImportLoading: true });
     try {
-        let reader = new FileReader();
+        const reader = new FileReader();
         reader.readAsText(state.importFile);
 
         reader.onload = function () {
@@ -287,7 +348,7 @@ const onImportSubmit = async (
                 if (!verifyHeaders(headers))
                     throw new Error('Error with file formatting');
 
-                readCSVFile(lines, state, update, props, dispatch);
+                readCSVFile(lines, update, props, dispatch);
             } catch (error: any) {
                 update({
                     isLoading: false,
@@ -320,6 +381,11 @@ const onImportSubmit = async (
     }
 };
 
+/**
+ * Settings component used to allow certain miscellaneous features for the user
+ * @param props props used to configure the Settings
+ * @returns a Settings component
+ */
 export default function Settings(props: SettingsProps) {
     const dispatch = useAppDispatch();
     const account = useAppSelector((state) => state.account);
@@ -489,7 +555,7 @@ export default function Settings(props: SettingsProps) {
                                 );
                             else if (state.currentTab === SettingsView.IMPORT)
                                 onImportSubmit(state, update, props, dispatch);
-                            else onClose(state, update, props.onClose, true);
+                            else onClose(state, update, props.onClose);
                         }}
                     >
                         {state.currentTab !== SettingsView.ABOUT

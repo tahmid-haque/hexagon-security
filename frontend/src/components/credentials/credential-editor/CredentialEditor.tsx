@@ -15,7 +15,7 @@ export type CredentialEditorProps = {
     onClose: (modified?: boolean) => void;
     credentialService: CredentialService;
     isEdit: boolean;
-    credential?: Credential;
+    credential?: Credential; // the credential to edit, if any
 };
 
 type CredentialEditorState = {
@@ -52,6 +52,11 @@ const initState: CredentialEditorState = {
     isOverwriteLoading: false,
 };
 
+/**
+ * Initialize the editor with the new credential passed from the props
+ * @param props the props passed to the CredentialEditor
+ * @param update function used to update the state
+ */
 const onCredentialChange = (
     props: CredentialEditorProps,
     update: (update: Partial<CredentialEditorState>) => void
@@ -67,6 +72,11 @@ const onCredentialChange = (
     }
 };
 
+/**
+ * Event handler to handle URL field changes. Determine whether the URL is valid and update the page.
+ * @param update function used to update the state
+ * @param event a ChangeEvent
+ */
 const onURLChange = (
     update: (update: Partial<CredentialEditorState>) => void,
     event: React.ChangeEvent<HTMLInputElement>
@@ -86,6 +96,11 @@ const onURLChange = (
     });
 };
 
+/**
+ * Event handler to handle username field changes. Determine whether the username is valid and update the page.
+ * @param update function used to update the state
+ * @param event a ChangeEvent
+ */
 const onUserChange = (
     update: (update: Partial<CredentialEditorState>) => void,
     event: React.ChangeEvent<HTMLInputElement>
@@ -98,6 +113,11 @@ const onUserChange = (
     });
 };
 
+/**
+ * Event handler to handle password field changes. Determine whether the password is valid and update the page.
+ * @param update function used to update the state
+ * @param event a ChangeEvent
+ */
 const onPasswordChange = (
     update: (update: Partial<CredentialEditorState>) => void,
     event: React.ChangeEvent<HTMLInputElement>
@@ -110,6 +130,13 @@ const onPasswordChange = (
     });
 };
 
+/**
+ * Event handler to handle close events
+ * @param state the current state of the CredentialEditor
+ * @param update function used to update the state
+ * @param close callback to call on close with the modification update
+ * @param modified whether a credential was updated/created
+ */
 const onClose = (
     state: CredentialEditorState,
     update: (update: Partial<CredentialEditorState>) => void,
@@ -121,6 +148,12 @@ const onClose = (
     close(modified);
 };
 
+/**
+ * Determine whether the form is valid
+ * @param state the current state of the CredentialEditor
+ * @param update function used to update the state
+ * @returns true if the form is valid, false otherwise
+ */
 const validateForm = (
     state: CredentialEditorState,
     update: (update: Partial<CredentialEditorState>) => void
@@ -147,6 +180,14 @@ const validateForm = (
     return error;
 };
 
+/**
+ * Event handler for handling credential creation. Check if the credential exists and if not
+ * create the credential, otherwise offer to update.
+ * @param state the current state of the CredentialEditor
+ * @param update function used to update the state
+ * @param props the props passed to the CredentialEditor
+ * @param dispatch function used to dispatch redux actions
+ */
 const onCreateSubmit = async (
     state: CredentialEditorState,
     update: (update: Partial<CredentialEditorState>) => void,
@@ -190,6 +231,13 @@ const onCreateSubmit = async (
     onClose(state, update, props.onClose, true);
 };
 
+/**
+ * Event handler for handling credential update. Updates the credential on the server.
+ * @param state the current state of the CredentialEditor
+ * @param update function used to update the state
+ * @param props the props passed to the CredentialEditor
+ * @param dispatch function used to dispatch redux actions
+ */
 const onEditSubmit = async (
     state: CredentialEditorState,
     update: (update: Partial<CredentialEditorState>) => void,
@@ -231,6 +279,11 @@ const onEditSubmit = async (
     onClose(state, update, props.onClose, true);
 };
 
+/**
+ * CredentialEditor component used to edit/create website credentials
+ * @param props props used to configure the CredentialEditor
+ * @returns a CredentialEditor component
+ */
 export default function CredentialEditor(props: CredentialEditorProps) {
     const { state, update } = useComponentState(initState);
     const dispatch = useAppDispatch();

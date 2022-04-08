@@ -17,6 +17,7 @@ interface AppBarProps extends MuiAppBarProps {
     open?: boolean;
 }
 
+// create a custom styled header based on the MuiAppBar
 const AppBar = styled(MuiAppBar)<AppBarProps>(({ theme, open }) => ({
     zIndex: theme.zIndex.drawer + 1,
     transition: theme.transitions.create(['width', 'margin', 'transform'], {
@@ -40,9 +41,15 @@ type DashboardHeaderProps = {
     currentPane: string;
 };
 
+/**
+ * DashboardHeader component used to display the current view information and create options
+ * @param props props used to configure the DashboardHeader
+ * @returns a DashboardHeader component
+ */
 export default function DashboardHeader(props: DashboardHeaderProps) {
     const dispatch = useAppDispatch();
 
+    // dispatch the create event
     const onCreateClick = () => {
         dispatch(createEvent({ type: DashboardEventType.CREATE_CLICK }));
     };

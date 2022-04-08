@@ -38,6 +38,10 @@ type AppTableContext = {
     props: AppTableProps;
 };
 
+/**
+ * Update the table's contents
+ * @param this context in which to execute the function
+ */
 const updateContent = async function (this: AppTableContext) {
     const { props, state, update } = this;
 
@@ -52,11 +56,19 @@ const updateContent = async function (this: AppTableContext) {
     }
 };
 
+/**
+ * Handle dashboard events dispatched by Redux
+ * @param this context in which to execute the function
+ */
 const handleEvent = function (this: AppTableContext) {
     if (this.event.type === DashboardEventType.RERENDER_DATA)
         updateContent.call(this);
 };
 
+/**
+ * Initialize the table by calculating the number of rows to display
+ * @param this context in which to execute the function
+ */
 const init = function (this: AppTableContext) {
     const { ref, update, state } = this;
     const updateNumRows = () => {
@@ -71,6 +83,11 @@ const init = function (this: AppTableContext) {
     updateNumRows();
 };
 
+/**
+ * MessageOverlay component used to display messages about the table on errors / no data.
+ * @param props contains the text to display
+ * @returns a MessageOverlay component
+ */
 const MessageOverlay = (props: { text: string }) => (
     <Box
         sx={{
@@ -106,6 +123,7 @@ export default function AppTable(props: AppTableProps) {
     };
 
     useEffect(init.bind(context), []);
+    // update table content on parameter change
     useEffect(() => {
         updateContent.call(context);
     }, [state.numRows, state.sortType, state.currentPage, props.contentCount]);

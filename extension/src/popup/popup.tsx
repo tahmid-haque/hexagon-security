@@ -2,7 +2,7 @@ import { Box, LinearProgress } from "@mui/material";
 import parser from "hexagon-shared/utils/parser";
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
-import Header from "../sharedComponents/header/Header";
+import Header from "../sharedComponents/header/header";
 import PopupBody from "./components/PopupBody/PopupBody";
 import "./components/Signin/signin.css";
 import SigninPage from "./components/Signin/SigninPage";

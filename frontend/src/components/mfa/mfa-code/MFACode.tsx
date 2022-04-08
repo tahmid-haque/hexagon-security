@@ -4,12 +4,18 @@ import totp from 'totp-generator';
 import { useAppDispatch } from '../../../store/store';
 import { sendToast } from '../../../store/slices/ToastSlice';
 
+/**
+ * MFACode component used to show OTPs
+ * @param props contains a seed used to generate TOTP tokens and the url of the the MFA
+ * @returns a MFACode component
+ */
 export default function MFACode(props: { seed: string; name: string }) {
     const [code, setCode] = useState(888888);
     const [isMounted, setIsMounted] = useState(true);
     const [isError, setIsError] = useState(false);
     const dispatch = useAppDispatch();
 
+    // update the MFA code every 60 seconds
     const updateCode = () => {
         if (!isMounted || isError) return;
         try {

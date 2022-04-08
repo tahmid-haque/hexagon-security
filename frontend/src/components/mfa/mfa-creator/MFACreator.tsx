@@ -40,6 +40,11 @@ const initState: MFACreatorState = {
     isLoading: false,
 };
 
+/**
+ * Event handler to handle URL field changes. Determine whether the URL is valid and update the page.
+ * @param update function used to update the state
+ * @param event a ChangeEvent
+ */
 const onURLChange = (
     update: (update: Partial<MFACreatorState>) => void,
     event: React.ChangeEvent<HTMLInputElement>
@@ -59,6 +64,11 @@ const onURLChange = (
     });
 };
 
+/**
+ * Event handler to handle username field changes. Determine whether the username is valid and update the page.
+ * @param update function used to update the state
+ * @param event a ChangeEvent
+ */
 const onUserChange = (
     update: (update: Partial<MFACreatorState>) => void,
     event: React.ChangeEvent<HTMLInputElement>
@@ -71,6 +81,11 @@ const onUserChange = (
     });
 };
 
+/**
+ * Event handler to handle secret field changes. Determine whether the secret is valid and update the page.
+ * @param update function used to update the state
+ * @param event a ChangeEvent
+ */
 const onSecretChange = (
     update: (update: Partial<MFACreatorState>) => void,
     event: React.ChangeEvent<HTMLInputElement>
@@ -83,6 +98,13 @@ const onSecretChange = (
     });
 };
 
+/**
+ * Event handler to handle close events
+ * @param state the current state of the MFACreator
+ * @param update function used to update the state
+ * @param close callback to call on close with the modification update
+ * @param modified whether a MFA credential was updated/created
+ */
 const onClose = (
     state: MFACreatorState,
     update: (update: Partial<MFACreatorState>) => void,
@@ -94,6 +116,12 @@ const onClose = (
     close(modified);
 };
 
+/**
+ * Determine whether the form is valid
+ * @param state the current state of the MFACreator
+ * @param update function used to update the state
+ * @returns true if the form is valid, false otherwise
+ */
 const validateForm = (
     state: MFACreatorState,
     update: (update: Partial<MFACreatorState>) => void
@@ -120,6 +148,14 @@ const validateForm = (
     return error;
 };
 
+/**
+ * Event handler for handling MFA credential creation. Check if the MFA credential exists and if not
+ * create the MFA credential, otherwise request deletion.
+ * @param state the current state of the MFACreator
+ * @param update function used to update the state
+ * @param props the props passed to the MFACreator
+ * @param dispatch function used to dispatch redux actions
+ */
 const onCreateSubmit = async (
     state: MFACreatorState,
     update: (update: Partial<MFACreatorState>) => void,
@@ -157,6 +193,11 @@ const onCreateSubmit = async (
     onClose(state, update, props.onClose, true);
 };
 
+/**
+ * MFAEditor component used to create MFA credentials
+ * @param props props used to configure the MFAEditor
+ * @returns a MFAEditor component
+ */
 export default function MFAEditor(props: MFACreatorProps) {
     const { state, update } = useComponentState(initState);
     const dispatch = useAppDispatch();

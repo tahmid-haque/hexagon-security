@@ -432,7 +432,7 @@ const Mutation = new GraphQLObjectType({
          * throws an error on failure
          * @param {GraphQLString} oldPassword current password for the user
          * @param {GraphQLString} newPassword password to be updated with
-         * @returns {any} updated user object
+         * @returns {Promise<boolean>} success status
          */
         updatePassword: {
             type: GraphQLBoolean,

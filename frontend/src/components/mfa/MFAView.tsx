@@ -60,6 +60,7 @@ export type MFA = {
 
 const loadErrorText = 'Unable to load MFA credentials. Please try again later.';
 
+// MUI Data Grid cofiguration
 const columnDef: GridColDef[] = [
     {
         field: 'name',
@@ -129,8 +130,17 @@ const columnDef: GridColDef[] = [
     },
 ];
 
+/**
+ * Determine whether a MFA credential has valid data
+ * @param mfa the MFA credential to validate
+ * @returns true if the MFA credential is valid, false otherwise
+ */
 const isMFAValid = (mfa: MFA) => mfa.user && mfa.seed && mfa.key;
 
+/**
+ * Update the page to reflect the latest count
+ * @param this context in which to execute the function
+ */
 const updateCount = function (this: MFAViewContext) {
     const { state, update } = this;
     state.mfaService
@@ -144,6 +154,10 @@ const updateCount = function (this: MFAViewContext) {
         .catch(() => update({ tableErrorText: loadErrorText }));
 };
 
+/**
+ * Handle dashboard events dispatched by Redux
+ * @param this context in which to execute the function
+ */
 const handleEvent = function (this: MFAViewContext) {
     const { event, update, dispatch } = this;
     switch (event.type) {
@@ -171,6 +185,13 @@ const handleEvent = function (this: MFAViewContext) {
     }
 };
 
+/**
+ * Update the current MFA credentials with new ones based on the requested attributes.
+ * @param this context in which to execute the function
+ * @param offset the start position of the requested MFA credentials
+ * @param limit the number of MFA credentials requested
+ * @param sortType the sort direction
+ */
 const updateMFA = async function (
     this: MFAViewContext,
     offset: number,
@@ -181,7 +202,11 @@ const updateMFA = async function (
     update({ isLoading: true });
 
     try {
-        const content = await state.mfaService.getMFAs(offset, limit, sortType);
+        const content = (await state.mfaService.getMFAs(
+            offset,
+            limit,
+            sortType
+        )) as any as MFA[];
         content.forEach((mfa) => {
             if (!isMFAValid(mfa))
                 dispatch(
@@ -198,6 +223,10 @@ const updateMFA = async function (
     update({ isLoading: false });
 };
 
+/**
+ * Rerender the app table by obtaining fresh data
+ * @param this context in which to execute the function
+ */
 const rerenderView = function (this: MFAViewContext) {
     this.dispatch(
         createEvent({
@@ -206,6 +235,10 @@ const rerenderView = function (this: MFAViewContext) {
     );
 };
 
+/**
+ * Delete the current MFA credential from the user's profile
+ * @param this context in which to execute the function
+ */
 const onDeleteAccept = async function (this: MFAViewContext) {
     const { update, state, dispatch } = this;
     update({ isDeleteLoading: true });
@@ -231,11 +264,19 @@ const onDeleteAccept = async function (this: MFAViewContext) {
     update({ isDeleteLoading: false });
 };
 
+/**
+ * Update the dashboard periphery to reflect the current view
+ * @param this context in which to execute the function
+ */
 const init = function (this: MFAViewContext) {
     this.dispatch(setDisplay(Display.MFA));
     updateCount.call(this);
 };
 
+/**
+ * MFAView component used to view and manage MFA credentials
+ * @returns a MFAView component
+ */
 export default function MFAView() {
     const event = useAppSelector((state) => state.dashboard);
     const dispatch = useAppDispatch();

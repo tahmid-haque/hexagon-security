@@ -46,6 +46,7 @@ const dateFormat: Intl.DateTimeFormatOptions = {
     minute: 'numeric',
 };
 
+// MUI Data Grid cofiguration
 const columnDef: GridColDef[] = [
     {
         field: 'title',
@@ -97,8 +98,20 @@ const columnDef: GridColDef[] = [
     },
 ];
 
+/**
+ * Determine whether a note has valid data
+ * @param note the note to validate
+ * @returns true if the note is valid, false otherwise
+ */
 const isNoteValid = (note: Note) => note.title && note.lastModified && note.key;
 
+/**
+ * Update the current notes with new ones based on the requested attributes.
+ * @param this context in which to execute the function
+ * @param offset the start position of the requested notes
+ * @param limit the number of notes requested
+ * @param sortType the sort direction
+ */
 const updateNotes = async function (
     this: NotesViewContext,
     offset: number,
@@ -108,7 +121,11 @@ const updateNotes = async function (
     const { update, state, dispatch } = this;
     update({ isLoading: true });
     try {
-        const notes = await state.noteService.getNotes(offset, limit, sortType);
+        const notes = (await state.noteService.getNotes(
+            offset,
+            limit,
+            sortType
+        )) as any as Note[];
         for (const note of notes) {
             if (!isNoteValid(note)) {
                 dispatch(
@@ -128,6 +145,10 @@ const updateNotes = async function (
     update({ isLoading: false });
 };
 
+/**
+ * Rerender the app table by obtaining fresh data
+ * @param this context in which to execute the function
+ */
 const rerenderView = function (this: NotesViewContext) {
     this.dispatch(
         createEvent({
@@ -136,6 +157,10 @@ const rerenderView = function (this: NotesViewContext) {
     );
 };
 
+/**
+ * Delete the current note from the user's profile
+ * @param this context in which to execute the function
+ */
 const onDeleteAccept = async function (this: NotesViewContext) {
     const { update, state, dispatch } = this;
     update({ isDeleteLoading: true });
@@ -161,6 +186,10 @@ const onDeleteAccept = async function (this: NotesViewContext) {
     update({ isDeleteLoading: false });
 };
 
+/**
+ * Update the page to reflect the latest count
+ * @param this context in which to execute the function
+ */
 const updateCount = function (this: NotesViewContext) {
     const { state, update } = this;
     state.noteService
@@ -174,6 +203,10 @@ const updateCount = function (this: NotesViewContext) {
         .catch(() => update({ tableErrorText: loadErrorText }));
 };
 
+/**
+ * Handle dashboard events dispatched by Redux
+ * @param this context in which to execute the function
+ */
 const handleEvent = function (this: NotesViewContext) {
     const { event, update, dispatch, state } = this;
     switch (event.type) {
@@ -211,6 +244,10 @@ const handleEvent = function (this: NotesViewContext) {
     }
 };
 
+/**
+ * Update the dashboard periphery to reflect the current view
+ * @param this context in which to execute the function
+ */
 const init = function (this: NotesViewContext) {
     this.dispatch(setDisplay(Display.NOTES));
     updateCount.call(this);
@@ -237,6 +274,10 @@ type NotesViewContext = {
     dispatch: any;
 };
 
+/**
+ * NotesView component used to view and manage notes
+ * @returns a NotesView component
+ */
 export default function NotesView() {
     const event = useAppSelector((state) => state.dashboard);
     const dispatch = useAppDispatch();
