@@ -4,7 +4,7 @@ Developed by the _NoAccess_ team.
 
 ## Project URL
 
-[Link](https://hexagon-web.xyz/authenticate)
+[Link](https://hexagon-web.xyz)
 
 ## Project Video URL
 

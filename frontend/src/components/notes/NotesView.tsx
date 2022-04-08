@@ -2,35 +2,29 @@ import {
     ApolloClient,
     NormalizedCacheObject,
     useApolloClient,
-} from "@apollo/client";
-import LockIcon from "@mui/icons-material/Lock";
-import GppBadIcon from "@mui/icons-material/GppBad";
-import GppGoodOutlinedIcon from "@mui/icons-material/GppGoodOutlined";
-import GppMaybeIcon from "@mui/icons-material/GppMaybe";
-import GppGoodIcon from "@mui/icons-material/GppGood";
-import { Box, Tooltip } from "@mui/material";
-import { GridColDef, GridSortDirection } from "@mui/x-data-grid";
-import React, { ReactElement, useEffect } from "react";
-import { useOutletContext } from "react-router-dom";
-import CredentialService from "../../services/CredentialService";
+} from '@apollo/client';
+import { Box } from '@mui/material';
+import { GridColDef, GridSortDirection } from '@mui/x-data-grid';
+import React, { useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import NoteService from '../../services/NoteService';
 import {
     clearEvent,
     createEvent,
     DashboardEvent,
     DashboardEventType,
-} from "../../store/slices/DashboardSlice";
-import { Display, setDisplay } from "../../store/slices/DisplaySlice";
-import { sendToast } from "../../store/slices/ToastSlice";
-import { useAppDispatch, useAppSelector } from "../../store/store";
-import { useComponentState } from "../../utils/hooks";
-import AppTable from "../shared/AppTable";
-import ConfirmationDialog from "../shared/ConfirmationDialog";
-import ActionMenu from "../credentials/action-menu/ActionMenu";
-import NoteService from "../../services/NoteService";
-import NoteEditor from "./note-editor/NoteEditor";
-import NoteTitle from "./note-title/NoteTitle";
-import { Owner, PendingShare } from "../shares/ShareManager";
-import OwnershipStatus from "../shared/OwnershipStatus";
+} from '../../store/slices/DashboardSlice';
+import { Display, setDisplay } from '../../store/slices/DisplaySlice';
+import { sendToast } from '../../store/slices/ToastSlice';
+import { useAppDispatch, useAppSelector } from '../../store/store';
+import { useComponentState } from '../../utils/hooks';
+import ActionMenu from '../credentials/action-menu/ActionMenu';
+import AppTable from '../shared/AppTable';
+import ConfirmationDialog from '../shared/ConfirmationDialog';
+import OwnershipStatus from '../shared/OwnershipStatus';
+import { Owner, PendingShare } from '../shares/ShareManager';
+import NoteEditor from './note-editor/NoteEditor';
+import NoteTitle from './note-title/NoteTitle';
 
 export type Note = {
     id: string;
@@ -42,20 +36,20 @@ export type Note = {
     pendingShares: PendingShare[];
 };
 
-const loadErrorText = "Unable to load notes. Please try again later.";
+const loadErrorText = 'Unable to load notes. Please try again later.';
 
 const dateFormat: Intl.DateTimeFormatOptions = {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "numeric",
-    minute: "numeric",
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
 };
 
 const columnDef: GridColDef[] = [
     {
-        field: "title",
-        headerName: "Title",
+        field: 'title',
+        headerName: 'Title',
         width: 500,
         flex: 2,
         sortable: false,
@@ -65,25 +59,25 @@ const columnDef: GridColDef[] = [
         ),
     },
     {
-        field: "lastModified",
-        headerName: "Last Modified",
+        field: 'lastModified',
+        headerName: 'Last Modified',
         hideable: false,
         sortable: true,
         width: 250,
         valueFormatter: ({ value }) =>
-            new Date(value as Date).toLocaleDateString("en-US", dateFormat),
+            new Date(value as Date).toLocaleDateString('en-US', dateFormat),
     },
     {
-        field: "ownership",
-        headerName: "Ownership",
+        field: 'ownership',
+        headerName: 'Ownership',
         width: 88,
         sortable: false,
         filterable: false,
         renderCell: (params) => <OwnershipStatus data={params.row} />,
     },
     {
-        field: "actions",
-        headerName: "Actions",
+        field: 'actions',
+        headerName: 'Actions',
         width: 67,
         sortable: false,
         filterable: false,
@@ -120,7 +114,7 @@ const updateNotes = async function (
                 dispatch(
                     sendToast({
                         message: `There were errors in loading note(s)`,
-                        severity: "error",
+                        severity: 'error',
                     })
                 );
                 break;
@@ -149,8 +143,8 @@ const onDeleteAccept = async function (this: NotesViewContext) {
         await state.noteService.deleteNote(state.currentId!);
         dispatch(
             sendToast({
-                message: "Successfully deleted your note.",
-                severity: "success",
+                message: 'Successfully deleted your note.',
+                severity: 'success',
             })
         );
         update({ isDeleteOpen: false });
@@ -159,8 +153,8 @@ const onDeleteAccept = async function (this: NotesViewContext) {
         dispatch(
             sendToast({
                 message:
-                    "Something went wrong and we were unable to delete your note. Please try again later.",
-                severity: "error",
+                    'Something went wrong and we were unable to delete your note. Please try again later.',
+                severity: 'error',
             })
         );
     }
@@ -260,26 +254,29 @@ export default function NotesView() {
         isLoading: true,
         totalNotes: 0,
         isDeleteLoading: false,
-        tableErrorText: "",
-        sortType: "asc",
+        tableErrorText: '',
+        sortType: 'asc',
         noteService: new NoteService(cryptoWorker, account, apolloClient),
     } as NotesViewState);
 
     const context = { state, event, update, dispatch };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(init.bind(context), []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(handleEvent.bind(context), [event]);
 
     return (
-        <Box sx={{ height: "100%" }}>
+        <Box sx={{ height: '100%' }}>
             <AppTable
                 errorText={state.tableErrorText}
                 columnDef={columnDef}
                 content={state.notes}
                 contentCount={state.totalNotes}
                 isLoading={state.isLoading}
-                sortField="lastModified"
+                sortField='lastModified'
                 updateContent={updateNotes.bind(context)}
-                initialSort="desc"
+                initialSort='desc'
             />
             <NoteEditor
                 isOpen={state.isEditorOpen}
@@ -297,8 +294,8 @@ export default function NotesView() {
                 isOpen={state.isDeleteOpen}
                 onClose={() => update({ isDeleteOpen: false })}
                 onAccept={onDeleteAccept.bind(context)}
-                title="Delete Note"
-                body="Are you sure you want to delete this note? This action cannot be undone."
+                title='Delete Note'
+                body='Are you sure you want to delete this note? This action cannot be undone.'
                 isLoading={state.isDeleteLoading}
             />
         </Box>

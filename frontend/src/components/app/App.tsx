@@ -21,7 +21,6 @@ export default function App() {
         (state) => state
     );
     const [isToastOpen, setIsToastOpen] = useState(false);
-    const [currentToast, setCurrentToast] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useAppDispatch();
@@ -39,7 +38,7 @@ export default function App() {
                 dispatch(consumeToast());
             }, 300);
         },
-        []
+        [dispatch, toastQueue.length]
     );
 
     useEffect(() => {
@@ -63,7 +62,7 @@ export default function App() {
                 })
             );
         }, 300);
-    }, [event]);
+    }, [event, dispatch]);
 
     return (
         <div id='app' className='background'>

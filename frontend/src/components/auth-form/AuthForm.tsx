@@ -6,7 +6,7 @@ import Grow from '@mui/material/Grow';
 import Slide from '@mui/material/Slide';
 import TextField from '@mui/material/TextField';
 import parser from 'hexagon-shared/utils/parser';
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AccountService from '../../services/AccountService';
 import { updateAccount } from '../../store/slices/AccountSlice';
@@ -189,15 +189,19 @@ export default function AuthForm() {
     const dispatch = useAppDispatch();
     const location = useAppSelector((state) => state.location);
     const bodyRef: React.RefObject<HTMLDivElement> = useRef(null);
-    useEffect(() => {
-        const lastUser = window.localStorage.getItem('lastUser');
-        if (lastUser)
-            update({
-                currentEmail: lastUser,
-                isEmailEntered: true,
-                isSignUp: false,
-            });
-    }, []);
+    useEffect(
+        () => {
+            const lastUser = window.localStorage.getItem('lastUser');
+            if (lastUser)
+                update({
+                    currentEmail: lastUser,
+                    isEmailEntered: true,
+                    isSignUp: false,
+                });
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        []
+    );
 
     const input = !state.isEmailEntered ? (
         <TextField
@@ -304,10 +308,7 @@ export default function AuthForm() {
                                 },
                             }}
                             startIcon={<ChevronLeftIcon />}
-                            onClick={useCallback(
-                                () => onBackButtonClick(update),
-                                []
-                            )}
+                            onClick={onBackButtonClick.bind(null, update)}
                         >
                             Use different email
                         </Button>

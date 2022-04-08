@@ -1,13 +1,13 @@
-import { GridSortDirection } from "@mui/x-data-grid";
-import { Account } from "../store/slices/AccountSlice";
+import { GridSortDirection } from '@mui/x-data-grid';
+import { Account } from '../store/slices/AccountSlice';
 import CredentialController, {
     CredentialDto,
-} from "../controllers/CredentialController";
-import * as CryptoWorker from "../workers/CryptoWorker";
-import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
-import zxcvbn from "zxcvbn";
-import { Owner, PendingShare } from "../components/shares/ShareManager";
-import SecureRecordController from "../controllers/SecureRecordController";
+} from '../controllers/CredentialController';
+import * as CryptoWorker from '../workers/CryptoWorker';
+import { ApolloClient, NormalizedCacheObject } from '@apollo/client';
+import zxcvbn from 'zxcvbn';
+import { Owner, PendingShare } from '../components/shares/ShareManager';
+import SecureRecordController from '../controllers/SecureRecordController';
 
 type Credential = {
     id: string;
@@ -21,11 +21,11 @@ type Credential = {
 };
 
 enum CredentialStrength {
-    BREACHED = "Potentially Breached Password",
-    WEAK = "Weak Password",
-    MODERATE = "Moderately Secure Password",
-    STRONG = "Secure Password",
-    UNKNOWN = "Security Unknown",
+    BREACHED = 'Potentially Breached Password',
+    WEAK = 'Weak Password',
+    MODERATE = 'Moderately Secure Password',
+    STRONG = 'Secure Password',
+    UNKNOWN = 'Security Unknown',
 }
 
 class CredentialService {
@@ -68,13 +68,9 @@ class CredentialService {
             const res = await this.credentialController.checkBreach(
                 hash.slice(0, 5)
             );
-            const data = res.split("\r\n");
+            const data = res.split('\r\n');
             const idx = this.binarySearchHash(data, hash.slice(5));
-            if (idx !== -1) {
-                const [_, count] = data[idx].split(":");
-                const isBreached = Number(count) >= 10;
-                return CredentialStrength.BREACHED;
-            }
+            if (idx !== -1) return CredentialStrength.BREACHED;
         } catch (error) {}
         const score = zxcvbn(password).score;
         if (score <= 2) return CredentialStrength.WEAK;
@@ -93,9 +89,9 @@ class CredentialService {
     }
 
     private async decryptCredential(dto: CredentialDto): Promise<Credential> {
-        let user = "";
-        let key = "";
-        let password = "";
+        let user = '';
+        let key = '';
+        let password = '';
         let shares: Owner[] = [];
         let pendingShares: PendingShare[] = [];
         let strength = CredentialStrength.UNKNOWN;
@@ -169,6 +165,7 @@ class CredentialService {
                             );
                     } catch (e) {}
                     if (user === username) {
+                        // eslint-disable-next-line no-throw-literal
                         throw {
                             id: dto._id,
                             key,
@@ -230,6 +227,7 @@ class CredentialService {
 
     async createCredential(url: string, username: string, password: string) {
         const existError = await this.checkCredentialExists(url, username);
+        // eslint-disable-next-line no-throw-literal
         if (existError) throw { status: 409, ...existError };
 
         const [encryptedKey, encryptedUser, encryptedPass, encryptedEmail] =
@@ -252,6 +250,7 @@ class CredentialService {
     ) {
         const existError = await this.checkCredentialExists(url, username);
         if (existError && existError.id !== id)
+            // eslint-disable-next-line no-throw-literal
             throw { status: 409, ...existError };
 
         const [encryptedUser, encryptedPass] =

@@ -1,5 +1,5 @@
-import { ApolloClient, gql, NormalizedCacheObject } from "@apollo/client";
-import { executeQuery } from "../utils/controller";
+import { ApolloClient, gql, NormalizedCacheObject } from '@apollo/client';
+import { executeQuery } from '../utils/controller';
 
 const countCredentialsQuery = gql`
     query {
@@ -113,7 +113,7 @@ class CredentialController {
     }
 
     /**
-     * Sorts the records by sortType, starts from the given offSet and returns 
+     * Sorts the records by sortType, starts from the given offSet and returns
      * records upto the given limit
      * @param {string} sortType ascending or descending
      * @param {number} offset offset
@@ -215,7 +215,7 @@ class CredentialController {
      * @param {string} password updates with the new note password
      * @param {string} secureRecordId points to the note record to be updated
      * @returns {any} newly created credentials data
-     */    
+     */
     public updateCredentials(
         username: string,
         password: string,
@@ -235,11 +235,12 @@ class CredentialController {
     /**
      * checks for any breaches given the hashprefix
      * @param {string} hashPrefix hashprefix
-     */    
+     */
     async checkBreach(hashPrefix: string): Promise<string> {
         return fetch(`https://api.pwnedpasswords.com/range/${hashPrefix}`, {
-            method: "GET",
+            method: 'GET',
         }).then((res) => {
+            // eslint-disable-next-line no-throw-literal
             if (!res.ok) throw { status: res.status, errors: res.text() };
             else return res.text();
         });
