@@ -35,6 +35,7 @@ const doRequest = (
         },
         ...(!isGet && { body: JSON.stringify(body) }),
     }).then((res) => {
+        // eslint-disable-next-line no-throw-literal
         if (!res.ok) throw { status: res.status, errors: res.json() };
         else return res.json();
     });
@@ -76,7 +77,6 @@ class AccountController {
         });
     }
 
-    
     /**
      * Checks if a email exists in the database
      * @param {string} email current password for the user

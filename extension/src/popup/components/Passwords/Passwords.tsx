@@ -33,13 +33,11 @@ type PasswordProps = {
 const onFormSubmit = async (
     e: SyntheticEvent,
     username: string,
+    password,
     onUpdate: (username: string, password: string) => void
 ) => {
     e.preventDefault();
-    let password = document.querySelector(
-        "#hexagon-updated-password-" + username
-    ) as HTMLInputElement;
-    await onUpdate(username, password.value);
+    await onUpdate(username, password);
 };
 
 type PasswordFormProps = {
@@ -78,11 +76,11 @@ const PasswordCardForm = ({
                 justifyContent={"space-between"}
                 alignItems={"flex-end"}
                 component={"form"}
-                onSubmit={(e) => onFormSubmit(e, username, onUpdate)}
+                onSubmit={(e) => onFormSubmit(e, username, pass, onUpdate)}
             >
                 {showPass ? (
                     <TextField
-                        id={"hexagon-updated-password-" + username}
+                        id={"hexagon-updated-password"}
                         required
                         label="Password"
                         autoComplete="current-password"
@@ -97,7 +95,7 @@ const PasswordCardForm = ({
                     />
                 ) : (
                     <TextField
-                        id={"hexagon-updated-password-" + username}
+                        id={"hexagon-updated-password"}
                         required
                         label="Password"
                         type="password"

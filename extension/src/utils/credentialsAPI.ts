@@ -1,5 +1,5 @@
 import CredentialService from "hexagon-frontend/src/services/CredentialService";
-import CryptoService from "hexagon-shared/services/CryptoService";
+import { authenticationAPI } from "./authenticationAPI";
 import { Credential } from "../contentScript/contentScript";
 import { Account, client, cryptoService } from "./serviceUtils";
 
@@ -28,7 +28,8 @@ export const credentialsAPI = (function () {
                     password
                 );
             } catch (err) {
-                throw "Unable to create credential";
+                if (err.status === 401) authenticationAPI.updateToken();
+                throw "Unable to create credential. Try again later.";
             }
         },
 
@@ -41,7 +42,8 @@ export const credentialsAPI = (function () {
                 );
                 await credentialService.deleteCredential(id);
             } catch (err) {
-                throw "Unable to delete credential";
+                if (err.status === 401) authenticationAPI.updateToken();
+                throw "Unable to delete credential. Try again later.";
             }
         },
 
@@ -63,7 +65,8 @@ export const credentialsAPI = (function () {
                     .updateCredential(id, url, username, password, key)
                     .then(() => console.log("credential updated"));
             } catch (err) {
-                throw "Unable to update credential";
+                if (err.status === 401) authenticationAPI.updateToken();
+                throw "Unable to update credential. Try again later.";
             }
         },
 
@@ -79,7 +82,8 @@ export const credentialsAPI = (function () {
                     username
                 );
             } catch (err) {
-                throw "Unable to check credential right now";
+                if (err.status === 401) authenticationAPI.updateToken();
+                throw "Unable to check credential right now. Try again later.";
             }
         },
 
@@ -102,7 +106,8 @@ export const credentialsAPI = (function () {
                     )
                 );
             } catch (err) {
-                throw "Unable to fetch credentials right now";
+                if (err.status === 401) authenticationAPI.updateToken();
+                throw "Unable to fetch credentials right now. Try again later.";
             }
         },
     };

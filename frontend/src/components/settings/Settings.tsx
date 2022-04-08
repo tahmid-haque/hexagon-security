@@ -193,7 +193,7 @@ const onUpdateSubmit = async (
 };
 
 const verifyHeaders = (headers: string[]): boolean => {
-    if (headers.length != 4) return false;
+    if (headers.length !== 4) return false;
     if (
         headers[0].trim().toLowerCase() !== 'name' ||
         headers[1].trim().toLowerCase() !== 'url' ||
@@ -220,7 +220,7 @@ const readCSVFile = async (
             let currentPassword = current[3].trim();
 
             if (!currentDomain || !currentUsername || !currentPassword)
-                throw 'Missing fields in credentials';
+                throw new Error('Missing fields in credentials');
 
             await props.credentialService.createCredential(
                 currentDomain,
@@ -284,7 +284,8 @@ const onImportSubmit = async (
 
                 const headers = lines[0].split(',');
 
-                if (!verifyHeaders(headers)) throw 'Error with file formatting';
+                if (!verifyHeaders(headers))
+                    throw new Error('Error with file formatting');
 
                 readCSVFile(lines, state, update, props, dispatch);
             } catch (error: any) {
@@ -423,7 +424,7 @@ export default function Settings(props: SettingsProps) {
                     </Box>
                 )}
                 {state.currentTab === SettingsView.ABOUT && (
-                    <Box>
+                    <Box id='about-tab-view'>
                         <Box my={2}>
                             <Typography
                                 variant='body1'
@@ -431,7 +432,11 @@ export default function Settings(props: SettingsProps) {
                             >
                                 About Hexagon
                             </Typography>
-                            <div>abjdksfgkj;fdklgkfdkgkfdgjksfsd</div>
+                            <div>
+                                A secure password manager for all your security
+                                needs. Save all your passwords, MFA secrets, and
+                                notes in one place.
+                            </div>
                         </Box>
 
                         <Box>
@@ -441,7 +446,30 @@ export default function Settings(props: SettingsProps) {
                             >
                                 Credits
                             </Typography>
-                            <div>iorkesfkdskfkdfjkdsjfjkljk</div>
+                            <ul style={{ margin: 0 }}>
+                                <li>
+                                    UI designed using{' '}
+                                    <a href='https://mui.com/'>MUI</a>
+                                </li>
+                                <li>
+                                    All site logos retrieved from{' '}
+                                    <a href='https://clearbit.com/logo'>
+                                        Clearbit
+                                    </a>
+                                </li>
+                                <li>
+                                    Password security checked by{' '}
+                                    <a href='https://haveibeenpwned.com/Passwords'>
+                                        HaveIBeenPwned
+                                    </a>
+                                </li>
+                                <li>
+                                    Full list of credits can be found{' '}
+                                    <a href='https://github.com/UTSCC09/project-noaccess/blob/31e4489aaae33d07d13ee0f393e7bd835b5547a6/README.md'>
+                                        here
+                                    </a>
+                                </li>
+                            </ul>
                         </Box>
                     </Box>
                 )}
