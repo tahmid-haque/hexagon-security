@@ -39,9 +39,7 @@
         "hexagon-frontend": "workspace:*",
         "hexagon-shared": "workspace:*",
         "material-ui-popup-state": "^2.0.0",
-        "psl": "^1.8.0",
-        "react-password-strength-bar": "^0.4.0",
-        "valid-url": "^1.0.9"
+        "react-password-strength-bar": "^0.4.0"
     },
     "main": "webpack.common.js",
     "license": "ISC"
