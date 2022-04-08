@@ -598,6 +598,6 @@ const Mutation = new GraphQLObjectType({
     },
 });
 
-module.exports = {
+module.exports = Object.freeze({
     Mutation,
-};
+});

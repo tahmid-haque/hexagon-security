@@ -245,6 +245,6 @@ const RootQuery = new GraphQLObjectType({
     },
 });
 
-module.exports = {
+module.exports = Object.freeze({
     RootQuery,
-};
+});

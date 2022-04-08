@@ -121,7 +121,7 @@ const ShareType = new GraphQLObjectType({
     }),
 });
 
-module.exports = {
+module.exports = Object.freeze({
     ShareType,
     SecureRecordType,
-};
+});
