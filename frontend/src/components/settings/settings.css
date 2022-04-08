@@ -1,19 +1,25 @@
-ol{
+ol {
     margin: 5px 0px;
 }
 
-ol li{
+ol li {
     margin-bottom: 4px;
 }
 
-#import-passwords{
-    font-family: Lato,Roboto,Helvetica,Ariel,sans-serif;
+#import-passwords {
+    font-family: Lato, Roboto, Helvetica, Ariel, sans-serif;
     font-weight: 400;
     font-size: 1rem;
 }
 
-#import-view{
-    font-family: Lato,Roboto,Helvetica,Ariel,sans-serif;
+#import-view {
+    font-family: Lato, Roboto, Helvetica, Ariel, sans-serif;
+    font-weight: 400;
+    font-size: 1rem;
+}
+
+#about-tab-view {
+    font-family: Lato, Roboto, Helvetica, Ariel, sans-serif;
     font-weight: 400;
     font-size: 1rem;
 }

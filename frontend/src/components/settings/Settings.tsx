@@ -1,7 +1,7 @@
-import AppModal from '../shared/AppModal';
-import { useComponentState } from '../../utils/hooks';
-import { sendToast } from '../../store/slices/ToastSlice';
-import { useAppDispatch, useAppSelector } from '../../store/store';
+import AppModal from "../shared/AppModal";
+import { useComponentState } from "../../utils/hooks";
+import { sendToast } from "../../store/slices/ToastSlice";
+import { useAppDispatch, useAppSelector } from "../../store/store";
 import {
     Box,
     Button,
@@ -10,22 +10,22 @@ import {
     Tab,
     Tabs,
     Typography,
-} from '@mui/material';
-import PasswordField from '../shared/PasswordField';
-import LoadingDialog from '../shared/LoadingDialog';
-import AccountService from '../../services/AccountService';
-import CredentialService from '../../services/CredentialService';
-import './settings.css';
-import parser from 'hexagon-shared/utils/parser';
+} from "@mui/material";
+import PasswordField from "../shared/PasswordField";
+import LoadingDialog from "../shared/LoadingDialog";
+import AccountService from "../../services/AccountService";
+import CredentialService from "../../services/CredentialService";
+import "./settings.css";
+import parser from "hexagon-shared/utils/parser";
 import {
     createEvent,
     DashboardEventType,
-} from '../../store/slices/DashboardSlice';
+} from "../../store/slices/DashboardSlice";
 import {
     ApolloClient,
     NormalizedCacheObject,
     useApolloClient,
-} from '@apollo/client';
+} from "@apollo/client";
 
 export type SettingsProps = {
     isOpen: boolean;
@@ -56,11 +56,11 @@ type SettingsState = {
 
 const initState: SettingsState = {
     isOldPassValid: true,
-    oldPassword: '',
-    oldPasswordError: '',
+    oldPassword: "",
+    oldPasswordError: "",
     isNewPassValid: true,
-    newPassword: '',
-    newPasswordError: '',
+    newPassword: "",
+    newPasswordError: "",
     isImportLoadOpen: false,
     isImportLoading: false,
     isLoading: false,
@@ -94,7 +94,7 @@ const onOldPasswordChange = (
     update({
         oldPassword: value,
         isOldPassValid: value.length > 0,
-        oldPasswordError: '',
+        oldPasswordError: "",
     });
 };
 
@@ -106,7 +106,7 @@ const onNewPasswordChange = (
     update({
         newPassword: value,
         isNewPassValid: value.length > 0,
-        newPasswordError: '',
+        newPasswordError: "",
     });
 };
 
@@ -140,14 +140,14 @@ const validateForm = (
     let error = false;
     if (!state.isOldPassValid || !state.oldPassword) {
         update({
-            oldPasswordError: 'Please enter your current password',
+            oldPasswordError: "Please enter your current password",
             isOldPassValid: false,
         });
         error = true;
     }
     if (!state.isNewPassValid || !state.newPassword) {
         update({
-            newPasswordError: 'Please enter a password',
+            newPasswordError: "Please enter a password",
             isNewPassValid: false,
         });
         error = true;
@@ -174,8 +174,8 @@ const onUpdateSubmit = async (
         );
         dispatch(
             sendToast({
-                message: 'Successfully updated your password.',
-                severity: 'success',
+                message: "Successfully updated your password.",
+                severity: "success",
             })
         );
     } catch (error: any) {
@@ -184,8 +184,8 @@ const onUpdateSubmit = async (
         return dispatch(
             sendToast({
                 message:
-                    'Something went wrong and we were unable to update your password. Try again later.',
-                severity: 'error',
+                    "Something went wrong and we were unable to update your password. Try again later.",
+                severity: "error",
             })
         );
     }
@@ -195,10 +195,10 @@ const onUpdateSubmit = async (
 const verifyHeaders = (headers: string[]): boolean => {
     if (headers.length != 4) return false;
     if (
-        headers[0].trim().toLowerCase() !== 'name' ||
-        headers[1].trim().toLowerCase() !== 'url' ||
-        headers[2].trim().toLowerCase() !== 'username' ||
-        headers[3].trim().toLowerCase() !== 'password'
+        headers[0].trim().toLowerCase() !== "name" ||
+        headers[1].trim().toLowerCase() !== "url" ||
+        headers[2].trim().toLowerCase() !== "username" ||
+        headers[3].trim().toLowerCase() !== "password"
     )
         return false;
 
@@ -214,13 +214,13 @@ const readCSVFile = async (
 ) => {
     for (let i = 1; i < lines.length; i++) {
         try {
-            let current = lines[i].split(',');
+            let current = lines[i].split(",");
             let currentDomain = parser.extractDomain(current[1].trim());
             let currentUsername = current[2].trim();
             let currentPassword = current[3].trim();
 
             if (!currentDomain || !currentUsername || !currentPassword)
-                throw 'Missing fields in credentials';
+                throw "Missing fields in credentials";
 
             await props.credentialService.createCredential(
                 currentDomain,
@@ -231,10 +231,10 @@ const readCSVFile = async (
             dispatch(
                 sendToast({
                     message:
-                        'Unable to add credentials for website on line ' +
+                        "Unable to add credentials for website on line " +
                         i +
-                        '.',
-                    severity: 'error',
+                        ".",
+                    severity: "error",
                 })
             );
         }
@@ -248,13 +248,13 @@ const readCSVFile = async (
 
     dispatch(
         sendToast({
-            message: 'Successfully imported your passwords.',
-            severity: 'success',
+            message: "Successfully imported your passwords.",
+            severity: "success",
         })
     );
 
     let importForm = document.querySelector(
-        '#import-passwords-form'
+        "#import-passwords-form"
     ) as HTMLFormElement;
     importForm.reset();
     update({
@@ -282,9 +282,9 @@ const onImportSubmit = async (
                 let lines = fileContents.split(/\r\n|\n/);
                 if (lines.length < 1) return;
 
-                const headers = lines[0].split(',');
+                const headers = lines[0].split(",");
 
-                if (!verifyHeaders(headers)) throw 'Error with file formatting';
+                if (!verifyHeaders(headers)) throw "Error with file formatting";
 
                 readCSVFile(lines, state, update, props, dispatch);
             } catch (error: any) {
@@ -297,8 +297,8 @@ const onImportSubmit = async (
                 return dispatch(
                     sendToast({
                         message:
-                            'Something went wrong. Please check your file contents or try again later.',
-                        severity: 'error',
+                            "Something went wrong. Please check your file contents or try again later.",
+                        severity: "error",
                     })
                 );
             }
@@ -312,8 +312,8 @@ const onImportSubmit = async (
 
         return dispatch(
             sendToast({
-                message: 'No file uploaded. Please try again.',
-                severity: 'error',
+                message: "No file uploaded. Please try again.",
+                severity: "error",
             })
         );
     }
@@ -330,20 +330,20 @@ export default function Settings(props: SettingsProps) {
         <AppModal
             isOpen={props.isOpen}
             onClose={onClose.bind(null, state, update, props.onClose, false)}
-            modalTitle={'User Settings'}
+            modalTitle={"User Settings"}
         >
             <Box sx={{ width: 400 }}>
-                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                     <Tabs
                         value={state.currentTab}
                         onChange={onViewChange.bind(context)}
                     >
                         <Tab
-                            label='Update Password'
+                            label="Update Password"
                             value={SettingsView.UPDATE}
                         />
-                        <Tab label='Import' value={SettingsView.IMPORT} />
-                        <Tab label='About' value={SettingsView.ABOUT} />
+                        <Tab label="Import" value={SettingsView.IMPORT} />
+                        <Tab label="About" value={SettingsView.ABOUT} />
                     </Tabs>
                 </Box>
                 {state.currentTab === SettingsView.UPDATE && (
@@ -357,7 +357,7 @@ export default function Settings(props: SettingsProps) {
                                     update
                                 )}
                                 errorMessage={state.oldPasswordError}
-                                label='Current Password'
+                                label="Current Password"
                             />
                         </Box>
 
@@ -370,17 +370,17 @@ export default function Settings(props: SettingsProps) {
                                     update
                                 )}
                                 errorMessage={state.newPasswordError}
-                                label='New Password'
+                                label="New Password"
                             />
                         </Box>
                     </div>
                 )}
                 {state.currentTab === SettingsView.IMPORT && (
                     <Box mt={2}>
-                        <div id='import-view'>
+                        <div id="import-view">
                             <Typography
-                                variant='body1'
-                                sx={{ fontWeight: 'bold' }}
+                                variant="body1"
+                                sx={{ fontWeight: "bold" }}
                             >
                                 Steps to Import
                             </Typography>
@@ -392,10 +392,10 @@ export default function Settings(props: SettingsProps) {
                                 <li>
                                     Format your CSV file to follow the
                                     <Link
-                                        href='../../../Import_Passwords.csv'
-                                        underline='hover'
-                                        color='secondary'
-                                        ml={'4px'}
+                                        href="../../../Import_Passwords.csv"
+                                        underline="hover"
+                                        color="secondary"
+                                        ml={"4px"}
                                         download
                                     >
                                         template
@@ -408,14 +408,14 @@ export default function Settings(props: SettingsProps) {
                             <Box
                                 mx={2}
                                 mt={2}
-                                component={'form'}
-                                id='import-passwords-form'
+                                component={"form"}
+                                id="import-passwords-form"
                             >
                                 <input
-                                    type='file'
-                                    id='import-passwords'
-                                    name='import-passwords'
-                                    accept='.csv'
+                                    type="file"
+                                    id="import-passwords"
+                                    name="import-passwords"
+                                    accept=".csv"
                                     onChange={onFileUpload.bind(null, update)}
                                 ></input>
                             </Box>
@@ -423,31 +423,58 @@ export default function Settings(props: SettingsProps) {
                     </Box>
                 )}
                 {state.currentTab === SettingsView.ABOUT && (
-                    <Box>
+                    <Box id="about-tab-view">
                         <Box my={2}>
                             <Typography
-                                variant='body1'
-                                sx={{ fontWeight: 'bold' }}
+                                variant="body1"
+                                sx={{ fontWeight: "bold" }}
                             >
                                 About Hexagon
                             </Typography>
-                            <div>abjdksfgkj;fdklgkfdkgkfdgjksfsd</div>
+                            <div>
+                                A secure password manager for all your security
+                                needs. Save all your passwords, MFA secrets, and
+                                notes in one place.
+                            </div>
                         </Box>
 
                         <Box>
                             <Typography
-                                variant='body1'
-                                sx={{ fontWeight: 'bold' }}
+                                variant="body1"
+                                sx={{ fontWeight: "bold" }}
                             >
                                 Credits
                             </Typography>
-                            <div>iorkesfkdskfkdfjkdsjfjkljk</div>
+                            <ul>
+                                <li>
+                                    UI library{" "}
+                                    <a href="https://mui.com/">MUI</a>
+                                </li>
+                                <li>
+                                    All site logos retrieved from{" "}
+                                    <a href="https://clearbit.com/logo">
+                                        Clearbit
+                                    </a>
+                                </li>
+                                <li>
+                                    Password security checked by{" "}
+                                    <a href="https://haveibeenpwned.com/Passwords">
+                                        PwnedPasswords
+                                    </a>
+                                </li>
+                                <li>
+                                    Full list of credits can be found{" "}
+                                    <a href="https://github.com/UTSCC09/project-noaccess/blob/31e4489aaae33d07d13ee0f393e7bd835b5547a6/README.md">
+                                        here
+                                    </a>
+                                </li>
+                            </ul>
                         </Box>
                     </Box>
                 )}
-                <Box sx={{ position: 'relative', mt: 2, float: 'right' }}>
+                <Box sx={{ position: "relative", mt: 2, float: "right" }}>
                     <Button
-                        variant='contained'
+                        variant="contained"
                         disabled={state.isLoading}
                         onClick={() => {
                             if (state.currentTab === SettingsView.UPDATE)
@@ -465,18 +492,18 @@ export default function Settings(props: SettingsProps) {
                         }}
                     >
                         {state.currentTab !== SettingsView.ABOUT
-                            ? 'Submit'
-                            : 'Done'}
+                            ? "Submit"
+                            : "Done"}
                     </Button>
                     {state.isLoading && (
                         <CircularProgress
                             size={24}
                             sx={{
-                                position: 'absolute',
-                                top: '50%',
-                                left: '50%',
-                                marginTop: '-12px',
-                                marginLeft: '-12px',
+                                position: "absolute",
+                                top: "50%",
+                                left: "50%",
+                                marginTop: "-12px",
+                                marginLeft: "-12px",
                             }}
                         />
                     )}
@@ -484,8 +511,8 @@ export default function Settings(props: SettingsProps) {
                         isOpen={state.isImportLoadOpen}
                         onClose={() => update({ isImportLoadOpen: false })}
                         onAccept={() => update({ isImportLoadOpen: false })}
-                        title='Importing Passwords'
-                        body='Do not close this tab while passwords are importing.'
+                        title="Importing Passwords"
+                        body="Do not close this tab while passwords are importing."
                         isLoading={state.isImportLoading}
                     />
                 </Box>
