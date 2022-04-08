@@ -19,6 +19,12 @@ class SecureRecordController {
         this.executeQuery = executeQuery.bind(this, client, token);
     }
 
+    /**
+     * Attempts to delete an existing secure record,
+     * throws an error on failure
+     * @param {string} secureRecordId record to be deleted
+     * @returns {any} deleted secure record
+     */
     public deleteSecureRecord(secureRecordId: string) {
         return this.executeQuery(
             deleteSecureRecordMutation,

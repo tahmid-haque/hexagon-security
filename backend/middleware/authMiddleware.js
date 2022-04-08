@@ -16,17 +16,12 @@ const requireAuth = (req, res, next) => {
     if (token) {
         jwt.verify(token, JWT_SECRET, async (err, decodedToken) => {
             if (err) {
-                console.log(14, err);
                 return res.status(401).end('Invalid JWT');
             } else {
                 let isRetired = 'true';
                 try {
-                    console.log('key:', token);
-                    console.log('value:', await redisController.get(token));
                     isRetired = Boolean(await redisController.get(token));
-                } catch (error) {
-                    console.log(22, error);
-                }
+                } catch (error) {}
                 if (isRetired) return res.status(401).end('Invalid JWT');
                 req.token = decodedToken;
                 req.originalToken = token;

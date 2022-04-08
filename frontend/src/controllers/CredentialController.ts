@@ -112,6 +112,14 @@ class CredentialController {
         this.executeQuery = executeQuery.bind(this, client, token);
     }
 
+    /**
+     * Sorts the records by sortType, starts from the given offSet and returns 
+     * records upto the given limit
+     * @param {string} sortType ascending or descending
+     * @param {number} offset offset
+     * @param {number} limit limit
+     * @returns {any} list of SecureRecord data for credentials
+     */
     public getCredentials(offset: number, limit: number, sortType: string) {
         return this.executeQuery(
             getCredentialsQuery,
@@ -124,6 +132,13 @@ class CredentialController {
         ).then((data) => data.getCredentials as CredentialDto[]);
     }
 
+    /**
+     * Searches for a website credential given URL/name, if exactMatch
+     * is false then returns all secure records containing the given name
+     * @param {string} name domain url or name
+     * @param {boolean} exactMatch boolean value
+     * @returns {any} SecureRecord data for website credentials
+     */
     public searchCredentials(name: string, exactMatch: boolean) {
         return this.executeQuery(
             searchCredentialsQuery,
@@ -135,6 +150,13 @@ class CredentialController {
         ).then((data) => data.searchCredentials as CredentialDto[]);
     }
 
+    /**
+     * Searches for a website credential given URL/name, if exactMatch
+     * is false then returns all secure records containing the given name
+     * @param {string} name domain url or name
+     * @param {boolean} exactMatch boolean value
+     * @returns {any} SecureRecord data for website credentials
+     */
     public searchWebsiteCredentials(name: string, exactMatch: boolean) {
         return this.executeQuery(
             searchWebsiteCredentialsQuery,
@@ -146,12 +168,26 @@ class CredentialController {
         ).then((data) => data.searchCredentials as CredentialDto[]);
     }
 
+    /**
+     * counts the number of credentials for the current user and returns the count
+     * @returns {any} number of credentials records
+     */
     public countCredentials() {
         return this.executeQuery(countCredentialsQuery, {}, false).then(
             (data) => data.countWebsiteCredentials as number
         );
     }
 
+    /**
+     * Attempts to create a secure record with the given arguments, returns
+     * the newly created record on success
+     * @param {string} name website url
+     * @param {string} username username for the website
+     * @param {string} password password for the website
+     * @param {string} key key used for encryption
+     * @param {string} masterUsername username for the hexagon user
+     * @returns {any} newly created record data
+     */
     public addCredential(
         name: string,
         username: string,
@@ -172,6 +208,14 @@ class CredentialController {
         ).then((data) => data.addWebsiteCredential._id as string);
     }
 
+    /**
+     * Attempts to update an existing credentials record with a new username and password,
+     * throws an error on failure
+     * @param {string} username updates with the new username
+     * @param {string} password updates with the new note password
+     * @param {string} secureRecordId points to the note record to be updated
+     * @returns {any} newly created credentials data
+     */    
     public updateCredentials(
         username: string,
         password: string,
@@ -188,6 +232,10 @@ class CredentialController {
         ).then((data) => data.updateCredential._id as string);
     }
 
+    /**
+     * checks for any breaches given the hashprefix
+     * @param {string} hashPrefix hashprefix
+     */    
     async checkBreach(hashPrefix: string): Promise<string> {
         return fetch(`https://api.pwnedpasswords.com/range/${hashPrefix}`, {
             method: "GET",
