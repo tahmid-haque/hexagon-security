@@ -2,8 +2,14 @@ import parser from "hexagon-shared/utils/parser";
 import AccountService from "hexagon-frontend/src/services/AccountService";
 import { credentialsAPI } from "./credentialsAPI";
 
+//authentication api module
 export const authenticationAPI = (function () {
     // from https://stackoverflow.com/questions/18371339/how-to-retrieve-name-from-email-address
+    /**
+     * Extract a name from an email.
+     * @param email
+     * @returns the name from an email
+     */
     const extractName = (email: string) => {
         return email.match(/^.+(?=@)/)[0];
     };
@@ -11,7 +17,12 @@ export const authenticationAPI = (function () {
     const accountService = new AccountService("https://hexagon-web.xyz");
 
     const module = {
-        //api call to login and get token
+        /**
+         * Sign user in to account using their username and password. Store user info and token in
+         * storage to use when making other api calls.
+         * @param email
+         * @param password
+         */
         signIn: async (email: string, password: string) => {
             try {
                 const { masterKey, jwt } =
@@ -35,6 +46,10 @@ export const authenticationAPI = (function () {
             }
         },
 
+        /**
+         * Sign the user out of their account using their token. The token gets blacklisted.
+         * @param token
+         */
         signOut: async (token: string) => {
             try {
                 await accountService.signOut(token);
@@ -43,11 +58,13 @@ export const authenticationAPI = (function () {
             }
         },
 
+        /**
+         * Log the user back in with a new token once the old one expires.
+         */
         updateToken: async () => {
             chrome.storage.local.get(
                 ["hexagonAccount"],
                 async function (result) {
-                    console.log(result.hexagonAccount);
                     if (result.hexagonAccount) {
                         module.signIn(
                             result.hexagonAccount.email,

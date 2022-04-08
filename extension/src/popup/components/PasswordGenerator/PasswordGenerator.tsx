@@ -1,26 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import {
-    Card,
-    Box,
-    Button,
-    Typography,
-    Tab,
-    TextField,
-    IconButton,
-    Tooltip,
-} from '@mui/material';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import ReplayIcon from '@mui/icons-material/Replay';
-import '../../popup.css';
-import '../Signin/signin.css';
-import PasswordStrengthBar from 'react-password-strength-bar';
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import ReplayIcon from "@mui/icons-material/Replay";
+import { Box, IconButton, TextField, Tooltip } from "@mui/material";
+import React, { useState } from "react";
+import PasswordStrengthBar from "react-password-strength-bar";
+import "../../popup.css";
+import "../Signin/signin.css";
 
+/**
+ * Chooses random characters in an array to generate a password.
+ * @returns a randomly generated password
+ */
 const generatePass = (): string => {
     const characters =
         "aAbBcCdDeEfFgGhHiIj!@#$%^&*()_+=-{}[]JkKlLmMnNoOpPqQrRsStTuUvVwWXyYzZ123456790~`|;:<>,.?/'";
     let length = characters.length;
-    let password = '';
+    let password = "";
     for (let i = 0; i < 16; i++) {
         let index = Math.floor(Math.random() * length);
         password += characters[index];
@@ -29,6 +23,10 @@ const generatePass = (): string => {
     return password;
 };
 
+/**
+ * The password generator.
+ * @returns a react component
+ */
 const Generator = () => {
     const [pass, setPass] = useState(generatePass());
 
@@ -37,17 +35,17 @@ const Generator = () => {
             sx={{ m: 0 }}
             onClick={() => setPass((pass) => (pass = generatePass()))}
         >
-            <ReplayIcon fontSize='small' />
+            <ReplayIcon fontSize="small" />
         </IconButton>
     );
 
     return (
-        <Box p={3} pb={0} className='hexagon-generator'>
-            <div className='hexagon-subheading'>Generate A Password</div>
-            <Tooltip arrow title='Double click to copy' placement='top'>
+        <Box p={3} pb={0} className="hexagon-generator">
+            <div className="hexagon-subheading">Generate A Password</div>
+            <Tooltip arrow title="Double click to copy" placement="top">
                 <TextField
-                    id='outlined-read-only-input'
-                    label='Password'
+                    id="outlined-read-only-input"
+                    label="Password"
                     value={pass}
                     InputProps={{
                         readOnly: true,
@@ -63,25 +61,29 @@ const Generator = () => {
     );
 };
 
+/**
+ * Password strength checker for checking user inputted passwords.
+ * @returns a react component
+ */
 const StrengthChecker = () => {
-    const [checkPass, setCheckPass] = useState('');
+    const [checkPass, setCheckPass] = useState("");
 
     const copyIcon = (
         <IconButton
             sx={{ m: 0 }}
             onClick={() => navigator.clipboard.writeText(checkPass)}
         >
-            <ContentCopyIcon fontSize='small' />
+            <ContentCopyIcon fontSize="small" />
         </IconButton>
     );
 
     return (
-        <Box px={3} py={1} className='hexagon-check-strength'>
-            <div className='hexagon-subheading'>Check Password Strength</div>
-            <Tooltip arrow title='Double click to copy' placement='top'>
+        <Box px={3} py={1} className="hexagon-check-strength">
+            <div className="hexagon-subheading">Check Password Strength</div>
+            <Tooltip arrow title="Double click to copy" placement="top">
                 <TextField
-                    id='outlined-helperText'
-                    label='Enter Password'
+                    id="outlined-helperText"
+                    label="Enter Password"
                     value={checkPass}
                     InputProps={{
                         endAdornment: copyIcon,

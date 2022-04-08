@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from "react";
-import ReactDOM from "react-dom";
-import { Card, Box, TextField, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { TabContext, TabList, TabPanel } from "@mui/lab";
+import { Box, Card, IconButton, TextField } from "@mui/material";
+import React from "react";
 
+/**
+ * Display for messages in the extension popup.
+ * @param param0
+ * @returns a react component
+ */
 const PopupMessage = ({
     message,
     onClose,
@@ -47,6 +50,11 @@ const PopupMessage = ({
     );
 };
 
+/**
+ * Display for an error message in the extension popup.
+ * @param param0
+ * @returns a react component
+ */
 const ErrorMessage = ({
     message,
     onClose,

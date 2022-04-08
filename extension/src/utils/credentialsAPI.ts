@@ -3,7 +3,17 @@ import { authenticationAPI } from "./authenticationAPI";
 import { Credential } from "../contentScript/contentScript";
 import { Account, client, cryptoService } from "./serviceUtils";
 
+//credentials api module
 export const credentialsAPI = (function () {
+    /**
+     * Creates and returns a Credentials object with the given information.
+     * @param id
+     * @param username
+     * @param password
+     * @param url
+     * @param key
+     * @returns a Credentials object
+     */
     const newCredential = (id, username, password, url, key): Credential => {
         return {
             id: id,
@@ -15,6 +25,13 @@ export const credentialsAPI = (function () {
     };
 
     const module = {
+        /**
+         * Creates a new credential.
+         * @param account
+         * @param url
+         * @param username
+         * @param password
+         */
         createCredential: async (account: Account, url, username, password) => {
             try {
                 const credentialService = new CredentialService(
@@ -33,6 +50,11 @@ export const credentialsAPI = (function () {
             }
         },
 
+        /**
+         * Deletes a credential.
+         * @param account
+         * @param id
+         */
         deleteCredential: async (account: Account, id) => {
             try {
                 const credentialService = new CredentialService(
@@ -47,6 +69,15 @@ export const credentialsAPI = (function () {
             }
         },
 
+        /**
+         * Updates a credential.
+         * @param account
+         * @param id
+         * @param url
+         * @param username
+         * @param password
+         * @param key
+         */
         updateCredential: async (
             account: Account,
             id,
@@ -61,15 +92,26 @@ export const credentialsAPI = (function () {
                     account,
                     client
                 );
-                await credentialService
-                    .updateCredential(id, url, username, password, key)
-                    .then(() => console.log("credential updated"));
+                await credentialService.updateCredential(
+                    id,
+                    url,
+                    username,
+                    password,
+                    key
+                );
             } catch (err) {
                 if (err.status === 401) authenticationAPI.updateToken();
                 throw "Unable to update credential. Try again later.";
             }
         },
 
+        /**
+         * Checks if a credential already exists.
+         * @param account
+         * @param url
+         * @param username
+         * @returns the credential if it it exists
+         */
         checkCredentialExists: async (account: Account, url, username) => {
             try {
                 const credentialService = new CredentialService(
@@ -87,6 +129,12 @@ export const credentialsAPI = (function () {
             }
         },
 
+        /**
+         * Retrieves user's saved credentials for a specified website.
+         * @param account
+         * @param url
+         * @returns the credentials for the website
+         */
         getWebsiteCredentials: async (account: Account, url) => {
             try {
                 const credentialService = new CredentialService(

@@ -1,24 +1,26 @@
-import React, { useState, useEffect } from "react";
-import ReactDOM from "react-dom";
-import { Card, Box, Button, Tab } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
-import "../../popup.css";
-import "../Signin/signin.css";
-import PopupPasswords from "../Passwords/Passwords";
-import PasswordGenerator from "../PasswordGenerator/PasswordGenerator";
-import MFAKeyForm from "../MFAKey/MFAKeys";
+import { Box, Button, Card, Tab } from "@mui/material";
+import React, { useState } from "react";
+import { ErrorMessage } from "../../../sharedComponents/PopupMessages/PopupMessage";
 import { authenticationAPI } from "../../../utils/authenticationAPI";
 import type { HexagonAccount } from "../../popup";
-import {
-    PopupMessage,
-    ErrorMessage,
-} from "../../../sharedComponents/PopupMessages/PopupMessage";
+import "../../popup.css";
+import MFAKeyForm from "../MFAKey/MFAKeys";
+import PasswordGenerator from "../PasswordGenerator/PasswordGenerator";
+import PopupPasswords from "../Passwords/Passwords";
+import "../Signin/signin.css";
 
+//properties of a user greeting
 type UserGreetingProps = {
     name: string;
     onLogout: () => void;
 };
 
+/**
+ * The greeting for the user at the top of the popup.
+ * @param props
+ * @returns a react component
+ */
 const UserGreeting = (props: UserGreetingProps) => {
     return (
         <div className="container">
@@ -50,20 +52,34 @@ const UserGreeting = (props: UserGreetingProps) => {
     );
 };
 
+//properties of the popup body
 type PopupBodyProps = {
     account: HexagonAccount;
     url: string;
 };
 
+/**
+ * The entire popup body with tabs for passwords, generator, and mfa.
+ * @param props
+ * @returns a react component
+ */
 const PopupBody = (props: PopupBodyProps) => {
     const [value, setValue] = React.useState("1");
     const [showError, setShowError] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
+    /**
+     * Handles tab change
+     * @param event
+     * @param newValue
+     */
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
 
+    /**
+     * Calls the logout to sign the user out. Sets an error message on failure to logout.
+     */
     const onLogout = async () => {
         try {
             await authenticationAPI.signOut(props.account.token);

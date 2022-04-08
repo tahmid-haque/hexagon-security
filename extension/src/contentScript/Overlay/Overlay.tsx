@@ -1,5 +1,4 @@
 import React, { SyntheticEvent, useState } from "react";
-import ReactDOM from "react-dom";
 import {
     Card,
     Box,
@@ -16,6 +15,13 @@ import Header from "../../sharedComponents/header/Header";
 import { Credential } from "../contentScript";
 import "./overlay.css";
 
+/**
+ * On submit of the autofill form, call the parameter function autofill with
+ * the username and password details.
+ * @param e
+ * @param autofill
+ * @param password
+ */
 const autofillFormSubmit = (
     e: SyntheticEvent,
     autofill: (uname: string, pass: string) => void,
@@ -29,17 +35,22 @@ const autofillFormSubmit = (
         let account = document.querySelector(
             "#hexagon-autofill-username"
         ) as HTMLSelectElement;
-        console.log(account.innerHTML);
         autofill(account.innerHTML, password);
     }
 };
 
+//properties of autofill overlay
 type AutofillProps = {
     autofill: (uname: string, pass: string) => void;
     closeOverlay: () => void;
     accounts: Credential[];
 };
 
+/**
+ * Autofill overlay that gets displayed when user is on a site that has save credentials
+ * @param props
+ * @returns a react component
+ */
 const AutofillOverlay = (props: AutofillProps) => {
     const [password, setPassword] = React.useState("");
 
@@ -99,6 +110,13 @@ const AutofillOverlay = (props: AutofillProps) => {
     );
 };
 
+/**
+ * On submit of the save form, the parameter function saveCredentials is called with the
+ * username, password, and website details.
+ * @param e
+ * @param saveCredentials
+ * @param saveUrl
+ */
 const saveFormSubmit = (
     e: SyntheticEvent,
     saveCredentials: (username: string, password: string, url: string) => void,
@@ -115,12 +133,11 @@ const saveFormSubmit = (
         let password = document.querySelector(
             "#hexagon-save-password"
         ) as HTMLInputElement;
-        console.log(username.value);
-        console.log(password.value);
         saveCredentials(username.value, password.value, saveUrl);
     }
 };
 
+//properties of the save overlay
 type SaveProps = {
     username: string;
     password: string;
@@ -129,6 +146,11 @@ type SaveProps = {
     saveURL: string;
 };
 
+/**
+ * The save form overlay that is displayed when a new credential is detected on login.
+ * @param props
+ * @returns a react component
+ */
 const SavePassOverlay = (props: SaveProps) => {
     const [showPass, setShowPass] = useState(false);
 
@@ -205,6 +227,7 @@ const SavePassOverlay = (props: SaveProps) => {
     );
 };
 
+//properties of the siginin overlay
 type SigninProps = {
     email: string;
     closeOverlay: () => void;
@@ -212,6 +235,12 @@ type SigninProps = {
     onDecline: () => void;
 };
 
+/**
+ * The signin overlay that is displayed when the background script detects login to
+ * a new Hexagon account.
+ * @param props
+ * @returns a react component
+ */
 const SigninOverlay = (props: SigninProps) => {
     return (
         <div className="hexagon-overlay hexagon-signin-overlay">

@@ -1,35 +1,30 @@
-import React, { useState, useEffect, SyntheticEvent } from "react";
-import {
-    Card,
-    Box,
-    Typography,
-    TextField,
-    IconButton,
-    Avatar,
-    Button,
-    LinearProgress,
-} from "@mui/material";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import {
+    Avatar,
+    Box,
+    Button,
+    Card,
+    IconButton,
+    LinearProgress,
+    TextField,
+    Typography,
+} from "@mui/material";
+import React, { SyntheticEvent, useEffect, useState } from "react";
 import { Credential } from "../../../contentScript/contentScript";
+import { ErrorMessage } from "../../../sharedComponents/PopupMessages/PopupMessage";
 import { credentialsAPI } from "../../../utils/credentialsAPI";
 import "../../popup.css";
 import "./passwords.css";
-import {
-    PopupMessage,
-    ErrorMessage,
-} from "../../../sharedComponents/PopupMessages/PopupMessage";
 
-type PasswordProps = {
-    website: string;
-    username: string;
-    password: string;
-    id: string;
-    onDelete: () => void;
-    onUpdate: (username: string, password: string) => void;
-};
-
+/**
+ * Calls update function with username and password on update form submit.
+ * @param e
+ * @param username
+ * @param password
+ * @param onUpdate
+ */
 const onFormSubmit = async (
     e: SyntheticEvent,
     username: string,
@@ -40,6 +35,7 @@ const onFormSubmit = async (
     await onUpdate(username, password);
 };
 
+//properties of the password form
 type PasswordFormProps = {
     username: string;
     password: string;
@@ -47,12 +43,12 @@ type PasswordFormProps = {
     onUpdate: (username: string, password: string) => void;
 };
 
-const PasswordCardForm = ({
-    username,
-    password,
-    id,
-    onUpdate,
-}: PasswordFormProps) => {
+/**
+ * The password update for for each password card.
+ * @param props
+ * @returns a react component
+ */
+const PasswordCardForm = (props: PasswordFormProps) => {
     const [showPass, setShowPass] = useState(false);
     const [pass, setPass] = useState("");
     const icon = (
@@ -69,14 +65,16 @@ const PasswordCardForm = ({
             }}
         >
             <Box
-                id={"hexagon-update-pass-" + username}
+                id={"hexagon-update-pass-" + props.username}
                 padding={2}
                 pt={"8px"}
                 display="flex"
                 justifyContent={"space-between"}
                 alignItems={"flex-end"}
                 component={"form"}
-                onSubmit={(e) => onFormSubmit(e, username, pass, onUpdate)}
+                onSubmit={(e) =>
+                    onFormSubmit(e, props.username, pass, props.onUpdate)
+                }
             >
                 {showPass ? (
                     <TextField
@@ -123,14 +121,22 @@ const PasswordCardForm = ({
     );
 };
 
-const PasswordCard = ({
-    website,
-    username,
-    password,
-    id,
-    onDelete,
-    onUpdate,
-}: PasswordProps) => {
+//properties of a password card
+type PasswordProps = {
+    website: string;
+    username: string;
+    password: string;
+    id: string;
+    onDelete: () => void;
+    onUpdate: (username: string, password: string) => void;
+};
+
+/**
+ * The password card for each credential, displaying the website url, username and password.
+ * @param props
+ * @returns a react component
+ */
+const PasswordCard = (props: PasswordProps) => {
     const [showPass, setShowPass] = useState(false);
     const [showPassUpdateForm, setShowPassUpdateForm] = useState(false);
 
@@ -153,8 +159,8 @@ const PasswordCard = ({
                                 objectFit: "contain",
                             }}
                             variant="rounded"
-                            src={`https://logo.clearbit.com/${website}`}
-                            alt={website.toUpperCase()}
+                            src={`https://logo.clearbit.com/${props.website}`}
+                            alt={props.website.toUpperCase()}
                         ></Avatar>
                     </div>
                     <div className="site-info">
@@ -163,22 +169,22 @@ const PasswordCard = ({
                             sx={{ fontWeight: "bold" }}
                             display="block"
                         >
-                            {website}
+                            {props.website}
                         </Typography>
                         <Typography
                             variant="body2"
                             sx={{ fontWeight: "light", color: "#424242" }}
                             display="block"
                             onDoubleClick={() =>
-                                navigator.clipboard.writeText(username)
+                                navigator.clipboard.writeText(props.username)
                             }
                         >
-                            {username}
+                            {props.username}
                         </Typography>
                         <div className="pass-info">
                             {showPass ? (
                                 <TextField
-                                    value={password}
+                                    value={props.password}
                                     InputProps={{
                                         readOnly: true,
                                         disableUnderline: true,
@@ -191,7 +197,9 @@ const PasswordCard = ({
                                     size="small"
                                     variant="standard"
                                     onDoubleClick={() =>
-                                        navigator.clipboard.writeText(password)
+                                        navigator.clipboard.writeText(
+                                            props.password
+                                        )
                                     }
                                 />
                             ) : (
@@ -209,7 +217,9 @@ const PasswordCard = ({
                                     size="small"
                                     variant="standard"
                                     onDoubleClick={() =>
-                                        navigator.clipboard.writeText(password)
+                                        navigator.clipboard.writeText(
+                                            props.password
+                                        )
                                     }
                                 />
                             )}
@@ -229,7 +239,7 @@ const PasswordCard = ({
                     justifyContent="space-between"
                 >
                     <IconButton
-                        onClick={onDelete}
+                        onClick={props.onDelete}
                         sx={{ height: 30, width: 30 }}
                     >
                         <DeleteOutlineIcon
@@ -252,16 +262,21 @@ const PasswordCard = ({
             </Card>
             {showPassUpdateForm && (
                 <PasswordCardForm
-                    username={username}
-                    password={password}
-                    id={id}
-                    onUpdate={onUpdate}
+                    username={props.username}
+                    password={props.password}
+                    id={props.id}
+                    onUpdate={props.onUpdate}
                 />
             )}
         </Box>
     );
 };
 
+/**
+ * The page to be displayed when a user has no passwords saved on the current site.
+ * @param param0
+ * @returns a react component
+ */
 const EmptyPasswordsPage = ({ url }: { url: string }) => {
     return (
         <Box
@@ -299,6 +314,11 @@ const EmptyPasswordsPage = ({ url }: { url: string }) => {
     );
 };
 
+/**
+ * The passwords page where the cards will be displayed for each credential.
+ * @param param0
+ * @returns a react component
+ */
 const PopupPasswords = ({ url }: { url: string }) => {
     const [passwords, setPasswords] = useState<Credential[] | null>(null);
     const [showError, setShowError] = useState(false);
@@ -308,6 +328,10 @@ const PopupPasswords = ({ url }: { url: string }) => {
         fetchPasswords(url);
     }, [url]);
 
+    /**
+     * Call the api and retrieve the saved credentials for the current site.
+     * @param url
+     */
     const fetchPasswords = async (url: string) => {
         chrome.storage.local.get(["hexagonAccount"], async function (result) {
             if (result.hexagonAccount) {
@@ -332,6 +356,11 @@ const PopupPasswords = ({ url }: { url: string }) => {
         });
     };
 
+    /**
+     * Returns a function that calls the delete api to delete and refresh the credentials.
+     * @param id
+     * @returns a function that deletes credentials
+     */
     const handleDelete = (id: string) => async () => {
         chrome.storage.local.get(["hexagonAccount"], async function (result) {
             if (result.hexagonAccount) {
@@ -353,6 +382,12 @@ const PopupPasswords = ({ url }: { url: string }) => {
         });
     };
 
+    /**
+     * Returns a function that calls the update api to update and refresh the credentials.
+     * @param id
+     * @param key
+     * @returns a function that updates credentials.
+     */
     const handleUpdate =
         (id: string, key: string) =>
         async (username: string, password: string) => {
@@ -384,6 +419,7 @@ const PopupPasswords = ({ url }: { url: string }) => {
             );
         };
 
+    //display loading progress bar while credentials are being retrieved
     if (!passwords) {
         return (
             <Box sx={{ width: "100%" }} margin="-2px">

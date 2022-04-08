@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from "react";
-import ReactDOM from "react-dom";
-import { Card, Box, Button, Typography, Tab } from "@mui/material";
+import { Button } from "@mui/material";
+import React from "react";
 import "../../popup.css";
 import "./signin.css";
 
+/**
+ * Guide user to website signin page when the click the button.
+ */
 const onClickSignin = () => {
     chrome.tabs.create({
         active: true,
@@ -11,6 +13,10 @@ const onClickSignin = () => {
     });
 };
 
+/**
+ * The signin page for when the user is not yet logged in to an account.
+ * @returns a react component
+ */
 const SigninPage = () => {
     return (
         <div className="signin-page">
