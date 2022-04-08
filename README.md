@@ -4,7 +4,8 @@ Developed by the _NoAccess_ team.
 
 ## Project URL
 
-[Link](https://hexagon-web.xyz)
+-   [Web App](https://hexagon-web.xyz)
+-   [Extension (requires local install)](https://github.com/UTSCC09/project-noaccess/releases)
 
 ## Project Video URL
 
