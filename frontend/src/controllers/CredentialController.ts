@@ -28,11 +28,6 @@ const searchWebsiteCredentialsQuery = gql`
             credential {
                 username
                 password
-                owners
-            }
-            pendingShares {
-                receiver
-                _id
             }
         }
     }
@@ -101,6 +96,9 @@ export type CredentialDto = {
     pendingShares?: { receiver: string; _id: string }[];
 };
 
+/**
+ * Controller to communicate with the backend in all website credential related functions
+ */
 class CredentialController {
     private executeQuery: (
         query: any,
@@ -108,19 +106,24 @@ class CredentialController {
         isMutation: boolean
     ) => Promise<any>;
 
+    /**
+     * Creates a CredentialController to communicate with the backend
+     * @param client the GraphQL client used to communicate with the backend
+     * @param token the user's JWT
+     */
     constructor(client: ApolloClient<NormalizedCacheObject>, token: string) {
         this.executeQuery = executeQuery.bind(this, client, token);
     }
 
     /**
-     * Sorts the records by sortType, starts from the given offSet and returns
-     * records upto the given limit
-     * @param {string} sortType ascending or descending
-     * @param {number} offset offset
-     * @param {number} limit limit
-     * @returns {any} list of SecureRecord data for credentials
+     * Sorts the records by sortType, starts from the given offset and returns
+     * records up to the given limit
+     * @param sortType sort direction
+     * @param offset offset
+     * @param limit limit
+     * @returns a promise resolving to a list of credential data
      */
-    public getCredentials(offset: number, limit: number, sortType: string) {
+    getCredentials(offset: number, limit: number, sortType: string) {
         return this.executeQuery(
             getCredentialsQuery,
             {
@@ -133,13 +136,12 @@ class CredentialController {
     }
 
     /**
-     * Searches for a website credential given URL/name, if exactMatch
-     * is false then returns all secure records containing the given name
-     * @param {string} name domain url or name
-     * @param {boolean} exactMatch boolean value
-     * @returns {any} SecureRecord data for website credentials
+     * Searches for all website credentials given a URL/name stripped of passwords and ownership
+     * @param name domain url
+     * @param exactMatch whether or not to match the domain exactly
+     * @returns a promise resolving to a list of credential data
      */
-    public searchCredentials(name: string, exactMatch: boolean) {
+    searchCredentials(name: string, exactMatch: boolean) {
         return this.executeQuery(
             searchCredentialsQuery,
             {
@@ -153,11 +155,11 @@ class CredentialController {
     /**
      * Searches for a website credential given URL/name, if exactMatch
      * is false then returns all secure records containing the given name
-     * @param {string} name domain url or name
-     * @param {boolean} exactMatch boolean value
-     * @returns {any} SecureRecord data for website credentials
+     * @param name domain url or name
+     * @param exactMatch boolean value
+     * @returns a promise resolving to a list of credential data
      */
-    public searchWebsiteCredentials(name: string, exactMatch: boolean) {
+    searchWebsiteCredentials(name: string, exactMatch: boolean) {
         return this.executeQuery(
             searchWebsiteCredentialsQuery,
             {
@@ -169,26 +171,25 @@ class CredentialController {
     }
 
     /**
-     * counts the number of credentials for the current user and returns the count
-     * @returns {any} number of credentials records
+     * Counts the number of credentials for the current user
+     * @returns number of credentials
      */
-    public countCredentials() {
+    countCredentials() {
         return this.executeQuery(countCredentialsQuery, {}, false).then(
             (data) => data.countWebsiteCredentials as number
         );
     }
 
     /**
-     * Attempts to create a secure record with the given arguments, returns
-     * the newly created record on success
-     * @param {string} name website url
-     * @param {string} username username for the website
-     * @param {string} password password for the website
-     * @param {string} key key used for encryption
-     * @param {string} masterUsername username for the hexagon user
-     * @returns {any} newly created record data
+     * Attempts to create a credential with the given arguments
+     * @param name website url
+     * @param username username for the website
+     * @param password password for the website
+     * @param key key used for encryption
+     * @param masterUsername username for the hexagon user
+     * @returns id of created credential
      */
-    public addCredential(
+    addCredential(
         name: string,
         username: string,
         password: string,
@@ -211,12 +212,12 @@ class CredentialController {
     /**
      * Attempts to update an existing credentials record with a new username and password,
      * throws an error on failure
-     * @param {string} username updates with the new username
-     * @param {string} password updates with the new note password
-     * @param {string} secureRecordId points to the note record to be updated
-     * @returns {any} newly created credentials data
+     * @param username updates with the new username
+     * @param password updates with the new note password
+     * @param secureRecordId points to the credential to be updated
+     * @returns id of updated credential
      */
-    public updateCredentials(
+    updateCredentials(
         username: string,
         password: string,
         secureRecordId: string
@@ -233,10 +234,11 @@ class CredentialController {
     }
 
     /**
-     * checks for any breaches given the hashprefix
-     * @param {string} hashPrefix hashprefix
+     * Checks for any breaches given the hashPrefix
+     * @param hashPrefix the prefix to search for
+     * @returns a list of hashes and their corresponding breach count
      */
-    async checkBreach(hashPrefix: string): Promise<string> {
+    checkBreach(hashPrefix: string): Promise<string> {
         return fetch(`https://api.pwnedpasswords.com/range/${hashPrefix}`, {
             method: 'GET',
         }).then((res) => {

@@ -7,6 +7,10 @@ import { Owner, PendingShare } from '../components/shares/ShareManager';
 import MFAController, { MFADto } from '../controllers/MFAController';
 import SecureRecordController from '../controllers/SecureRecordController';
 import { ApolloClient, NormalizedCacheObject } from '@apollo/client';
+
+/**
+ * Service used to manage all MFA credential related functions
+ */
 class MFAService {
     private cryptoWorker: typeof CryptoWorker;
     private mfaController: MFAController;
@@ -14,6 +18,12 @@ class MFAService {
     private masterKey: string;
     private masterEmail: string;
 
+    /**
+     * Creates a set of encrypted strings relevant for a MFA credential
+     * @param username username
+     * @param seed seed
+     * @returns an object containing encrypted [key, username, seed, email]
+     */
     private async createEncryptedMFA(username: string, seed: string) {
         return this.cryptoWorker.encryptWrappedData(
             [username, seed, this.masterEmail],
@@ -21,6 +31,11 @@ class MFAService {
         );
     }
 
+    /**
+     * Decrypts a MFA credential given the DTO and formats it into MFA format
+     * @param dto MFA credential DTO
+     * @returns the decrypted MFA credential with as many fields we were able to decrypt
+     */
     private async decryptMFA(dto: MFADto): Promise<MFA> {
         let user = '';
         let seed = '';
@@ -72,6 +87,12 @@ class MFAService {
         };
     }
 
+    /**
+     * Determine whether a MFA credential exists for the given url and username
+     * @param url URL to check
+     * @param username username to check
+     * @returns the id and key of the existing MFA credential if it exists, else null
+     */
     private async checkMFAExists(url: string, username: string) {
         const domainMatches: MFADto[] = await this.mfaController.searchMFAs(
             url,
@@ -103,6 +124,12 @@ class MFAService {
         }
     }
 
+    /**
+     * Creates a MFAService
+     * @param cryptoWorker web worker used for all cryprographic operations
+     * @param account account information
+     * @param client GraphQL client used to communicate with backend
+     */
     constructor(
         cryptoWorker: any,
         account: Account,
@@ -118,15 +145,33 @@ class MFAService {
         );
     }
 
+    /**
+     * Counts the number of MFA credentials for this user
+     * @returns the number of MMFA credentials
+     */
     async getMFACount() {
         return this.mfaController.countMFAs();
     }
 
+    /**
+     * Retrieves a list of MFA credentials sorted by sortType, from offset, limited to limit
+     * @param offset offset
+     * @param limit limit
+     * @param sortType sort direction
+     * @returns a list of MFA credentials
+     */
     async getMFAs(offset: number, limit: number, sortType: GridSortDirection) {
         const dtos = await this.mfaController.getMFAs(offset, limit, sortType!);
         return Promise.all(dtos.map(this.decryptMFA.bind(this)));
     }
 
+    /**
+     * Creates a new MFA credential based on the provided arguments
+     * @param url website url
+     * @param username username
+     * @param seed seed
+     * @returns the id of the created MFA credential
+     */
     async createMFA(url: string, username: string, seed: string) {
         if (await this.checkMFAExists(url, username)) throw { status: 409 };
         const [encryptedKey, encryptedUser, encryptedSeed, encryptedEmail] =
@@ -140,6 +185,11 @@ class MFAService {
         );
     }
 
+    /**
+     * Deletes a MFA credential matching the provided id
+     * @param id secure record id
+     * @returns the id of the deleted secure record
+     */
     async deleteMFA(id: string) {
         return this.secureRecordController.deleteSecureRecord(id);
     }

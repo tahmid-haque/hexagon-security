@@ -16,6 +16,7 @@ import NotesView from './components/notes/NotesView';
 import ShareFinalizer from './components/shares/ShareFinalizer';
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 
+// create a custom theme for the app
 const muiTheme = createTheme({
     palette: {
         primary: {
@@ -36,6 +37,7 @@ const muiTheme = createTheme({
     },
 });
 
+// initialise the client for GraphQL
 const client = new ApolloClient({
     uri: '/api/graphql',
     cache: new InMemoryCache(),

@@ -21,12 +21,18 @@ import { Note } from '../../notes/NotesView';
 import { Credential } from '../../credentials/CredentialsView';
 import { getShareInfo } from '../../shares/ShareManager';
 
+// options to hide certain actions for the ActionMenu
 export type hideOptions = {
     edit?: boolean;
     share?: boolean;
     delete?: boolean;
 };
 
+/**
+ * ActionMenu component used to display the additional actions avilable for a MUI Data Grid row.
+ * @param props the data the action menu provides for and hide options
+ * @returns an ActionMenu component
+ */
 export default function ActionMenu(props: {
     data: Credential | MFA | Note;
     hideOptions?: hideOptions;
@@ -36,14 +42,17 @@ export default function ActionMenu(props: {
     const open = Boolean(anchorEl);
     const dispatch = useAppDispatch();
 
+    // show action menu on click
     const onClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
 
+    // hide action menu on clickaway or option select
     const onClose = useCallback(() => {
         setAnchorEl(null);
     }, []);
 
+    // dispatch a delete event
     const onDeleteClick = () => {
         dispatch(
             createEvent({
@@ -54,6 +63,7 @@ export default function ActionMenu(props: {
         onClose();
     };
 
+    // dispatch a share event
     const onShareClick = () => {
         dispatch(
             createEvent({
@@ -64,6 +74,7 @@ export default function ActionMenu(props: {
         onClose();
     };
 
+    // dispatch an edit event
     const onEditClick = () => {
         dispatch(
             createEvent({

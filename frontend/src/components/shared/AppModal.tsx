@@ -8,6 +8,11 @@ export type AppModalProps = {
     children?: JSX.Element | JSX.Element[];
 };
 
+/**
+ * AppModal component used to show a modal on top of existing views
+ * @param props props used to configure the AppModal
+ * @returns a AppModal component
+ */
 export default function AppModal(props: AppModalProps) {
     return (
         <Modal open={props.isOpen} onClose={props.onClose}>

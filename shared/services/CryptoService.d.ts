@@ -13,11 +13,11 @@ export default class CryptoService {
         keyUsage: KeyUsage[]
     ) => Promise<CryptoKey>;
     generatePlainSecret: () => string;
-    encryptSecrets: (
+    decryptSecrets: (
         encryptedSecrets: string[],
         password: string
     ) => Promise<string>;
-    decryptSecrets: (
+    encryptSecrets: (
         plainSecrets: string[],
         password: string
     ) => Promise<string>;

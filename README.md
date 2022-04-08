@@ -81,7 +81,9 @@ The main components are developed as follows:
             using cookies of any sort so as to decrease our attack surface and instead stored all data
             in memory. As a result, a user's session only lasts as long as they do not leave the
             website. This also ensures that forgetting to sign out does not leave room for unauthorized
-            users to view the original user's credentials on a shared computer.
+            users to view the original user's credentials on a shared computer. We do however make use
+            of local storage to store the last user's email but this itself is not enough to use our
+            app and security is maintained.
 -   **Backend**
     -   The backend uses `Node.js` in `JavaScript` with the `Express` framework. It also makes use of
         `GraphQL` for its API, `MongoDB` as its database and `Redis` as an in-memory data store. The database

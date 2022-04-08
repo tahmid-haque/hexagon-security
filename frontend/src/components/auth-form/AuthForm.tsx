@@ -33,6 +33,12 @@ type AuthFormState = {
 
 const accountService = new AccountService();
 
+/**
+ * Event handler for handling email submission. Check if the email exists and update the page.
+ * @param state the current state of the AuthForm
+ * @param update function used to update the state
+ * @param dispatch function used to dispatch redux actions
+ */
 const onEmailSubmit = async (
     state: AuthFormState,
     update: (update: Partial<AuthFormState>) => void,
@@ -62,6 +68,11 @@ const onEmailSubmit = async (
     update({ isLoading: false });
 };
 
+/**
+ * Event handler to handle email field changes. Determine whether the email is valid and update the page.
+ * @param event a ChangeEvent
+ * @param update function used to update the state
+ */
 const onEmailChange = (
     event: React.ChangeEvent<HTMLInputElement>,
     update: (update: Partial<AuthFormState>) => void
@@ -75,6 +86,10 @@ const onEmailChange = (
     });
 };
 
+/**
+ * Event handler for handling the back button. Return to the email input stage.
+ * @param update function used to update the state
+ */
 const onBackButtonClick = (
     update: (update: Partial<AuthFormState>) => void
 ) => {
@@ -87,6 +102,11 @@ const onBackButtonClick = (
     });
 };
 
+/**
+ * Event handler to handle password field changes. Determine whether the password is valid and update the page.
+ * @param event a ChangeEvent
+ * @param update function used to update the state
+ */
 const onPasswordChange = (
     event: React.ChangeEvent<HTMLInputElement>,
     update: (update: Partial<AuthFormState>) => void
@@ -99,6 +119,15 @@ const onPasswordChange = (
     });
 };
 
+/**
+ * Event handler for handling account authorization. Authenticate with the server, send messages
+ * to the chrome extension and redirect the user to the dashboard.
+ * @param state the current state of the AuthForm
+ * @param update function used to update the state
+ * @param dispatch function used to dispatch redux actions
+ * @param navigate function used to route the user
+ * @param location the current location of the page
+ */
 const onPasswordSubmit = async (
     state: AuthFormState,
     update: (update: Partial<AuthFormState>) => void,
@@ -127,7 +156,7 @@ const onPasswordSubmit = async (
             })
         );
 
-        //send message to chrome extension here
+        //send message to chrome extension
         const hexagonExtensionId = 'cpionbifpgemolinhilabicjppibdhck';
 
         try {
@@ -174,6 +203,10 @@ const onPasswordSubmit = async (
     update({ isLoading: false });
 };
 
+/**
+ * AuthForm component used to authenticate users
+ * @returns an AuthForm component
+ */
 export default function AuthForm() {
     const { state, update } = useComponentState({
         isSignUp: false,
@@ -189,6 +222,7 @@ export default function AuthForm() {
     const dispatch = useAppDispatch();
     const location = useAppSelector((state) => state.location);
     const bodyRef: React.RefObject<HTMLDivElement> = useRef(null);
+    // check local storage for a user not signed out
     useEffect(
         () => {
             const lastUser = window.localStorage.getItem('lastUser');
@@ -203,6 +237,7 @@ export default function AuthForm() {
         []
     );
 
+    // determine which state of authentication the user is on
     const input = !state.isEmailEntered ? (
         <TextField
             fullWidth

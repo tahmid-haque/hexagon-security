@@ -1,3 +1,7 @@
+/**
+ * Web worker file to run cryptographic operations. Delegates to a service.
+ */
+
 import CryptoService from 'hexagon-shared/services/CryptoService';
 
 const cryptoService = new CryptoService(window.crypto);

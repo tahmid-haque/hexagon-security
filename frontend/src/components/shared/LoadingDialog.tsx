@@ -4,7 +4,7 @@ import AppModal from './AppModal';
 export type LoadingDialogProps = {
     isOpen: boolean;
     isLoading: boolean;
-    onClose: (event?: {}, reason?: "escapeKeyDown" | "backdropClick") => void;
+    onClose: (event?: {}, reason?: 'escapeKeyDown' | 'backdropClick') => void;
     onAccept: () => void;
     title: string;
     body: string;
@@ -13,6 +13,11 @@ export type LoadingDialogProps = {
     onReject?: () => void;
 };
 
+/**
+ * LoadingDialog component used to indicate credentials import loading
+ * @param props props used to configure the LoadingDialog
+ * @returns a LoadingDialog component
+ */
 export default function LoadingDialog(props: LoadingDialogProps) {
     return (
         <AppModal

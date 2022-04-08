@@ -31,6 +31,11 @@ const initState: NoteEditorState = {
     isLoading: false,
 };
 
+/**
+ * Initialize the editor with the new note passed from the props
+ * @param props the props passed to the NoteEditor
+ * @param update function used to update the state
+ */
 const onNoteChange = (
     props: NoteEditorProps,
     update: (update: Partial<NoteEditorState>) => void
@@ -43,6 +48,11 @@ const onNoteChange = (
     }
 };
 
+/**
+ * Event handler to handle title field changes. Determine whether the title is valid and update the page.
+ * @param update function used to update the state
+ * @param event a ChangeEvent
+ */
 const onTitleChange = (
     update: (update: Partial<NoteEditorState>) => void,
     event: React.ChangeEvent<HTMLInputElement>
@@ -55,6 +65,13 @@ const onTitleChange = (
     });
 };
 
+/**
+ * Event handler to handle close events
+ * @param state the current state of the NoteEditor
+ * @param update function used to update the state
+ * @param close callback to call on close with the modification update
+ * @param modified whether a note was updated/created
+ */
 const onClose = (
     state: NoteEditorState,
     update: (update: Partial<NoteEditorState>) => void,
@@ -66,6 +83,13 @@ const onClose = (
     close(modified);
 };
 
+/**
+ * Event handler for handling note creation by calling the server.
+ * @param state the current state of the NoteEditor
+ * @param update function used to update the state
+ * @param props the props passed to the NoteEditor
+ * @param dispatch function used to dispatch redux actions
+ */
 const onCreateSubmit = async (
     state: NoteEditorState,
     update: (update: Partial<NoteEditorState>) => void,
@@ -101,6 +125,13 @@ const onCreateSubmit = async (
     onClose(state, update, props.onClose, true);
 };
 
+/**
+ * Event handler for handling note update. Updates the note on the server.
+ * @param state the current state of the NoteEditor
+ * @param update function used to update the state
+ * @param props the props passed to the NoteEditor
+ * @param dispatch function used to dispatch redux actions
+ */
 const onEditSubmit = async (
     state: NoteEditorState,
     update: (update: Partial<NoteEditorState>) => void,
@@ -141,6 +172,11 @@ const onEditSubmit = async (
     onClose(state, update, props.onClose, true);
 };
 
+/**
+ * NoteEditor component used to edit/create notes
+ * @param props props used to configure the NoteEditor
+ * @returns a NoteEditor component
+ */
 export default function NoteEditor(props: NoteEditorProps) {
     const { state, update } = useComponentState(initState);
     const dispatch = useAppDispatch();

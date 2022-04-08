@@ -34,6 +34,7 @@ import styles from './DashboardNavigation.module.scss';
 
 const optionHeight = 48;
 
+// CSS style for menu open
 const openedMixin = (theme: Theme): CSSObject => ({
     width: navWidth,
     transition: theme.transitions.create(['width', 'transform'], {
@@ -43,6 +44,7 @@ const openedMixin = (theme: Theme): CSSObject => ({
     overflowX: 'hidden',
 });
 
+// CSS style for menu close
 const closedMixin = (theme: Theme): CSSObject => ({
     transition: theme.transitions.create(['width', 'transform'], {
         easing: theme.transitions.easing.sharp,
@@ -55,6 +57,7 @@ const closedMixin = (theme: Theme): CSSObject => ({
     },
 });
 
+// create a styled div to show the logo and account information
 const DrawerEnd = styled('div')(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
@@ -64,10 +67,12 @@ const DrawerEnd = styled('div')(({ theme }) => ({
     cursor: 'default',
 }));
 
+// create a styled DrawerEnd with height styling
 const DrawerHeader = styled(DrawerEnd)(({ theme }) => ({
     ...theme.mixins.toolbar,
 }));
 
+// create a styled menu based on MuiDrawer
 const Drawer = styled(MuiDrawer)(({ theme, open }) => ({
     width: navWidth,
     height: '100vh',
@@ -96,9 +101,14 @@ type DashboardNavigationProps = {
     isNavOpen: boolean;
     isShown: boolean;
     email: string;
-    currentPane: Display;
+    currentPane: Display; // the current view
 };
 
+/**
+ * Creates the menu items that'll be added to the navigation menu
+ * @param this contains props passed to DashboardNavigation, a way to dispatch redux actions and a way to change the view
+ * @returns the menu items
+ */
 const getFeatureButtons = function (this: {
     props: DashboardNavigationProps;
     dispatch: any;
@@ -162,6 +172,11 @@ const getFeatureButtons = function (this: {
     ));
 };
 
+/**
+ * DashboardNavigation component used to allow navigation within the app
+ * @param props props used to configure the DashboardNavigation
+ * @returns a DashboardNavigation component
+ */
 export default function DashboardNavigation(props: DashboardNavigationProps) {
     const account = useAppSelector((state) => state.account);
     const dispatch = useAppDispatch();
@@ -169,6 +184,7 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
     const [featureButtons, setFeatureButtons] = useState([] as JSX.Element[]);
     const [isLoading, setIsLoading] = useState(false);
 
+    // update the menu buttons on view change or menu collapse/open
     useEffect(
         () =>
             setFeatureButtons(
@@ -177,6 +193,7 @@ export default function DashboardNavigation(props: DashboardNavigationProps) {
         [props.isNavOpen, props.currentPane]
     );
 
+    // sign out the user by calling the backend and clearing credentials
     const onSignOutClick = async () => {
         try {
             setIsLoading(true);

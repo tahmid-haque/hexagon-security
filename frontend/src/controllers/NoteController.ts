@@ -70,6 +70,9 @@ export type NoteDto = {
     pendingShares: { receiver: string; _id: string }[];
 };
 
+/**
+ * Controller to communicate with the backend in all note related functions
+ */
 class NoteController {
     private executeQuery: (
         query: any,
@@ -77,19 +80,24 @@ class NoteController {
         isMutation: boolean
     ) => Promise<any>;
 
+    /**
+     * Creates a NoteController to communicate with the backend
+     * @param client the GraphQL client used to communicate with the backend
+     * @param token the user's JWT
+     */
     constructor(client: ApolloClient<NormalizedCacheObject>, token: string) {
         this.executeQuery = executeQuery.bind(this, client, token);
     }
 
     /**
-     * Sorts the records by sortType, starts from the given offSet and returns 
-     * records upto the given limit
-     * @param {string} sortType ascending or descending
-     * @param {number} offset offset
-     * @param {number} limit limit
-     * @returns {any} list of SecureRecord data for notes
+     * Sorts the records by sortType, starts from the given offset and returns
+     * records up to the given limit
+     * @param sortType sort direction
+     * @param offset offset
+     * @param limit limit
+     * @returns a promise resolving to a list of note data
      */
-    public getNotes(offset: number, limit: number, sortType: string) {
+    getNotes(offset: number, limit: number, sortType: string) {
         return this.executeQuery(
             getNotesQuery,
             {
@@ -102,25 +110,24 @@ class NoteController {
     }
 
     /**
-     * counts the number of notes for the current user and returns the count
-     * @returns {any} number of note records
+     * Counts the number of notes for the current user
+     * @returns the number of notes
      */
-    public countNotes() {
+    countNotes() {
         return this.executeQuery(countNotesQuery, {}, false).then(
             (data) => data.countNotes as number
         );
     }
 
     /**
-     * Attempts to create a secure record with the given arguments, returns
-     * the newly created record on success
+     * Attempts to create a note with the given arguments
      * @param {string} title title of the note
      * @param {string} note content of the note
      * @param {string} key key used for encryption
      * @param {string} masterUsername username for the hexagon user
-     * @returns {any} newly created record data
+     * @returns id of created note
      */
-    public createNote(
+    createNote(
         title: string,
         note: string,
         key: string,
@@ -141,12 +148,12 @@ class NoteController {
     /**
      * Attempts to update an existing note record with a new title and content,
      * throws an error on failure
-     * @param {string} title updates with the new title
-     * @param {string} note updates with the new note content
-     * @param {string} secureRecordId points to the note record to be updated
-     * @returns {any} newly created note data
+     * @param title updates with the new title
+     * @param note updates with the new note content
+     * @param secureRecordId points to the note record to be updated
+     * @returns id of ipdated note
      */
-    public updateNote(title: string, note: string, secureRecordId: string) {
+    updateNote(title: string, note: string, secureRecordId: string) {
         return this.executeQuery(
             updateNoteMutation,
             {

@@ -11,7 +11,14 @@ import { Credential } from '../credentials/CredentialsView';
 import { MFA } from '../mfa/MFAView';
 import { Note } from '../notes/NotesView';
 
-export default function (props: { data: Credential | MFA | Note }) {
+/**
+ * OwnershipStatus component used to display ownership of a credential / MFA credential / note
+ * @param props contains the data to determine ownership of
+ * @returns a OwnershipStatus component
+ */
+export default function OwnershipStatus(props: {
+    data: Credential | MFA | Note;
+}) {
     const dispatch = useAppDispatch();
     const isShared =
         props.data.shares.length + props.data.pendingShares.length > 1;

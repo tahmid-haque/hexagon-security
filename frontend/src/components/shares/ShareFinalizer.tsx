@@ -35,6 +35,11 @@ type ShareFinalizerContext = {
     navigate: any;
 };
 
+/**
+ * Accept or decline the share using the server.
+ * @param this context in which to execute the function
+ * @param isAccept whether or note to accept the offered share
+ */
 const finalizeShare = async function (
     this: ShareFinalizerContext,
     isAccept: boolean
@@ -64,11 +69,19 @@ const finalizeShare = async function (
     update({ isLoading: false });
 };
 
+/**
+ * Close the share finalizer
+ * @param this context in which to execute the function
+ */
 const close = function (this: ShareFinalizerContext) {
     this.update({ isOpen: false, isLoading: false });
     setTimeout(() => this.navigate(this.state.nextLocation), 300);
 };
 
+/**
+ * Try to obtain share information using the URL and verifying it with the server
+ * @param this context in which to execute the function
+ */
 const onInit = async function (this: ShareFinalizerContext) {
     const queryParams = new URL(window.location.href).searchParams;
     this.update({
@@ -98,6 +111,10 @@ const onInit = async function (this: ShareFinalizerContext) {
     }
 };
 
+/**
+ * ShareFinalizer component used to accept or decline share
+ * @returns a ShareFinalizer component
+ */
 export default function ShareFinalizer() {
     const cryptoWorker = useOutletContext();
     const account = useAppSelector((state) => state.account);

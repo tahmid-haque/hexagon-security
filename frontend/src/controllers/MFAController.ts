@@ -65,6 +65,10 @@ export type MFADto = {
     mfa: { username: string; seed?: string; owners?: string[] };
     pendingShares?: { receiver: string; _id: string }[];
 };
+
+/**
+ * Controller to communicate with the backend in all MFA credential related functions
+ */
 class MFAController {
     private executeQuery: (
         query: any,
@@ -72,19 +76,24 @@ class MFAController {
         isMutation: boolean
     ) => Promise<any>;
 
+    /**
+     * Creates a MFAController to communicate with the backend
+     * @param client the GraphQL client used to communicate with the backend
+     * @param token the user's JWT
+     */
     constructor(client: ApolloClient<NormalizedCacheObject>, token: string) {
         this.executeQuery = executeQuery.bind(this, client, token);
     }
 
     /**
-     * Sorts the records by sortType, starts from the given offSet and returns 
-     * records upto the given limit
-     * @param {string} sortType ascending or descending
-     * @param {number} offset offset
-     * @param {number} limit limit
-     * @returns {any} list of SecureRecord data for MFAs
+     * Sorts the records by sortType, starts from the given offset and returns
+     * records up to the given limit
+     * @param sortType sort direction
+     * @param offset offset
+     * @param limit limit
+     * @returns a promise resolving to a list of MFA credential data
      */
-    public getMFAs(offset: number, limit: number, sortType: string) {
+    getMFAs(offset: number, limit: number, sortType: string) {
         return this.executeQuery(
             getMFAsQuery,
             {
@@ -97,13 +106,12 @@ class MFAController {
     }
 
     /**
-     * Searches for a MFA given URL/name, if exactMatch
-     * is false then returns all secure records containing the given name
-     * @param {string} name domain url or name
-     * @param {boolean} exactMatch boolean value
-     * @returns {any} SecureRecord data for MFA
+     * Searches for all MFA credentials given a URL/name stripped of seeds and ownership
+     * @param name domain url
+     * @param exactMatch whether or not to match the domain exactly
+     * @returns a promise resolving to a list of credential data
      */
-    public searchMFAs(name: string, exactMatch: boolean) {
+    searchMFAs(name: string, exactMatch: boolean) {
         return this.executeQuery(
             searchMFAsQuery,
             {
@@ -115,26 +123,25 @@ class MFAController {
     }
 
     /**
-     * counts the number of MFAs for the current user and returns the count
-     * @returns {any} number of MFA records
+     * Counts the number of MFAs for the current user and returns the count
+     * @returns number of MFA records
      */
-    public countMFAs() {
+    countMFAs() {
         return this.executeQuery(countMFAsQuery, {}, false).then(
             (data) => data.countMFAs as number
         );
     }
 
     /**
-     * Attempts to create a secure record with the given arguments, returns
-     * the newly created record on success
-     * @param {string} name website url
-     * @param {string} username username for the website
-     * @param {string} seed MFA seed for the website
-     * @param {string} key key used for encryption
-     * @param {string} masterUsername username for the hexagon user
-     * @returns {any} newly created record data
+     * Attempts to create a MFA credential with the given arguments
+     * @param name website url
+     * @param username username for the website
+     * @param seed MFA seed for the website
+     * @param key key used for encryption
+     * @param masterUsername username for the hexagon user
+     * @returns id of created MFA credential
      */
-    public createMFA(
+    createMFA(
         name: string,
         username: string,
         seed: string,

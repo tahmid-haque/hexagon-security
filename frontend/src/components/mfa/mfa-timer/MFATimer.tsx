@@ -1,10 +1,15 @@
 import { Box, CircularProgress, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 
-export default function MFATimer(props: any) {
+/**
+ * MFATimer component used to show the time remaining on an MFA token
+ * @returns a MFATimer component
+ */
+export default function MFATimer() {
     const [ticks, setTicks] = useState(0);
     const [isMounted, setIsMounted] = useState(true);
 
+    // update the time left every second
     const refreshTicks = () => {
         if (!isMounted) return;
         setTicks(60 - new Date().getSeconds());

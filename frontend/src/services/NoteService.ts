@@ -7,6 +7,9 @@ import SecureRecordController from '../controllers/SecureRecordController';
 import { Account } from '../store/slices/AccountSlice';
 import * as CryptoWorker from '../workers/CryptoWorker';
 
+/**
+ * Service used to manage all note related functions
+ */
 class NoteService {
     private cryptoWorker: typeof CryptoWorker;
     private noteController: NoteController;
@@ -14,6 +17,12 @@ class NoteService {
     private masterKey: string;
     private masterEmail: string;
 
+    /**
+     * Creates a set of encrypted strings relevant for a credential
+     * @param title note title
+     * @param body note body
+     * @returns an encrypted object containing [key, title, body, email]
+     */
     private async createEncryptedNote(title: string, body: string) {
         return this.cryptoWorker.encryptWrappedData(
             [title, body, this.masterEmail],
@@ -21,6 +30,11 @@ class NoteService {
         );
     }
 
+    /**
+     * Decrypts a note given the DTO and formats it into Note format
+     * @param dto note DTO
+     * @returns the decrypted note with as many fields we were able to decrypt
+     */
     private async decryptNote(dto: NoteDto): Promise<Note> {
         let title = '';
         let body = '';
@@ -77,6 +91,12 @@ class NoteService {
         };
     }
 
+    /**
+     * Creates a NoteService
+     * @param cryptoWorker web worker used for all cryprographic operations
+     * @param account account information
+     * @param client GraphQL client used to communicate with backend
+     */
     constructor(
         cryptoWorker: any,
         account: Account,
@@ -92,10 +112,21 @@ class NoteService {
         );
     }
 
+    /**
+     * Counts the number of notes for this user
+     * @returns the number of notes
+     */
     async getNoteCount() {
         return this.noteController.countNotes();
     }
 
+    /**
+     * Retrieves a list of notes sorted by sortType, from offset, limited to limit
+     * @param offset offset
+     * @param limit limit
+     * @param sortType sort direction
+     * @returns a list of notes
+     */
     async getNotes(offset: number, limit: number, sortType: GridSortDirection) {
         const dtos = await this.noteController.getNotes(
             offset,
@@ -105,6 +136,12 @@ class NoteService {
         return Promise.all(dtos.map(this.decryptNote.bind(this)));
     }
 
+    /**
+     * Creates a new note based on the provided arguments
+     * @param title note title
+     * @param body note body
+     * @returns the id of the created note
+     */
     async createNote(title: string, body: string) {
         const [encryptedKey, encryptedTitle, encryptedBody, encryptedEmail] =
             await this.createEncryptedNote(title, body);
@@ -116,6 +153,14 @@ class NoteService {
         );
     }
 
+    /**
+     * Updates a note based on the provided arguments
+     * @param id the secure record id of the note
+     * @param title note title
+     * @param body note body
+     * @param key key for note
+     * @returns the id of the updated note
+     */
     async updateNote(id: string, title: string, body: string, key: string) {
         const [encryptedTitle, encryptedBody] =
             await this.cryptoWorker.encryptData([title, body], key);
@@ -126,6 +171,11 @@ class NoteService {
         );
     }
 
+    /**
+     * Deletes a note matching the provided id
+     * @param id secure record id
+     * @returns the id of the deleted secure record
+     */
     async deleteNote(id: string) {
         return this.secureRecordController.deleteSecureRecord(id);
     }

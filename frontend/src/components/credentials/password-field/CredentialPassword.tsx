@@ -1,4 +1,4 @@
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import {
     IconButton,
     Input,
@@ -6,11 +6,15 @@ import {
     SxProps,
     Theme,
     Tooltip,
-} from "@mui/material";
-import React, { useState } from "react";
-import { sendToast, Toast } from "../../../store/slices/ToastSlice";
-import { useAppDispatch } from "../../../store/store";
+} from '@mui/material';
+import React, { useState } from 'react';
+import { sendToast, Toast } from '../../../store/slices/ToastSlice';
+import { useAppDispatch } from '../../../store/store';
 
+/**
+ * Double click event handler to copy a password to clipboard
+ * @param this contains a dispatch function capable of dispatching redux actions and a password to copy
+ */
 const onDoubleClick = function (this: any) {
     const { dispatch, password } = this;
     navigator.clipboard
@@ -18,20 +22,25 @@ const onDoubleClick = function (this: any) {
         .then(
             () =>
                 ({
-                    message: "Copied to clipboard!",
-                    severity: "success",
+                    message: 'Copied to clipboard!',
+                    severity: 'success',
                 } as Toast)
         )
         .catch(
             () =>
                 ({
-                    message: "Unable to copy.",
-                    severity: "error",
+                    message: 'Unable to copy.',
+                    severity: 'error',
                 } as Toast)
         )
         .then((toast) => dispatch(sendToast(toast)));
 };
 
+/**
+ * CredentialPassword component used to display sensitive information
+ * @param props contains the password to display, how much to shorten the hidden password and additional styles
+ * @returns a CredentialPassword component
+ */
 export default function CredentialPassword(props: {
     password: string;
     shorten?: number;
@@ -41,21 +50,21 @@ export default function CredentialPassword(props: {
     const dispatch = useAppDispatch();
 
     return (
-        <Tooltip arrow title={props.password ? "Double click to copy" : ""}>
+        <Tooltip arrow title={props.password ? 'Double click to copy' : ''}>
             <Input
                 fullWidth
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 value={
                     showPassword
                         ? props.password
-                        : "********".slice(props.shorten ?? 0)
+                        : '********'.slice(props.shorten ?? 0)
                 }
                 sx={{
-                    borderBottom: "none",
-                    "::after, ::before": {
-                        borderBottom: "none!important", // override MUI styling
+                    borderBottom: 'none',
+                    '::after, ::before': {
+                        borderBottom: 'none!important', // override MUI styling
                     },
-                    textOverflow: "ellipsis",
+                    textOverflow: 'ellipsis',
                     ...props.sx,
                 }}
                 onDoubleClick={onDoubleClick.bind({
@@ -63,11 +72,11 @@ export default function CredentialPassword(props: {
                     password: props.password,
                 })}
                 endAdornment={
-                    <InputAdornment position="end" sx={{ mr: 1 }}>
+                    <InputAdornment position='end' sx={{ mr: 1 }}>
                         <IconButton
-                            aria-label="toggle password visibility"
+                            aria-label='toggle password visibility'
                             onClick={() => setShowPassword(!showPassword)}
-                            edge="end"
+                            edge='end'
                         >
                             {showPassword ? <VisibilityOff /> : <Visibility />}
                         </IconButton>

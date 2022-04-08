@@ -60,6 +60,10 @@ export type ShareDetailsDto = {
     type: string;
     key: string;
 };
+
+/**
+ * Controller to communicate with the backend in all share related functions
+ */
 class ShareController {
     private executeQuery: (
         query: any,
@@ -67,18 +71,22 @@ class ShareController {
         isMutation: boolean
     ) => Promise<any>;
 
+    /**
+     * Creates a ShareController to communicate with the backend
+     * @param client the GraphQL client used to communicate with the backend
+     * @param token the user's JWT
+     */
     constructor(client: ApolloClient<NormalizedCacheObject>, token: string) {
         this.executeQuery = executeQuery.bind(this, client, token);
     }
 
     /**
-     * Searches for the share given by shareId, decrypts and verifies using shareKey
-     * and returns the data
-     * @param {string} shareKey key used for decryption
-     * @param {string} shareId id used for searching
-     * @returns {any} share record
+     * Searches for the share given by shareId
+     * @param shareKey key used for decryption
+     * @param shareId id used for searching
+     * @returns the share details
      */
-    public getShare(shareId: string, shareKey: string) {
+    getShare(shareId: string, shareKey: string) {
         return this.executeQuery(
             getShareQuery,
             { shareId, shareKey },
@@ -87,14 +95,13 @@ class ShareController {
     }
 
     /**
-     * Attempts to create a share record with the given arguments, returns
-     * the newly created share object on success
-     * @param {string} secureRecordId points to secure record
-     * @param {string} receiver the user who you wish to add as an owner
-     * @param {string} key key used for encryption
-     * @returns {any} newly created share data
+     * Attempts to create a share with the given arguments
+     * @param secureRecordId points to secure record
+     * @param receiver the user who you wish to add as an owner
+     * @param key key used for encryption
+     * @returns the id of the created share
      */
-    public createShare(receiver: string, secureRecordId: string, key: string) {
+    createShare(receiver: string, secureRecordId: string, key: string) {
         return this.executeQuery(
             addShareMutation,
             { receiver, secureRecordId, key },
@@ -103,13 +110,13 @@ class ShareController {
     }
 
     /**
-     * Attempts to delete an existing share record,
+     * Attempts to delete a pending share,
      * throws an error on failure
-     * @param {string} secureRecordId id of which shareId belongs to
-     * @param {string} shareId share to be deleted
-     * @returns {any} deleted share record
+     * @param secureRecordId id of which shareId belongs to
+     * @param shareId share to be deleted
+     * @returns id of the deleted pending share
      */
-    public deleteShare(shareId: string, secureRecordId: string) {
+    deleteShare(shareId: string, secureRecordId: string) {
         return this.executeQuery(
             deleteShareMutation,
             { shareId, secureRecordId },
@@ -120,11 +127,11 @@ class ShareController {
     /**
      * Attempts to revoke a share from the given secureRecordId,
      * throws an error on failure
-     * @param {string} owner username of the owner to be revoked
-     * @param {string} secureRecordId Id of the record to perform the revoke action
-     * @returns {any} boolean value
+     * @param owner username of the owner to be revoked
+     * @param secureRecordId id of the record to perform the revoke action
+     * @returns whether the operation was successful
      */
-    public revokeShare(owner: string, secureRecordId: string) {
+    revokeShare(owner: string, secureRecordId: string) {
         return this.executeQuery(
             revokeShareMutation,
             { owner, secureRecordId },
@@ -136,14 +143,14 @@ class ShareController {
      * Finalizes a share based on given arguments,
      * If isAccepted is true, user becomes a new owner of the recordID,
      * throws an error on any failures
-     * @param {string} shareKey key used for decryption
-     * @param {string} shareId Id pointing to share record request
-     * @param {boolean} isAccepted determines if user accepts or declines share request
-     * @param {string} masterUsername username of the current user
-     * @param {string} recordKey key used to create to secure record
-     * @returns {any} secure record id
+     * @param shareKey key used for decryption
+     * @param shareId Id pointing to share record request
+     * @param isAccepted determines if user accepts or declines share request
+     * @param masterUsername username of the current user
+     * @param recordKey key used to create to secure record
+     * @returns the secure record id of the accepted share
      */
-    public finalizeShare(
+    finalizeShare(
         shareKey: string,
         shareId: string,
         isAccepted: boolean,
