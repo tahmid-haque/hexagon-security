@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from "react";
-import ReactDOM from "react-dom";
-import { Box, LinearProgress } from "@mui/material";
-import "./popup.css";
-import "./components/Signin/signin.css";
-import Header from "../sharedComponents/header/Header";
-import parser from "hexagon-shared/utils/parser";
-import { useComponentState } from "hexagon-frontend/src/utils/hooks";
-import SigninPage from "./components/Signin/SigninPage";
-import PopupBody from "./components/PopupBody/PopupBody";
-import { authenticationAPI } from "../utils/authenticationAPI";
+import { Box, LinearProgress } from '@mui/material';
+import parser from 'hexagon-shared/utils/parser';
+import React, { useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
+import Header from '../sharedComponents/header/header';
+import PopupBody from './components/PopupBody/PopupBody';
+import './components/Signin/signin.css';
+import SigninPage from './components/Signin/SigninPage';
+import './popup.css';
 
 export type HexagonAccount = {
     username: string;
@@ -23,7 +21,7 @@ const HexagonAccount = ({ url }: { url: string }) => {
     const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
     useEffect(() => {
-        chrome.storage.local.get(["hexagonAccount"], async function (result) {
+        chrome.storage.local.get(['hexagonAccount'], async function (result) {
             // console.log(result.hexagonAccount);
             if (result.hexagonAccount) {
                 setCredentials({
@@ -40,13 +38,13 @@ const HexagonAccount = ({ url }: { url: string }) => {
 
     return (
         <div>
-            <Header url={"icon.png"} clickAction={() => window.close()} />
+            <Header url={'icon.png'} clickAction={() => window.close()} />
             {isLoggedIn == null && (
                 <Box
                     sx={{
-                        width: "350px",
-                        height: "432px",
-                        backgroundColor: "white",
+                        width: '350px',
+                        height: '432px',
+                        backgroundColor: 'white',
                     }}
                 >
                     <LinearProgress />
@@ -60,7 +58,7 @@ const HexagonAccount = ({ url }: { url: string }) => {
     );
 };
 
-const root = document.createElement("div");
+const root = document.createElement('div');
 document.body.appendChild(root);
 
 chrome.tabs.query({ currentWindow: true, active: true }, function (result) {

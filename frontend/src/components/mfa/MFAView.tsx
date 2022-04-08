@@ -202,7 +202,11 @@ const updateMFA = async function (
     update({ isLoading: true });
 
     try {
-        const content = await state.mfaService.getMFAs(offset, limit, sortType);
+        const content = (await state.mfaService.getMFAs(
+            offset,
+            limit,
+            sortType
+        )) as any as MFA[];
         content.forEach((mfa) => {
             if (!isMFAValid(mfa))
                 dispatch(

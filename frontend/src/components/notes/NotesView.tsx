@@ -121,7 +121,11 @@ const updateNotes = async function (
     const { update, state, dispatch } = this;
     update({ isLoading: true });
     try {
-        const notes = await state.noteService.getNotes(offset, limit, sortType);
+        const notes = (await state.noteService.getNotes(
+            offset,
+            limit,
+            sortType
+        )) as any as Note[];
         for (const note of notes) {
             if (!isNoteValid(note)) {
                 dispatch(

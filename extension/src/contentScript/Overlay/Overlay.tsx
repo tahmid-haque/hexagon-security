@@ -1,5 +1,5 @@
-import React, { SyntheticEvent, useState } from "react";
-import ReactDOM from "react-dom";
+import React, { SyntheticEvent, useState } from 'react';
+import ReactDOM from 'react-dom';
 import {
     Card,
     Box,
@@ -10,11 +10,11 @@ import {
     Select,
     TextField,
     IconButton,
-} from "@mui/material";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import Header from "../../sharedComponents/header/Header";
-import { Credential } from "../contentScript";
-import "./overlay.css";
+} from '@mui/material';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import Header from '../../sharedComponents/header/header';
+import { Credential } from '../contentScript';
+import './overlay.css';
 
 const autofillFormSubmit = (
     e: SyntheticEvent,
@@ -23,11 +23,11 @@ const autofillFormSubmit = (
 ) => {
     e.preventDefault();
     let form = document.querySelector(
-        "#hexagon-autofill-login-form"
+        '#hexagon-autofill-login-form'
     ) as HTMLFormElement;
     if (form.reportValidity()) {
         let account = document.querySelector(
-            "#hexagon-autofill-username"
+            '#hexagon-autofill-username'
         ) as HTMLSelectElement;
         console.log(account.innerHTML);
         autofill(account.innerHTML, password);
@@ -41,32 +41,32 @@ type AutofillProps = {
 };
 
 const AutofillOverlay = (props: AutofillProps) => {
-    const [password, setPassword] = React.useState("");
+    const [password, setPassword] = React.useState('');
 
     const handleChange = (event) => {
         setPassword(event.target.value);
     };
 
     return (
-        <div className="hexagon-overlay">
+        <div className='hexagon-overlay'>
             <Header
-                url={chrome.runtime.getURL("icon.png")}
+                url={chrome.runtime.getURL('icon.png')}
                 clickAction={props.closeOverlay}
             />
-            <Card className="hexagon-overlay-body">
+            <Card className='hexagon-overlay-body'>
                 <div>Username/Password fields detected. Autofill fields?</div>
 
-                <Box component={"form"} id="hexagon-autofill-login-form">
+                <Box component={'form'} id='hexagon-autofill-login-form'>
                     <div>
                         <FormControl required sx={{ mt: 2, width: 180 }}>
-                            <InputLabel id="demo-simple-select-helper-label">
+                            <InputLabel id='demo-simple-select-helper-label'>
                                 Account
                             </InputLabel>
                             <Select
-                                id="hexagon-autofill-username"
+                                id='hexagon-autofill-username'
                                 required
                                 value={password}
-                                label="account"
+                                label='account'
                                 onChange={handleChange}
                                 MenuProps={{
                                     style: { zIndex: 100005 },
@@ -85,11 +85,11 @@ const AutofillOverlay = (props: AutofillProps) => {
                     </div>
 
                     <Button
-                        size="large"
+                        size='large'
                         onClick={(e) =>
                             autofillFormSubmit(e, props.autofill, password)
                         }
-                        sx={{ margin: "5px", fontSize: "15px" }}
+                        sx={{ margin: '5px', fontSize: '15px' }}
                     >
                         Autofill
                     </Button>
@@ -106,14 +106,14 @@ const saveFormSubmit = (
 ) => {
     e.preventDefault();
     let form = document.querySelector(
-        "#hexagon-save-login-form"
+        '#hexagon-save-login-form'
     ) as HTMLFormElement;
     if (form.reportValidity()) {
         let username = document.querySelector(
-            "#hexagon-save-username"
+            '#hexagon-save-username'
         ) as HTMLInputElement;
         let password = document.querySelector(
-            "#hexagon-save-password"
+            '#hexagon-save-password'
         ) as HTMLInputElement;
         console.log(username.value);
         console.log(password.value);
@@ -137,52 +137,52 @@ const SavePassOverlay = (props: SaveProps) => {
             sx={{ m: 0 }}
             onClick={() => setShowPass((showPass) => !showPass)}
         >
-            <VisibilityIcon fontSize="small" />
+            <VisibilityIcon fontSize='small' />
         </IconButton>
     );
 
     return (
-        <div className="hexagon-overlay hexagon-save-overlay">
+        <div className='hexagon-overlay hexagon-save-overlay'>
             <Header
-                url={chrome.runtime.getURL("icon.png")}
+                url={chrome.runtime.getURL('icon.png')}
                 clickAction={props.closeOverlay}
             />
-            <Card className="hexagon-overlay-body hexagon-save-overlay-body">
+            <Card className='hexagon-overlay-body hexagon-save-overlay-body'>
                 <div>
                     Username/Password detected. Save username and password?
                 </div>
 
-                <Box component={"form"} id="hexagon-save-login-form">
+                <Box component={'form'} id='hexagon-save-login-form'>
                     <TextField
                         required
-                        id="hexagon-save-username"
-                        label="Username"
+                        id='hexagon-save-username'
+                        label='Username'
                         defaultValue={props.username}
-                        sx={{ mt: 3, mb: 2, width: "240px" }}
+                        sx={{ mt: 3, mb: 2, width: '240px' }}
                     />
 
                     {showPass ? (
                         <TextField
                             required
-                            id="hexagon-save-password"
-                            label="Password"
+                            id='hexagon-save-password'
+                            label='Password'
                             defaultValue={props.password}
                             InputProps={{
                                 endAdornment: icon,
                             }}
-                            sx={{ m: 1, width: "240px" }}
+                            sx={{ m: 1, width: '240px' }}
                         />
                     ) : (
                         <TextField
                             required
-                            id="hexagon-save-password"
-                            label="Password"
-                            type="password"
+                            id='hexagon-save-password'
+                            label='Password'
+                            type='password'
                             defaultValue={props.password}
                             InputProps={{
                                 endAdornment: icon,
                             }}
-                            sx={{ m: 1, width: "240px" }}
+                            sx={{ m: 1, width: '240px' }}
                         />
                     )}
 
@@ -194,8 +194,8 @@ const SavePassOverlay = (props: SaveProps) => {
                                 props.saveURL
                             )
                         }
-                        size="large"
-                        sx={{ margin: "5px", fontSize: "15px" }}
+                        size='large'
+                        sx={{ margin: '5px', fontSize: '15px' }}
                     >
                         Save
                     </Button>
@@ -214,34 +214,34 @@ type SigninProps = {
 
 const SigninOverlay = (props: SigninProps) => {
     return (
-        <div className="hexagon-overlay hexagon-signin-overlay">
+        <div className='hexagon-overlay hexagon-signin-overlay'>
             <Header
-                url={chrome.runtime.getURL("icon.png")}
+                url={chrome.runtime.getURL('icon.png')}
                 clickAction={props.closeOverlay}
             />
-            <Card className="hexagon-overlay-body hexagon-signin-body">
+            <Card className='hexagon-overlay-body hexagon-signin-body'>
                 <div>
-                    Sign-in to Hexagon detected. Log in to extension as{" "}
+                    Sign-in to Hexagon detected. Log in to extension as{' '}
                     {props.email}?
                 </div>
                 <Box
-                    display="flex"
-                    justifyContent={"space-between"}
+                    display='flex'
+                    justifyContent={'space-between'}
                     m={2}
-                    width="80%"
+                    width='80%'
                 >
                     <Button
-                        variant="outlined"
-                        size="large"
-                        sx={{ margin: "5px", fontSize: "15px" }}
+                        variant='outlined'
+                        size='large'
+                        sx={{ margin: '5px', fontSize: '15px' }}
                         onClick={props.onDecline}
                     >
                         No
                     </Button>
                     <Button
-                        variant="contained"
-                        size="large"
-                        sx={{ margin: "5px", fontSize: "15px" }}
+                        variant='contained'
+                        size='large'
+                        sx={{ margin: '5px', fontSize: '15px' }}
                         onClick={props.onAccept}
                     >
                         Yes
