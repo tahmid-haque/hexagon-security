@@ -4,7 +4,7 @@ Developed by the _NoAccess_ team.
 
 ## Project URL
 
--   [Web App](https://hexagon-web.xyz)
+-   [Web App](https://hexagon-web.xyz) (Now decomissioned)
 -   [Extension (requires local install)](https://github.com/UTSCC09/project-noaccess/releases)
 
 ## Project Video URL
@@ -16,7 +16,7 @@ Developed by the _NoAccess_ team.
 _Hexagon Security_ is a browser-centric security tool, capable of managing a user’s secure data
 including passwords, MFA keys, and notes. As part of this tool, there is a website to manage data,
 along with a chrome extension to facilitate quick actions such as saving/autofilling passwords and
-adding MFA keys to their profile. In addition, this tool supports a few auxiliary features,
+adding MFA keys to their profile. In addition, this tool supports a few auxiliary features that include
 providing users with information about their password strength/breaches and allows sharing any
 slice of their data with other users. _Hexagon_ supports all of these features while maintaining
 a fully secure environment. The entirety of a user's data is ultimately encrypted using their
@@ -24,7 +24,7 @@ password, even preventing the development team from viewing the data.
 
 -   **Supported Features:**
     -   Web App
-        -   User authentication (sign up / sign in / sign out)
+        -   User authentication & authorization (sign up / sign in / sign out)
         -   Add / view / change / delete website credentials
         -   Add / change / delete MFA credentials
         -   Add / view / change / delete notes
@@ -52,9 +52,9 @@ is configured with their own `NPM` project and their own `package.json` to manag
 In addition to these main components, we make use of `Yarn` package manager and their workspaces
 feature in order to share code across all 3 components using the `shared` component.
 
-This component is just miscellaneous services and utilities written in JavaScript and upgraded to
-TypeScript. All 3 main components make use of the `shared` component and in turn make use of
-the `WebCrypto` library to encrypt/decyrpt the user's data when needed. We make use of the `PKDBF2`
+This component is just miscellaneous services and utilities written in `JavaScript` and upgraded to
+`TypeScript`. All 3 main components make use of the `shared` component and in turn make use of
+the `WebCrypto` library to encrypt/decrypt the user's data when needed. We make use of the `PKDBF2`
 algorithm to generate keys from secrets, `AES-GCM` to encrypt user-uploaded data and `AES-KW` to
 encrypt keys associated to the user-uploaded data. All keys are 256-bit. In addition, this component
 uses the `psl` library to extract domains from URLs.
@@ -118,7 +118,7 @@ The main components are developed as follows:
         reusable servicees, and the backend for data.
     -   Libraries
         -   `mui` for component building
-        -   `fontsouce` for fonts
+        -   `fontsource` for fonts
         -   `generate-password` for secure password generation
         -   `react-password-strength-bar` for measuring password strength
     -   No third party APIs were used
@@ -176,21 +176,7 @@ resource usage.
 -   **Tahmid Haque**
     -   Completed most of the frontend (all but Settings feature and Apollo configurations)
     -   Refactored queries / mutations and added JWT blacklisting on the backend
+    -   Worked on developing an encryption scheme
     -   Implemented the entire encryption scheme
     -   Built the GitHub workflows
     -   Configured the VM, DNS and Docker compose files
-    -   Worked on developing an encryption scheme
--   **Junaid Syed**
-    -   Completed most of the backend (all but JWT blacklisting)
-    -   Added Apollo configurations and queries to frontend
-    -   Added Docker files for frontend and backend
-    -   Worked on developing an encryption scheme
--   **Raisa Haque**
-    -   Completed the entirety of the Chrome extension
-    -   Built the settings feature on the frontend
-
-# One more thing?
-
-This was a fun project and we all feel that we learned a lot throughout its course!
-If it would be possible to release the project guidelines earlier, it would've given us more time
-as there was much less time in the second half of a semester compared to the first.
