@@ -85,8 +85,9 @@ services:
             - MONGO_INITDB_DATABASE=${MONGODB_DATABASE_NAME}
             - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USERNAME}
             - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASSWORD}
+            - DATADOG_AGENT_PASSWORD=${DATADOG_AGENT_PASSWORD}
         volumes:
-            - ./scripts/db-setup.sh:/docker-entrypoint-initdb.d/db-setup.sh:ro
+            - ./scripts:/docker-entrypoint-initdb.d
             - database:/data/db
 
     backend:
